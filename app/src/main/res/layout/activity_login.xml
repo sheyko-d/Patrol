@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/login_background"
+    tools:ignore="MissingPrefix">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingLeft="48dp"
+        android:paddingRight="48dp"
+        tools:context="ca.itquality.patrol.LoginActivity"
+        tools:targetApi="lollipop">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="60dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="36dp"
+            android:contentDescription="@null"
+            android:src="@drawable/logo"
+            android:tint="@android:color/white" />
+
+        <EditText
+            android:id="@+id/login_email_edit_txt"
+            fontPath="fonts/Roboto-Medium.ttf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:backgroundTint="@android:color/white"
+            android:drawableLeft="@drawable/login_email"
+            android:drawablePadding="16dp"
+            android:drawableStart="@drawable/login_email"
+            android:hint="@string/login_email_hint"
+            android:inputType="textEmailAddress"
+            android:paddingBottom="16dp"
+            android:paddingTop="16dp"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white"
+            android:textSize="18sp" />
+
+        <EditText
+            android:id="@+id/login_password_edit_txt"
+            fontPath="fonts/Roboto-Medium.ttf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:layout_marginTop="12dp"
+            android:backgroundTint="@android:color/white"
+            android:drawableLeft="@drawable/login_password"
+            android:drawablePadding="16dp"
+            android:drawableStart="@drawable/login_password"
+            android:hint="@string/login_password_hint"
+            android:inputType="textPassword"
+            android:paddingBottom="16dp"
+            android:paddingTop="16dp"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white"
+            android:textSize="18sp" />
+
+        <Button
+            fontPath="fonts/Roboto-Bold.ttf"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="36dp"
+            android:text="@string/login_btn"
+            android:textColor="@color/colorPrimary"
+            android:textSize="16sp"
+            android:theme="@style/Button" />
+
+        <Button
+            style="?buttonBarButtonStyle"
+            fontPath="fonts/Roboto-Medium.ttf"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:layout_marginTop="24dp"
+            android:textAllCaps="false"
+            android:text="@string/login_register"
+            android:textColor="@android:color/white"
+            android:textSize="14sp" />
+
+        <Button
+            fontPath="fonts/Roboto-Bold.ttf"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="64dp"
+            android:drawableLeft="@drawable/facebook"
+            android:drawableStart="@drawable/facebook"
+            android:paddingLeft="24dp"
+            android:text="@string/login_facebook"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:theme="@style/Button.Facebook" />
+    </LinearLayout>
+</FrameLayout>

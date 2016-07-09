@@ -1,11 +1,25 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="AppTheme.Login" parent="AppTheme">
+        <item name="android:windowBackground">@color/colorPrimary</item>
+        <item name="android:statusBarColor" tools:ignore="NewApi">@android:color/transparent</item>
+        <item name="colorAccent">@android:color/white</item>
+    </style>
+
+    <style name="Button" parent="Widget.AppCompat.Button">
+        <item name="colorButtonNormal">@android:color/white</item>
+    </style>
+
+    <style name="Button.Facebook" parent="Widget.AppCompat.Button">
+        <item name="colorButtonNormal">@color/facebook</item>
     </style>
 
 </resources>

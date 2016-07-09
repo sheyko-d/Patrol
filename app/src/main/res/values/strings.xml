@@ -1,3 +1,10 @@
 <resources>
-    <string name="app_name">Patrol</string>
+    <string name="app_name">Stigg</string>
+    <string name="title_activity_login">Log in</string>
+    <string name="login_email_hint">Email</string>
+    <string name="login_password_hint">Password</string>
+    <string name="login_btn">Log In</string>
+    <string name="login_register">Don\'t have an account? Sign up!</string>
+    <string name="login_forgot_password">Forgot password?</string>
+    <string name="login_facebook">Sign In with Facebook</string>
 </resources>
