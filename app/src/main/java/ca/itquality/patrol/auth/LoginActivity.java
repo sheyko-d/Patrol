@@ -1,11 +1,13 @@
-package ca.itquality.patrol;
+package ca.itquality.patrol.auth;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
+import ca.itquality.patrol.R;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class LoginActivity extends AppCompatActivity {
@@ -34,5 +36,9 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
+    }
+
+    public void onRegisterButtonClicked(View view) {
+        startActivity(new Intent(this, RegisterActivity.class));
     }
 }

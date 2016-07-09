@@ -26,12 +26,32 @@
             android:tint="@android:color/white" />
 
         <EditText
-            android:id="@+id/login_email_edit_txt"
+            android:id="@+id/register_name_edit_txt"
             fontPath="fonts/Roboto-Medium.ttf"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="1dp"
             android:layout_marginRight="1dp"
+            android:backgroundTint="@android:color/white"
+            android:drawableLeft="@drawable/register_name"
+            android:drawablePadding="16dp"
+            android:drawableStart="@drawable/register_name"
+            android:hint="@string/auth_name_hint"
+            android:inputType="textPersonName"
+            android:paddingBottom="16dp"
+            android:paddingTop="16dp"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white"
+            android:textSize="18sp" />
+
+        <EditText
+            android:id="@+id/register_email_edit_txt"
+            fontPath="fonts/Roboto-Medium.ttf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:layout_marginTop="12dp"
             android:backgroundTint="@android:color/white"
             android:drawableLeft="@drawable/auth_email"
             android:drawablePadding="16dp"
@@ -45,7 +65,7 @@
             android:textSize="18sp" />
 
         <EditText
-            android:id="@+id/login_password_edit_txt"
+            android:id="@+id/register_password_edit_txt"
             fontPath="fonts/Roboto-Medium.ttf"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -64,13 +84,33 @@
             android:textColorHint="@android:color/white"
             android:textSize="18sp" />
 
+        <EditText
+            android:id="@+id/register_password_repeat_edit_txt"
+            fontPath="fonts/Roboto-Medium.ttf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:layout_marginTop="12dp"
+            android:backgroundTint="@android:color/white"
+            android:drawableLeft="@drawable/auth_password_repeat"
+            android:drawablePadding="16dp"
+            android:drawableStart="@drawable/auth_password_repeat"
+            android:hint="@string/auth_password_repeat_hint"
+            android:inputType="textPassword"
+            android:paddingBottom="16dp"
+            android:paddingTop="16dp"
+            android:textColor="@android:color/white"
+            android:textColorHint="@android:color/white"
+            android:textSize="18sp" />
+
         <Button
             fontPath="fonts/Roboto-Bold.ttf"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:layout_marginBottom="8dp"
             android:layout_marginTop="36dp"
-            android:text="@string/login_btn"
+            android:text="@string/register_btn"
             android:textColor="@color/colorPrimary"
             android:textSize="16sp"
             android:theme="@style/Button" />
@@ -82,26 +122,12 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:paddingLeft="16dp"
-            android:onClick="onRegisterButtonClicked"
+            android:onClick="onLoginButtonClicked"
             android:paddingRight="16dp"
             android:layout_marginTop="24dp"
             android:textAllCaps="false"
-            android:text="@string/login_register"
+            android:text="@string/register_login"
             android:textColor="@android:color/white"
             android:textSize="14sp" />
-
-        <Button
-            fontPath="fonts/Roboto-Bold.ttf"
-            android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="64dp"
-            android:drawableLeft="@drawable/facebook"
-            android:drawableStart="@drawable/facebook"
-            android:paddingLeft="24dp"
-            android:text="@string/login_facebook"
-            android:textColor="@android:color/white"
-            android:textSize="16sp"
-            android:theme="@style/Button.Facebook" />
     </LinearLayout>
 </FrameLayout>

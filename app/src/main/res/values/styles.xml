@@ -8,7 +8,7 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="AppTheme.Login" parent="AppTheme">
+    <style name="AppTheme.Auth" parent="AppTheme">
         <item name="android:windowBackground">@color/colorPrimary</item>
         <item name="android:statusBarColor" tools:ignore="NewApi">@android:color/transparent</item>
         <item name="colorAccent">@android:color/white</item>
