@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Patrol</string>
+    <string name="hello_round">Hello Round World!</string>
+    <string name="hello_square">Hello Square World!</string>
+    <string name="launch_welcome">Welcome!</string>
+    <string name="launch_login">Log in on your device</string>
+</resources>
