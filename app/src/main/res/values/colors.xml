@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary_text">#212121</color>
-    <color name="secondary_text">#727272</color>
     <color name="facebook">#3b5998</color>
+    <color name="facebook_disabled">#dd3b5998</color>
+    <color name="white_disabled">#ddffffff</color>
 </resources>

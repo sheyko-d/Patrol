@@ -26,7 +26,7 @@ public class LaunchActivity extends Activity implements GoogleApiClient.Connecti
 
     // Constants
     private static final int REQUEST_RESOLVE_ERROR = 1001;
-    private static final String HELLO_WORLD_WEAR_PATH = "/hello-world-wear";
+    private static final String HELLO_WORLD_WEAR_PATH = "/stigg-wear";
     private static final String DIALOG_ERROR = "dialog_error";
 
     // Usual variables
@@ -38,8 +38,11 @@ public class LaunchActivity extends Activity implements GoogleApiClient.Connecti
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_launch);
-        Util.Log("created");
 
+        initGoogleClient();
+    }
+
+    private void initGoogleClient() {
         //Connect the GoogleApiClient
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
@@ -83,9 +86,15 @@ public class LaunchActivity extends Activity implements GoogleApiClient.Connecti
         }
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mGoogleApiClient.disconnect();
+    }
+
     /*
-     * Resolve the node = the connected device to send the message to
-     */
+         * Resolve the node = the connected device to send the message to
+         */
     private void resolveNode() {
         Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).setResultCallback
                 (new ResultCallback<NodeApi.GetConnectedNodesResult>() {

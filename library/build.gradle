@@ -21,7 +21,13 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     testCompile 'junit:junit:4.12'
+    //noinspection GradleDependency
     compile 'com.android.support:appcompat-v7:23.4.0'
-    compile 'com.google.android.gms:play-services-wearable:8.+'
+    //noinspection GradleDynamicVersion
     compile 'uk.co.chrisjenx:calligraphy:2.2.0'
+    compile 'com.jakewharton:butterknife:7.0.1'
+    compile 'com.android.support:recyclerview-v7:23.4.0'
+    compile 'com.github.bumptech.glide:glide:3.7.0'
+    compile 'com.squareup.retrofit2:retrofit:2.1.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.1.0'
 }

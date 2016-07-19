@@ -2,6 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    android:animateLayoutChanges="true"
     android:layout_height="match_parent"
     android:background="@drawable/auth_background"
     tools:ignore="MissingPrefix">
@@ -41,7 +42,7 @@
             android:paddingBottom="16dp"
             android:paddingTop="16dp"
             android:textColor="@android:color/white"
-            android:textColorHint="@android:color/white"
+            android:textColorHint="@color/white_disabled"
             android:textSize="18sp" />
 
         <EditText
@@ -61,7 +62,7 @@
             android:paddingBottom="16dp"
             android:paddingTop="16dp"
             android:textColor="@android:color/white"
-            android:textColorHint="@android:color/white"
+            android:textColorHint="@color/white_disabled"
             android:textSize="18sp" />
 
         <EditText
@@ -81,7 +82,7 @@
             android:paddingBottom="16dp"
             android:paddingTop="16dp"
             android:textColor="@android:color/white"
-            android:textColorHint="@android:color/white"
+            android:textColorHint="@color/white_disabled"
             android:textSize="18sp" />
 
         <EditText
@@ -101,15 +102,17 @@
             android:paddingBottom="16dp"
             android:paddingTop="16dp"
             android:textColor="@android:color/white"
-            android:textColorHint="@android:color/white"
+            android:textColorHint="@color/white_disabled"
             android:textSize="18sp" />
 
         <Button
+            android:id="@+id/register_btn"
             fontPath="fonts/Roboto-Bold.ttf"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:layout_marginBottom="8dp"
             android:layout_marginTop="36dp"
+            android:onClick="onRegisterButtonClicked"
             android:text="@string/register_btn"
             android:textColor="@color/colorPrimary"
             android:textSize="16sp"
@@ -121,12 +124,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:paddingLeft="16dp"
-            android:onClick="onLoginButtonClicked"
-            android:paddingRight="16dp"
             android:layout_marginTop="24dp"
-            android:textAllCaps="false"
+            android:onClick="onLoginButtonClicked"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
             android:text="@string/register_login"
+            android:textAllCaps="false"
             android:textColor="@android:color/white"
             android:textSize="14sp" />
     </LinearLayout>

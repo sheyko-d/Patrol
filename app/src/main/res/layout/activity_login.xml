@@ -41,7 +41,7 @@
             android:paddingBottom="16dp"
             android:paddingTop="16dp"
             android:textColor="@android:color/white"
-            android:textColorHint="@android:color/white"
+            android:textColorHint="@color/white_disabled"
             android:textSize="18sp" />
 
         <EditText
@@ -61,15 +61,17 @@
             android:paddingBottom="16dp"
             android:paddingTop="16dp"
             android:textColor="@android:color/white"
-            android:textColorHint="@android:color/white"
+            android:textColorHint="@color/white_disabled"
             android:textSize="18sp" />
 
         <Button
+            android:id="@+id/login_btn"
             fontPath="fonts/Roboto-Bold.ttf"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:layout_marginBottom="8dp"
             android:layout_marginTop="36dp"
+            android:onClick="onLoginButtonClicked"
             android:text="@string/login_btn"
             android:textColor="@color/colorPrimary"
             android:textSize="16sp"
@@ -91,11 +93,13 @@
             android:textSize="14sp" />
 
         <Button
+            android:id="@+id/login_facebook_btn"
             fontPath="fonts/Roboto-Bold.ttf"
             android:layout_width="match_parent"
             android:layout_height="64dp"
             android:layout_marginBottom="8dp"
             android:layout_marginTop="64dp"
+            android:onClick="onFacebookButtonClicked"
             android:drawableLeft="@drawable/facebook"
             android:drawableStart="@drawable/facebook"
             android:paddingLeft="24dp"

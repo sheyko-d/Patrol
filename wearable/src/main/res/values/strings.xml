@@ -1,7 +1,5 @@
-<resources>
-    <string name="app_name">Patrol</string>
-    <string name="hello_round">Hello Round World!</string>
-    <string name="hello_square">Hello Square World!</string>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="launch_welcome">Welcome!</string>
     <string name="launch_login">Log in on your device</string>
+    <string name="main_heart_rate">%1$d BPM</string>
 </resources>

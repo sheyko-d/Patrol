@@ -10,7 +10,7 @@ import ca.itquality.patrol.library.util.Util;
 
 public class ListenerServiceFromWear extends WearableListenerService {
 
-    private static final String HELLO_WORLD_WEAR_PATH = "/hello-world-wear";
+    private static final String HELLO_WORLD_WEAR_PATH = "/stigg-wear";
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
