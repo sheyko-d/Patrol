@@ -14,11 +14,7 @@ import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMapItem;
-import com.google.android.gms.wearable.MessageApi;
-import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
-
-import java.io.UnsupportedEncodingException;
 
 import ca.itquality.patrol.MainActivity;
 import ca.itquality.patrol.library.util.Util;
@@ -64,22 +60,6 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
      * Resolve the node = the connected device to send the message to
      */
     private void connectToPhone() {
-        Wearable.MessageApi.addListener(mGoogleApiClient,
-                new MessageApi.MessageListener() {
-                    @Override
-                    public void onMessageReceived(MessageEvent messageEvent) {
-                        try {
-                            String activityName = new String(messageEvent.getData(),
-                                    "UTF-8");
-                            Util.Log("received: " + activityName);
-                            WearUtil.setActivityStatus(activityName);
-                            sendBroadcast(new Intent(INTENT_ACTIVITY_UPDATE)
-                                    .putExtra(EXTRA_ACTIVITY, activityName));
-                        } catch (UnsupportedEncodingException e) {
-                            // Activity type is empty
-                        }
-                    }
-                });
         Wearable.DataApi.addListener(mGoogleApiClient, new DataApi.DataListener() {
             @Override
             public void onDataChanged(DataEventBuffer dataEventBuffer) {
@@ -87,14 +67,21 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                     if (event.getType() == DataEvent.TYPE_CHANGED) {
                         DataItem item = event.getDataItem();
                         if ((item.getUri().getPath()).
-                                equals(Util.LOGGED_IN_PATH)) {
+                                equals(Util.PATH_LOGGED_IN)) {
                             DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
                             Boolean isLoggedIn = dataItem.getDataMap().getBoolean
-                                    (Util.LOGGED_IN_DATA);
+                                    (Util.DATA_LOGGED_IN);
                             WearUtil.setLoggedIn(isLoggedIn);
 
                             sendBroadcast(new Intent(MainActivity.LOGIN_STATE_INTENT)
                                     .putExtra(MainActivity.LOGIN_STATE_EXTRA, isLoggedIn));
+                        } else if ((item.getUri().getPath()).
+                                equals(Util.PATH_ACTIVITY)) {
+                            DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
+                            String activity = dataItem.getDataMap().getString(Util.DATA_ACTIVITY);
+                            WearUtil.setActivityStatus(activity);
+                            sendBroadcast(new Intent(INTENT_ACTIVITY_UPDATE)
+                                    .putExtra(EXTRA_ACTIVITY, activity));
                         }
                     }
                 }

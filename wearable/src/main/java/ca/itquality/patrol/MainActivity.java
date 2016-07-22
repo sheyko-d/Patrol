@@ -51,7 +51,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     public static final String LOGIN_STATE_EXTRA = "LoggedIn";
     private static final int BACKUP_DISMISS_DURATION = 10;
     private static final int SECOND_DURATION = 1000;
-    private static final int HEART_RATE_MIN_BACKUP = 100;
+    private static final int HEART_RATE_MIN_BACKUP = 120;
 
     // Views
     /*@Bind(R.id.main_heart_rate_txt)
@@ -127,7 +127,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                 R.drawable.green_circle_bg));
         mItems.add(new ListItem("Steps", R.drawable.steps, R.drawable.orange_circle_bg));
         mItems.add(new ListItem("Heart rate", R.drawable.heart_rate, R.drawable.red_circle_bg));
-        mItems.add(new ListItem("Floor", R.drawable.location, R.drawable.lime_circle_bg));
+        mItems.add(new ListItem("Floor", R.drawable.location, R.drawable.purple_circle_bg));
 
         mRecycler.setLayoutManager(new LinearLayoutManager(this));
         mRecycler.setHasFixedSize(true);
@@ -209,8 +209,8 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                 if (event.values[0] != 0) {
                     int heartRate = (int) event.values[0];
                     mAdapter.updateHeartRate((int) event.values[0]);
-                    //mSensorManager.unregisterListener(this, heartRateSensor);
-                    //mHandler.postDelayed(mMeasureHeartRateRunnable, HEART_RATE_MEASURE_INTERVAL);
+                    mSensorManager.unregisterListener(this, heartRateSensor);
+                    mHandler.postDelayed(mMeasureHeartRateRunnable, HEART_RATE_MEASURE_INTERVAL);
                     updateHeartRateOnDevice(heartRate);
                     checkHeartRate(heartRate);
                 }
@@ -264,9 +264,9 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
             };
 
             private void updateHeartRateOnDevice(int heartRate) {
-                PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.HEART_RATE_PATH);
+                PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_HEART_RATE);
                 putDataMapReq.setUrgent();
-                putDataMapReq.getDataMap().putInt(Util.HEART_RATE_DATA, heartRate);
+                putDataMapReq.getDataMap().putInt(Util.DATA_HEART_RATE, heartRate);
                 PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
                 Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
             }
@@ -282,8 +282,17 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         mSensorManager.registerListener(new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
-                int heartRate = (int) event.values[0];
-                mAdapter.updateStepsCount(heartRate);
+                int steps = (int) event.values[0];
+                updateStepsOnDevice(steps);
+                mAdapter.updateStepsCount(steps);
+            }
+
+            private void updateStepsOnDevice(int steps) {
+                PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_STEPS);
+                putDataMapReq.setUrgent();
+                putDataMapReq.getDataMap().putInt(Util.DATA_STEPS, steps);
+                PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+                Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
             }
 
             @Override

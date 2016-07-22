@@ -13,29 +13,33 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.NavigationView;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMapItem;
-import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
-import com.google.android.gms.wearable.WearableStatusCodes;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -49,12 +53,22 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, DataApi.DataListener {
 
+    @Bind(R.id.toolbar)
+    Toolbar mToolbar;
+    @Bind(R.id.main_drawer_layout)
+    DrawerLayout mDrawerLayout;
     @Bind(R.id.main_progress_bar)
     ProgressBar mProgressBar;
     @Bind(R.id.main_disconnected_layout)
     View mDisconnectedLayout;
     @Bind(R.id.main_heart_rate_txt)
     TextView mHeartRateTxt;
+    @Bind(R.id.main_steps_txt)
+    TextView mStepsTxt;
+    @Bind(R.id.main_activity_txt)
+    TextView mActivityTxt;
+    @Bind(R.id.main_navigation_view)
+    NavigationView mNavigationView;
 
     private GoogleApiClient mGoogleApiClient;
     private Node mNode;
@@ -72,23 +86,66 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             return;
         }
 
+        initActionBar();
+        initDrawer();
         initGoogleClient();
+        initSensorData();
         connectToWatch();
         initFloorListener();
+    }
+
+    private void initDrawer() {
+        // Initialize a Drawer Layout and an ActionBarToggle
+        ActionBarDrawerToggle actionBarDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
+                mToolbar, R.string.app_name, R.string.app_name) {
+
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+            }
+        };
+        // Set the actionbarToggle to drawer layout
+        mDrawerLayout.addDrawerListener(actionBarDrawerToggle);
+
+        // Calling sync state is necessary or else your hamburger icon wont show up
+        actionBarDrawerToggle.syncState();
+
+        View headerView = mNavigationView.getHeaderView(0);
+        TextView nameTxt = (TextView) headerView.findViewById(R.id.drawer_name_txt);
+        TextView emailTxt = (TextView) headerView.findViewById(R.id.drawer_email_txt);
+        ImageView photoImg = (ImageView) headerView.findViewById(R.id.drawer_photo_img);
+        nameTxt.setText(DeviceUtil.getName());
+        emailTxt.setText(DeviceUtil.getEmail());
+        Glide.with(this).load(DeviceUtil.getPhoto()).into(photoImg);
+    }
+
+    private void initActionBar() {
+        setSupportActionBar(mToolbar);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setHomeButtonEnabled(true);
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+    }
+
+    private void initSensorData() {
+        mActivityTxt.setText(TextUtils.isEmpty(DeviceUtil.getActivity()) ? "—"
+                : DeviceUtil.getActivity());
+        mStepsTxt.setText(DeviceUtil.getSteps() == -1 ? "—"
+                : String.valueOf(DeviceUtil.getSteps()));
+        mHeartRateTxt.setText(DeviceUtil.getHeartRate() == -1 ? "—"
+                : getString(R.string.main_heart_rate, DeviceUtil.getHeartRate()));
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         connectToWatch();
-        mGoogleApiClient.connect();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Wearable.DataApi.removeListener(mGoogleApiClient, this);
-        mGoogleApiClient.disconnect();
     }
 
     private void initFloorListener() {
@@ -159,26 +216,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     BroadcastReceiver mActivityStatusReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String status = intent.getStringExtra(ActivityRecognizedService.EXTRA_ACTIVITY);
-            updateWearActivityStatus(status);
+            String activity = intent.getStringExtra(ActivityRecognizedService.EXTRA_ACTIVITY);
+            updateWearActivityStatus(activity);
+            DeviceUtil.setActivity(activity);
+            mActivityTxt.setText(activity);
         }
     };
 
-    private void updateWearActivityStatus(final String status) {
-        PendingResult<MessageApi.SendMessageResult> messageResult = Wearable.MessageApi.sendMessage
-                (mGoogleApiClient, mNode.getId(), "stigg-login"/**TODO Change to stigg-actvity?*/, status.getBytes());
-        Util.Log("update status on the watch");
-        messageResult.setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
-            @Override
-            public void onResult(@NonNull MessageApi.SendMessageResult sendMessageResult) {
-                Util.Log("message status: " + sendMessageResult.getStatus().getStatusMessage());
-                Status status = sendMessageResult.getStatus();
-                Util.Log("Status: " + status.toString());
-                if (status.getStatusCode() != WearableStatusCodes.SUCCESS) {
-                    Util.Log("Tap to retry. Alert not sent :(");
-                }
-            }
-        });
+    private void updateWearActivityStatus(final String activity) {
+        PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_ACTIVITY);
+        putDataMapReq.setUrgent();
+        putDataMapReq.getDataMap().putString(Util.DATA_ACTIVITY, activity);
+        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+        Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
     }
 
     @Override
@@ -193,9 +243,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private void logInOnTheWatch() {
-        PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.LOGGED_IN_PATH);
+        PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_LOGGED_IN);
         putDataMapReq.setUrgent();
-        putDataMapReq.getDataMap().putBoolean(Util.LOGGED_IN_DATA, true);
+        putDataMapReq.getDataMap().putBoolean(Util.DATA_LOGGED_IN, true);
         PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
         Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
     }
@@ -216,6 +266,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     protected void onStop() {
+        Wearable.DataApi.removeListener(mGoogleApiClient, this);
         mGoogleApiClient.disconnect();
         try {
             unregisterReceiver(mActivityStatusReceiver);
@@ -265,10 +316,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             if (event.getType() == DataEvent.TYPE_CHANGED) {
                 DataItem item = event.getDataItem();
                 if ((item.getUri().getPath()).
-                        equals(Util.HEART_RATE_PATH)) {
+                        equals(Util.PATH_HEART_RATE)) {
                     DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
-                    int heartRate = dataItem.getDataMap().getInt(Util.HEART_RATE_DATA);
+                    int heartRate = dataItem.getDataMap().getInt(Util.DATA_HEART_RATE);
+                    DeviceUtil.setHeartRate(heartRate);
                     mHeartRateTxt.setText(getString(R.string.main_heart_rate, heartRate));
+                } else if ((item.getUri().getPath()).equals(Util.PATH_STEPS)) {
+                    DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
+                    int steps = dataItem.getDataMap().getInt(Util.DATA_STEPS);
+                    DeviceUtil.setSteps(steps);
+                    mStepsTxt.setText(String.valueOf(steps));
                 }
             }
         }

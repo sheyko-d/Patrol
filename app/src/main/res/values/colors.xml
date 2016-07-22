@@ -3,4 +3,6 @@
     <color name="facebook">#3b5998</color>
     <color name="facebook_disabled">#dd3b5998</color>
     <color name="white_disabled">#ddffffff</color>
+    <color name="divider">#ddd</color>
+    <color name="drawer_tint">#c2151b</color>
 </resources>

@@ -292,9 +292,9 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     }
 
     private void logOutOnTheWatch() {
-        PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.LOGGED_IN_PATH);
+        PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_LOGGED_IN);
         putDataMapReq.setUrgent();
-        putDataMapReq.getDataMap().putBoolean(Util.LOGGED_IN_DATA, false);
+        putDataMapReq.getDataMap().putBoolean(Util.DATA_LOGGED_IN, false);
         PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
         Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
     }

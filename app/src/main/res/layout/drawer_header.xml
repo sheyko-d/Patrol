@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:background="@color/drawer_tint"
+    android:layout_height="200dp"
+    tools:ignore="MissingPrefix">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:src="@drawable/drawer_header"
+        android:alpha="0.1"
+        android:contentDescription="@null"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:layout_weight="1">
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/drawer_photo_img"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_gravity="center_vertical"
+                android:src="@android:color/white" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/drawer_name_txt"
+            fontPath="fonts/Roboto-Medium.ttf"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            tools:text="Dmitry Sheiko" />
+
+        <TextView
+            android:id="@+id/drawer_email_txt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/secondary_text_light"
+            android:textSize="14sp"
+            tools:text="sheyko.dmitriy@gmail.com" />
+    </LinearLayout>
+</FrameLayout>
