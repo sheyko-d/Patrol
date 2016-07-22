@@ -58,7 +58,7 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
         } else if (position == POS_ACTIVITY) {
             holder.valueTxt.setText(TextUtils.isEmpty(mActivityStatus) ? "—" : mActivityStatus);
         } else if (position == POS_STEPS) {
-            holder.valueTxt.setText(String.valueOf(mStepsCount));
+            holder.valueTxt.setText(mStepsCount == null ? "—" : String.valueOf(mStepsCount));
         } else if (position == POS_HEART_RATE) {
             holder.valueTxt.setText(mHeartRate == null ? "—" : mContext.getString
                     (R.string.main_heart_rate, mHeartRate));

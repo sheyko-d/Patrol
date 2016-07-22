@@ -32,8 +32,7 @@ public class ActivityRecognizedService extends IntentService {
     }
 
     private void handleDetectedActivities(List<DetectedActivity> probableActivities) {
-        Util.Log("handleDetectedActivities");
-        String activityName = "-";
+        String activityName = null;
         for (DetectedActivity activity : probableActivities) {
             switch (activity.getType()) {
                 case DetectedActivity.IN_VEHICLE: {

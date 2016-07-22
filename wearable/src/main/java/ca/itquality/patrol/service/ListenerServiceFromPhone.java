@@ -9,12 +9,18 @@ import android.support.annotation.Nullable;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.DataEvent;
+import com.google.android.gms.wearable.DataEventBuffer;
+import com.google.android.gms.wearable.DataItem;
+import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
 
 import java.io.UnsupportedEncodingException;
 
+import ca.itquality.patrol.MainActivity;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.util.WearUtil;
 
@@ -57,7 +63,7 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
     /*
      * Resolve the node = the connected device to send the message to
      */
-    private void resolveNode() {
+    private void connectToPhone() {
         Wearable.MessageApi.addListener(mGoogleApiClient,
                 new MessageApi.MessageListener() {
                     @Override
@@ -74,11 +80,31 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                         }
                     }
                 });
+        Wearable.DataApi.addListener(mGoogleApiClient, new DataApi.DataListener() {
+            @Override
+            public void onDataChanged(DataEventBuffer dataEventBuffer) {
+                for (DataEvent event : dataEventBuffer) {
+                    if (event.getType() == DataEvent.TYPE_CHANGED) {
+                        DataItem item = event.getDataItem();
+                        if ((item.getUri().getPath()).
+                                equals(Util.LOGGED_IN_PATH)) {
+                            DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
+                            Boolean isLoggedIn = dataItem.getDataMap().getBoolean
+                                    (Util.LOGGED_IN_DATA);
+                            WearUtil.setLoggedIn(isLoggedIn);
+
+                            sendBroadcast(new Intent(MainActivity.LOGIN_STATE_INTENT)
+                                    .putExtra(MainActivity.LOGIN_STATE_EXTRA, isLoggedIn));
+                        }
+                    }
+                }
+            }
+        });
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        resolveNode();
+        connectToPhone();
     }
 
     @Override

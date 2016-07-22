@@ -1,13 +1,19 @@
 package ca.itquality.patrol;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.wearable.activity.WearableActivity;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -18,15 +24,30 @@ import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
+import java.util.Date;
+
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import ca.itquality.patrol.library.util.Util;
+import ca.itquality.patrol.service.ListenerServiceFromPhone;
+import ca.itquality.patrol.util.WearUtil;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
-public class LaunchActivity extends Activity implements GoogleApiClient.ConnectionCallbacks,
+public class LaunchActivity extends WearableActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
+
+    @Bind(R.id.launch_disconnected_layout)
+    View mDisconnectedLayout;
+    @Bind(R.id.launch_login_layout)
+    View mLoginLayout;
+    @Bind(R.id.launch_progress_bar)
+    ProgressBar mProgressBar;
+    @Bind(R.id.clock)
+    TextView mClockView;
 
     // Constants
     private static final int REQUEST_RESOLVE_ERROR = 1001;
-    private static final String HELLO_WORLD_WEAR_PATH = "/stigg-wear";
+    private static final String LOGIN_WEAR_PATH = "/stigg-login";
     private static final String DIALOG_ERROR = "dialog_error";
 
     // Usual variables
@@ -38,8 +59,34 @@ public class LaunchActivity extends Activity implements GoogleApiClient.Connecti
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_launch);
+        ButterKnife.bind(this);
 
         initGoogleClient();
+        updateTime();
+        startPhoneListenerService();
+        registerLoginStateListener();
+
+        startActivity(new Intent(this, MainActivity.class));
+    }
+
+    private void registerLoginStateListener() {
+        IntentFilter filter = new IntentFilter(MainActivity.LOGIN_STATE_INTENT);
+        registerReceiver(mLoginStateReceiver, filter);
+    }
+
+    BroadcastReceiver mLoginStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // If user logged in on the phone, log in on the watch as well
+            if (intent.getBooleanExtra(MainActivity.LOGIN_STATE_EXTRA, true)) {
+                startActivity(new Intent(LaunchActivity.this, MainActivity.class));
+                finish();
+            }
+        }
+    };
+
+    private void startPhoneListenerService() {
+        startService(new Intent(this, ListenerServiceFromPhone.class));
     }
 
     private void initGoogleClient() {
@@ -54,10 +101,10 @@ public class LaunchActivity extends Activity implements GoogleApiClient.Connecti
     /**
      * Send message to mobile handheld
      */
-    private void sendMessage() {
+    private void openLoginOnPhone() {
         if (mNode != null && mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             Wearable.MessageApi.sendMessage(
-                    mGoogleApiClient, mNode.getId(), HELLO_WORLD_WEAR_PATH, null).setResultCallback(
+                    mGoogleApiClient, mNode.getId(), LOGIN_WEAR_PATH, null).setResultCallback(
 
                     new ResultCallback<MessageApi.SendMessageResult>() {
                         @Override
@@ -73,8 +120,6 @@ public class LaunchActivity extends Activity implements GoogleApiClient.Connecti
                         }
                     }
             );
-        } else {
-            // TODO:
         }
     }
 
@@ -95,7 +140,8 @@ public class LaunchActivity extends Activity implements GoogleApiClient.Connecti
     /*
          * Resolve the node = the connected device to send the message to
          */
-    private void resolveNode() {
+    private void connectToPhone() {
+        mProgressBar.setVisibility(View.VISIBLE);
         Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).setResultCallback
                 (new ResultCallback<NodeApi.GetConnectedNodesResult>() {
                     @Override
@@ -104,7 +150,21 @@ public class LaunchActivity extends Activity implements GoogleApiClient.Connecti
                             mNode = node;
                         }
 
-                        sendMessage();
+                        Util.Log("Check node");
+                        if (mNode != null) {
+                            if (!WearUtil.isLoggedIn()) {
+                                mDisconnectedLayout.setVisibility(View.GONE);
+                                mLoginLayout.setVisibility(View.VISIBLE);
+                                openLoginOnPhone();
+                            } else {
+                                startActivity(new Intent(LaunchActivity.this, MainActivity.class));
+                                finish();
+                            }
+                        } else {
+                            mDisconnectedLayout.setVisibility(View.VISIBLE);
+                            mLoginLayout.setVisibility(View.GONE);
+                        }
+                        mProgressBar.setVisibility(View.GONE);
                     }
                 });
     }
@@ -112,7 +172,7 @@ public class LaunchActivity extends Activity implements GoogleApiClient.Connecti
     @Override
     public void onConnected(Bundle bundle) {
         Util.Log("connected");
-        resolveNode();
+        connectToPhone();
     }
 
     @Override
@@ -189,5 +249,43 @@ public class LaunchActivity extends Activity implements GoogleApiClient.Connecti
     @Override
     protected void attachBaseContext(Context newBase) {
         super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
+    }
+
+    private void updateTime() {
+        mClockView.setText(WearUtil.AMBIENT_DATE_FORMAT.format(new Date()));
+    }
+
+    @Override
+    public void onEnterAmbient(Bundle ambientDetails) {
+        super.onEnterAmbient(ambientDetails);
+        updateDisplay();
+    }
+
+    @Override
+    public void onUpdateAmbient() {
+        super.onUpdateAmbient();
+        updateDisplay();
+    }
+
+    @Override
+    public void onExitAmbient() {
+        updateDisplay();
+        super.onExitAmbient();
+    }
+
+    private void updateDisplay() {
+        if (isAmbient()) {
+            updateTime();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        try {
+            unregisterReceiver(mLoginStateReceiver);
+        } catch (Exception e) {
+            // Receiver not registered
+        }
+        super.onDestroy();
     }
 }

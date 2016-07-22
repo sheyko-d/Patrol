@@ -2,6 +2,9 @@ package ca.itquality.patrol.util;
 
 import android.preference.PreferenceManager;
 
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+
 import ca.itquality.patrol.library.util.app.MyApplication;
 
 /**
@@ -9,7 +12,10 @@ import ca.itquality.patrol.library.util.app.MyApplication;
  */
 public class WearUtil {
 
+    public static final SimpleDateFormat AMBIENT_DATE_FORMAT =
+            new SimpleDateFormat("HH:mm", Locale.US);
     private static final String PREF_ACTIVITY_STATUS = "ActivityStatus";
+    private static final String PREF_LOGGED_IN = "LoggedIn";
 
     /**
      * Saves an activity status in shared preferences.
@@ -24,6 +30,16 @@ public class WearUtil {
      */
     public static String getActivityStatus() {
         return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
-                .getString(PREF_ACTIVITY_STATUS, "-");
+                .getString(PREF_ACTIVITY_STATUS, null);
+    }
+
+    public static void setLoggedIn(boolean loggedIn) {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putBoolean(PREF_LOGGED_IN, loggedIn).apply();
+    }
+
+    public static boolean isLoggedIn() {
+        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+                .getBoolean(PREF_LOGGED_IN, false);
     }
 }

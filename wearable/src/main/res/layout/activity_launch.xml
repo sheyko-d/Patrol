@@ -1,28 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_gravity="center"
+    android:animateLayoutChanges="true"
     android:orientation="vertical"
     tools:context=".LaunchActivity"
     tools:ignore="MissingPrefix">
 
     <TextView
+        android:id="@+id/clock"
         fontPath="fonts/Roboto-Bold.ttf"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="@string/launch_welcome"
+        android:background="@color/header"
+        android:gravity="center"
+        android:padding="8dp"
         android:textColor="@android:color/white"
-        android:textSize="22sp" />
+        android:textSize="16sp"
+        app:layout_box="all" />
 
-    <TextView
+    <ProgressBar
+        android:id="@+id/launch_progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="8dp"
-        android:text="@string/launch_login"
-        android:textColor="@android:color/white"
-        android:textSize="16sp" />
-</LinearLayout>
+        android:layout_gravity="center" />
+
+    <LinearLayout
+        android:id="@+id/launch_login_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            fontPath="fonts/Roboto-Medium.ttf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="@string/launch_welcome"
+            android:textColor="@android:color/white"
+            android:textSize="22sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center_horizontal"
+            android:lineSpacingExtra="4dp"
+            android:text="@string/launch_login"
+            android:textColor="@color/secondary_text_light"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/launch_disconnected_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            fontPath="fonts/Roboto-Medium.ttf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="@string/launch_disconnected_title"
+            android:textColor="@android:color/white"
+            android:textSize="22sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center_horizontal"
+            android:lineSpacingExtra="4dp"
+            android:text="@string/launch_disconnected_desc"
+            android:textColor="@color/secondary_text_light"
+            android:textSize="16sp" />
+    </LinearLayout>
+</FrameLayout>

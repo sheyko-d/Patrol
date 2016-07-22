@@ -14,9 +14,6 @@ public class DeviceUtil {
     private static final String PREF_EMAIL = "Email";
     private static final String PREF_PHOTO = "Photo";
 
-    /**
-     * Checks if provided email address has a valid format.
-     */
     public static boolean isValidEmail(String email) {
         return !TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email)
                 .matches();
@@ -34,5 +31,9 @@ public class DeviceUtil {
     public static String getUserId() {
         return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_USER_ID, null);
+    }
+
+    public static boolean isLoggedIn() {
+        return !TextUtils.isEmpty(DeviceUtil.getUserId());
     }
 }

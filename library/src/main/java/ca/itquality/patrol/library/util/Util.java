@@ -12,6 +12,10 @@ import ca.itquality.patrol.library.util.app.MyApplication;
 public class Util {
 
     private static final String LOG_TAG = "PatrolDebug";
+    public static final String LOGGED_IN_PATH = "/logged_in";
+    public static final String LOGGED_IN_DATA = "LoggedIn";
+    public static final String HEART_RATE_PATH = "/heart_rate";
+    public static final String HEART_RATE_DATA = "HeartRate";
 
     /**
      * Adds a message to LogCat.

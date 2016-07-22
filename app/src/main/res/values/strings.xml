@@ -10,7 +10,5 @@
     <string name="register_btn">Sign up</string>
     <string name="auth_loading">Loading…</string>
     <string name="register_login">Already have an account? Log in!</string>
-    <string name="google_api_key">AIzaSyAlrKmDVMEAnDbdY4CgXbrcI_p3Ok3aB-g</string>
-    <string name="facebook_app_id">1719336118315630</string>
     <string name="login_facebook_loading">Signing in…</string>
 </resources>

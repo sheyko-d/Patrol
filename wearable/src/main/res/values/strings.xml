@@ -1,5 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="launch_welcome">Welcome!</string>
     <string name="launch_login">Log in on your device</string>
-    <string name="main_heart_rate">%1$d BPM</string>
+    <string name="launch_disconnected_title">Connect phone</string>
+    <string name="launch_disconnected_desc">Go to Android Wear app on the phone and pair it.</string>
+    <string name="cancel">Cancel</string>
+    <string name="main_backup_dismiss">Dismissing in %1$d…</string>
 </resources>
