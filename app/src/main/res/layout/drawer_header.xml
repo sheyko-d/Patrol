@@ -44,9 +44,10 @@
             tools:text="Dmitry Sheiko" />
 
         <TextView
-            android:id="@+id/drawer_email_txt"
+            android:id="@+id/drawer_assigned_object_txt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
             android:textColor="@color/secondary_text_light"
             android:textSize="14sp"
             tools:text="sheyko.dmitriy@gmail.com" />

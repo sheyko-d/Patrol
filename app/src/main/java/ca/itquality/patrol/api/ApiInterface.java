@@ -22,4 +22,8 @@ public interface ApiInterface {
     @FormUrlEncoded
     @POST("user/login.php")
     Call<User> login(@Field("email") String email, @Field("password") String password);
+
+    @FormUrlEncoded
+    @POST("user/profile.php")
+    Call<User> getProfile(@Field("id") String id, @Field("token") String token);
 }

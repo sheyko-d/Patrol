@@ -42,7 +42,7 @@ public class LaunchActivity extends WearableActivity implements GoogleApiClient.
     View mLoginLayout;
     @Bind(R.id.launch_progress_bar)
     ProgressBar mProgressBar;
-    @Bind(R.id.clock)
+    @Bind(R.id.main_clock_txt)
     TextView mClockView;
 
     // Constants
@@ -70,7 +70,7 @@ public class LaunchActivity extends WearableActivity implements GoogleApiClient.
     }
 
     private void registerLoginStateListener() {
-        IntentFilter filter = new IntentFilter(MainActivity.LOGIN_STATE_INTENT);
+        IntentFilter filter = new IntentFilter(MainActivity.INTENT_LOGIN_STATE);
         registerReceiver(mLoginStateReceiver, filter);
     }
 

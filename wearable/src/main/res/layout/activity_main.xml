@@ -1,26 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_gravity="center"
     android:animateLayoutChanges="true"
     tools:context="ca.itquality.patrol.MainActivity"
     tools:deviceIds="wear"
     tools:ignore="MissingPrefix">
 
-    <TextView
-        android:id="@+id/clock"
-        fontPath="fonts/Roboto-Bold.ttf"
+    <LinearLayout
+        android:id="@+id/main_header_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/header"
-        android:gravity="center"
-        android:padding="8dp"
-        android:textColor="@android:color/white"
-        android:textSize="16sp"
-        app:layout_box="all" />
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/main_clock_txt"
+            fontPath="fonts/Roboto-Bold.ttf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:textColor="@android:color/white"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/main_name_txt"
+            fontPath="fonts/Roboto-Regular.ttf"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:textColor="@color/secondary_text_light"
+            android:textSize="10sp"
+            tools:text="Dmitry Sheiko" />
+    </LinearLayout>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/main_recycler"
@@ -28,7 +44,7 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:paddingBottom="32dp"
-        android:paddingTop="44dp" />
+        android:paddingTop="56dp" />
 
     <FrameLayout
         android:id="@+id/main_backup_layout"
@@ -44,8 +60,8 @@
             android:orientation="vertical">
 
             <ImageView
-                android:layout_width="100dp"
-                android:layout_height="100dp"
+                android:layout_width="88dp"
+                android:layout_height="88dp"
                 android:layout_gravity="center_horizontal"
                 android:background="@drawable/primary_circle_bg"
                 android:clickable="true"
@@ -58,7 +74,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="12dp"
                 android:text="Need backup?"
                 android:textColor="@android:color/white"
                 android:textSize="18sp" />

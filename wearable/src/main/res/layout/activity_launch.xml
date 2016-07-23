@@ -11,7 +11,7 @@
     tools:ignore="MissingPrefix">
 
     <TextView
-        android:id="@+id/clock"
+        android:id="@+id/main_clock_txt"
         fontPath="fonts/Roboto-Bold.ttf"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

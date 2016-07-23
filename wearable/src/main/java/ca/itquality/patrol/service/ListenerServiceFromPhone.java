@@ -25,6 +25,8 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
 
     public static final String INTENT_ACTIVITY_UPDATE = "ca.itquality.patrol.ACTIVITY_UPDATE";
     public static final String EXTRA_ACTIVITY = "Activity";
+    public static final String INTENT_NAME_UPDATE = "ca.itquality.patrol.NAME_UPDATE";
+    public static final String EXTRA_NAME = "Name";
 
     private GoogleApiClient mGoogleApiClient;
 
@@ -66,22 +68,27 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                 for (DataEvent event : dataEventBuffer) {
                     if (event.getType() == DataEvent.TYPE_CHANGED) {
                         DataItem item = event.getDataItem();
+                        DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
                         if ((item.getUri().getPath()).
                                 equals(Util.PATH_LOGGED_IN)) {
-                            DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
                             Boolean isLoggedIn = dataItem.getDataMap().getBoolean
                                     (Util.DATA_LOGGED_IN);
                             WearUtil.setLoggedIn(isLoggedIn);
 
-                            sendBroadcast(new Intent(MainActivity.LOGIN_STATE_INTENT)
+                            sendBroadcast(new Intent(MainActivity.INTENT_LOGIN_STATE)
                                     .putExtra(MainActivity.LOGIN_STATE_EXTRA, isLoggedIn));
                         } else if ((item.getUri().getPath()).
                                 equals(Util.PATH_ACTIVITY)) {
-                            DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
                             String activity = dataItem.getDataMap().getString(Util.DATA_ACTIVITY);
                             WearUtil.setActivityStatus(activity);
                             sendBroadcast(new Intent(INTENT_ACTIVITY_UPDATE)
                                     .putExtra(EXTRA_ACTIVITY, activity));
+                        } else if ((item.getUri().getPath()).equals(Util.PATH_NAME)) {
+                            Util.Log("receive name");
+                            String name = dataItem.getDataMap().getString(Util.DATA_NAME);
+                            WearUtil.setName(name);
+                            sendBroadcast(new Intent(INTENT_NAME_UPDATE)
+                                    .putExtra(EXTRA_NAME, name));
                         }
                     }
                 }

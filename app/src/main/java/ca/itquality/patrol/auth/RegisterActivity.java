@@ -17,6 +17,7 @@ import ca.itquality.patrol.MainActivity;
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.api.ApiClient;
 import ca.itquality.patrol.api.ApiInterface;
+import ca.itquality.patrol.assignedobject.AssignedObjectActivity;
 import ca.itquality.patrol.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.util.DeviceUtil;
@@ -99,10 +100,16 @@ public class RegisterActivity extends AppCompatActivity {
                 public void onResponse(Call<User> call, Response<User> response) {
                     if (response.isSuccessful()) {
                         User user = response.body();
-                        Util.Log("user id: "+user.getUserId());
-                        DeviceUtil.logIn(user.getUserId(), user.getName(), user.getEmail(),
+                        Util.Log("user id: " + user.getUserId());
+                        DeviceUtil.updateProfile(user.getToken(), user.getUserId(),
+                                user.getAssignedObject(), user.getName(), user.getEmail(),
                                 user.getPhoto());
-                        startActivity(new Intent(RegisterActivity.this, MainActivity.class));
+                        if (DeviceUtil.isAssigned()) {
+                            startActivity(new Intent(RegisterActivity.this, MainActivity.class));
+                        } else {
+                            startActivity(new Intent(RegisterActivity.this,
+                                    AssignedObjectActivity.class));
+                        }
                         finish();
                     } else {
                         if (response.code() == 403) {

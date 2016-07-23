@@ -9,9 +9,9 @@
         android:icon="@drawable/settings"
         android:title="@string/settings" />
     <item
-        android:icon="@drawable/about"
-        android:title="@string/about" />
-    <item
         android:icon="@drawable/help"
         android:title="@string/help" />
+    <item
+        android:icon="@drawable/about"
+        android:title="@string/about" />
 </menu>

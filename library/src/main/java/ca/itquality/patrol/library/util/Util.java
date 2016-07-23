@@ -20,6 +20,8 @@ public class Util {
     public static final String DATA_ACTIVITY = "Activity";
     public static final String PATH_STEPS = "/steps";
     public static final String DATA_STEPS = "Steps";
+    public static final String PATH_NAME = "/name";
+    public static final String DATA_NAME = "Name";
 
     /**
      * Adds a message to LogCat.

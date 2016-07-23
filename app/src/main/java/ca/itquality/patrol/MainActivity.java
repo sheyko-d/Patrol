@@ -24,12 +24,19 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
@@ -43,11 +50,18 @@ import com.google.android.gms.wearable.Wearable;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import ca.itquality.patrol.api.ApiClient;
+import ca.itquality.patrol.api.ApiInterface;
+import ca.itquality.patrol.assignedobject.AssignedObjectActivity;
 import ca.itquality.patrol.auth.LoginActivity;
+import ca.itquality.patrol.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.service.ActivityRecognizedService;
 import ca.itquality.patrol.service.ListenerServiceFromWear;
 import ca.itquality.patrol.util.DeviceUtil;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
@@ -73,6 +87,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private GoogleApiClient mGoogleApiClient;
     private Node mNode;
     private SensorManager mSensorManager;
+    private GoogleMap mMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +107,70 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         initSensorData();
         connectToWatch();
         initFloorListener();
+        updateProfile();
+        initMap();
+    }
+
+    private void initMap() {
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(new OnMapReadyCallback() {
+            @Override
+            public void onMapReady(GoogleMap map) {
+                mMap = map;
+            }
+        });
+    }
+
+    private void updateMap() {
+        CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(DeviceUtil
+                .getGetAssignedLatitude(), DeviceUtil.getGetAssignedLongitude()));
+        CameraUpdate zoom = CameraUpdateFactory.zoomTo(17);
+        mMap.moveCamera(center);
+        mMap.animateCamera(zoom);
+    }
+
+    private void updateProfile() {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<User> call = apiService.getProfile(DeviceUtil.getUserId(), DeviceUtil.getToken());
+        call.enqueue(new Callback<User>() {
+            @Override
+            public void onResponse(Call<User> call, Response<User> response) {
+                if (response.isSuccessful()) {
+                    User user = response.body();
+                    DeviceUtil.updateProfile(user.getToken(), user.getUserId(),
+                            user.getAssignedObject(), user.getName(), user.getEmail(),
+                            user.getPhoto());
+
+                    if (!DeviceUtil.isAssigned()) {
+                        startActivity(new Intent(MainActivity.this, AssignedObjectActivity.class));
+                        finish();
+                    } else {
+                        updateMap();
+                    }
+                } else {
+                    //startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                    //finish();
+                    Toast.makeText(MainActivity.this, "Please log in again",
+                            Toast.LENGTH_SHORT).show();
+                    // TODO:
+                }
+            }
+
+            @Override
+            public void onFailure(Call<User> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Error, check your internet connection",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateWearName() {
+        PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_NAME);
+        putDataMapReq.setUrgent();
+        putDataMapReq.getDataMap().putString(Util.DATA_NAME, DeviceUtil.getName());
+        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+        Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
     }
 
     private void initDrawer() {
@@ -117,10 +196,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         View headerView = mNavigationView.getHeaderView(0);
         TextView nameTxt = (TextView) headerView.findViewById(R.id.drawer_name_txt);
-        TextView emailTxt = (TextView) headerView.findViewById(R.id.drawer_email_txt);
+        TextView assignedObjectTxt = (TextView) headerView.findViewById
+                (R.id.drawer_assigned_object_txt);
         ImageView photoImg = (ImageView) headerView.findViewById(R.id.drawer_photo_img);
         nameTxt.setText(DeviceUtil.getName());
-        emailTxt.setText(DeviceUtil.getEmail());
+        assignedObjectTxt.setText(TextUtils.isEmpty(DeviceUtil.getGetAssignedObjectId())
+                ? getString(R.string.drawer_not_assigned) : DeviceUtil.getGetAssignedObjectTitle());
         Glide.with(this).load(DeviceUtil.getPhoto()).into(photoImg);
     }
 
@@ -236,6 +317,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         logInOnTheWatch();
         listenForActivityStatus();
         listenForWearSensors();
+        updateWearName();
     }
 
     private void listenForWearSensors() {

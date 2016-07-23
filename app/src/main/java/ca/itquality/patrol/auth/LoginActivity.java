@@ -37,6 +37,7 @@ import ca.itquality.patrol.MainActivity;
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.api.ApiClient;
 import ca.itquality.patrol.api.ApiInterface;
+import ca.itquality.patrol.assignedobject.AssignedObjectActivity;
 import ca.itquality.patrol.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.util.DeviceUtil;
@@ -170,9 +171,13 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
             public void onResponse(Call<User> call, Response<User> response) {
                 if (response.isSuccessful()) {
                     User user = response.body();
-                    DeviceUtil.logIn(user.getUserId(), user.getName(), user.getEmail(),
-                            user.getPhoto());
-                    startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                    DeviceUtil.updateProfile(user.getToken(), user.getUserId(), user.getAssignedObject(),
+                            user.getName(), user.getEmail(), user.getPhoto());
+                    if (DeviceUtil.isAssigned()) {
+                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                    } else {
+                        startActivity(new Intent(LoginActivity.this, AssignedObjectActivity.class));
+                    }
                     finish();
                 } else {
                     if (response.code() == 400) {
@@ -230,9 +235,15 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 public void onResponse(Call<User> call, Response<User> response) {
                     if (response.isSuccessful()) {
                         User user = response.body();
-                        DeviceUtil.logIn(user.getUserId(), user.getName(), user.getEmail(),
+                        DeviceUtil.updateProfile(user.getToken(), user.getUserId(),
+                                user.getAssignedObject(), user.getName(), user.getEmail(),
                                 user.getPhoto());
-                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                        if (DeviceUtil.isAssigned()) {
+                            startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                        } else {
+                            startActivity(new Intent(LoginActivity.this,
+                                    AssignedObjectActivity.class));
+                        }
                         finish();
                     } else {
                         if (response.code() == 403) {

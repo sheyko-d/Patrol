@@ -7,7 +7,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.BODY_SENSORS" />
-    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -26,19 +27,27 @@
         </activity>
         <activity
             android:name=".MainActivity"
-            android:keepScreenOn="true" />
+            android:keepScreenOn="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <service android:name=".service.ListenerServiceFromPhone" />
 
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
         <uses-library
             android:name="com.google.android.wearable"
             android:required="false" />
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="bb1d45db6a6ade462c0c68fb3dfd4e710d49d8da" />
     </application>
-    <uses-permission android:name="android.permission.INTERNET" />
+
 </manifest>

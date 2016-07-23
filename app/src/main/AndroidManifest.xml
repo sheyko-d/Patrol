@@ -36,6 +36,9 @@
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity
+            android:name=".assignedobject.AssignedObjectActivity"
+            android:label="@string/assigned_object_title" />
 
         <service
             android:name=".service.ListenerServiceFromWear"

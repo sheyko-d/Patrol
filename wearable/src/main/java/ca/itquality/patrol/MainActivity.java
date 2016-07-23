@@ -22,6 +22,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
 import android.support.wearable.activity.WearableActivity;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
 
@@ -47,7 +48,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     // Constants
     private static final int MY_PERMISSIONS_REQUEST_SENSORS = 0;
     private static final int HEART_RATE_MEASURE_INTERVAL = 10000;
-    public static final String LOGIN_STATE_INTENT = "LoginState";
+    public static final String INTENT_LOGIN_STATE = "LoginState";
     public static final String LOGIN_STATE_EXTRA = "LoggedIn";
     private static final int BACKUP_DISMISS_DURATION = 10;
     private static final int SECOND_DURATION = 1000;
@@ -62,12 +63,16 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     TextView mActivityTxt;*/
     @Bind(R.id.main_recycler)
     RecyclerView mRecycler;
-    @Bind(R.id.clock)
+    @Bind(R.id.main_clock_txt)
     TextView mClockView;
     @Bind(R.id.main_backup_layout)
     View mBackupLayout;
     @Bind(R.id.main_backup_dismiss_txt)
     TextView mBackupDismissTxt;
+    @Bind(R.id.main_name_txt)
+    TextView mNameTxt;
+    @Bind(R.id.main_header_layout)
+    View mHeaderLayout;
 
     // Usual variables
     private SensorManager mSensorManager;
@@ -90,10 +95,14 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         initGoogleClient();
         initRecycler();
         updateTime();
+        initName();
         initActivity();
         initPermissions();
-        registerActivityStatusListener();
-        registerLoginStateListener();
+        registerWearListener();
+    }
+
+    private void initName() {
+        mNameTxt.setText(TextUtils.isEmpty(WearUtil.getName()) ? "—" : WearUtil.getName());
     }
 
     private void initGoogleClient() {
@@ -103,22 +112,6 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                 .addConnectionCallbacks(this)
                 .build();
     }
-
-    private void registerLoginStateListener() {
-        IntentFilter filter = new IntentFilter(LOGIN_STATE_INTENT);
-        registerReceiver(mLoginStateReceiver, filter);
-    }
-
-    BroadcastReceiver mLoginStateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            // If user logged out on the phone, log out on the watch as well
-            if (!intent.getBooleanExtra(LOGIN_STATE_EXTRA, true)) {
-                finish();
-                startActivity(new Intent(MainActivity.this, LaunchActivity.class));
-            }
-        }
-    };
 
     private void initRecycler() {
         mItems.add(new ListItem("Alert guards", R.drawable.alert, R.drawable.primary_circle_bg));
@@ -143,14 +136,16 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 mTotalScroll += dy;
 
-                mClockView.setTranslationY(-mTotalScroll);
+                mHeaderLayout.setTranslationY(-mTotalScroll);
             }
         });
     }
 
-    private void registerActivityStatusListener() {
-        IntentFilter intentFilter = new IntentFilter
-                (ListenerServiceFromPhone.INTENT_ACTIVITY_UPDATE);
+    private void registerWearListener() {
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(ListenerServiceFromPhone.INTENT_ACTIVITY_UPDATE);
+        intentFilter.addAction(ListenerServiceFromPhone.INTENT_NAME_UPDATE);
+        intentFilter.addAction(INTENT_LOGIN_STATE);
         registerReceiver(mReceiver, intentFilter);
     }
 
@@ -161,7 +156,19 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            mAdapter.updateActivityStatus(intent.getStringExtra(ListenerServiceFromPhone.EXTRA_ACTIVITY));
+            if (intent.getAction().equals(INTENT_LOGIN_STATE)) {
+                // If user logged out on the phone, log out on the watch as well
+                if (!intent.getBooleanExtra(LOGIN_STATE_EXTRA, true)) {
+                    finish();
+                    startActivity(new Intent(MainActivity.this, LaunchActivity.class));
+                }
+            } else if (intent.getAction().equals(ListenerServiceFromPhone.INTENT_ACTIVITY_UPDATE)) {
+                mAdapter.updateActivityStatus(intent.getStringExtra(ListenerServiceFromPhone
+                        .EXTRA_ACTIVITY));
+            } else if (intent.getAction().equals(ListenerServiceFromPhone.INTENT_NAME_UPDATE)) {
+                mNameTxt.setText(intent.getStringExtra(ListenerServiceFromPhone
+                        .EXTRA_NAME));
+            }
         }
     };
 
@@ -349,11 +356,6 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         try {
             mHandler.removeCallbacks(mMeasureHeartRateRunnable);
             unregisterReceiver(mReceiver);
-        } catch (Exception e) {
-            // Receiver not registered
-        }
-        try {
-            unregisterReceiver(mLoginStateReceiver);
         } catch (Exception e) {
             // Receiver not registered
         }
