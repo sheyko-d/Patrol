@@ -92,7 +92,7 @@
                     android:layout_height="@dimen/map_height"
                     tools:context=".MapsActivity" />
 
-                <ScrollView
+                <android.support.v4.widget.NestedScrollView
                     android:id="@+id/main_scroll_view"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -416,7 +416,7 @@
                             </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
-                </ScrollView>
+                </android.support.v4.widget.NestedScrollView>
             </FrameLayout>
         </FrameLayout>
     </LinearLayout>

@@ -15,6 +15,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -23,7 +24,6 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Bind(R.id.main_navigation_view)
     NavigationView mNavigationView;
     @Bind(R.id.main_scroll_view)
-    ScrollView mScrollView;
+    NestedScrollView mScrollView;
     @Bind(R.id.main_layout)
     View mLayout;
 
@@ -92,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private Node mNode;
     private SensorManager mSensorManager;
     private GoogleMap mMap;
+    private int mTotalScrollY = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -217,6 +218,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         if (actionBar != null) {
             actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayShowTitleEnabled(false);
+            actionBar.setDisplayShowCustomEnabled(true);
+            actionBar.setCustomView(R.layout.action_bar_logo);
         }
     }
 
