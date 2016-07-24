@@ -23,6 +23,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,7 +32,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.ActivityRecognition;
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -83,6 +83,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     TextView mActivityTxt;
     @Bind(R.id.main_navigation_view)
     NavigationView mNavigationView;
+    @Bind(R.id.main_scroll_view)
+    ScrollView mScrollView;
+    @Bind(R.id.main_layout)
+    View mLayout;
 
     private GoogleApiClient mGoogleApiClient;
     private Node mNode;
@@ -113,21 +117,23 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private void initMap() {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+                .findFragmentById(R.id.main_map);
         mapFragment.getMapAsync(new OnMapReadyCallback() {
             @Override
             public void onMapReady(GoogleMap map) {
                 mMap = map;
+                if (DeviceUtil.isAssigned()) {
+                    updateMap();
+                }
             }
         });
     }
 
     private void updateMap() {
-        CameraUpdate center = CameraUpdateFactory.newLatLng(new LatLng(DeviceUtil
-                .getGetAssignedLatitude(), DeviceUtil.getGetAssignedLongitude()));
-        CameraUpdate zoom = CameraUpdateFactory.zoomTo(17);
-        mMap.moveCamera(center);
-        mMap.animateCamera(zoom);
+        if (mMap != null) {
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(DeviceUtil
+                    .getGetAssignedLatitude(), DeviceUtil.getGetAssignedLongitude()), 17));
+        }
     }
 
     private void updateProfile() {
@@ -278,11 +284,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                         if (mNode != null) {
                             registerActivityStatusListener();
 
-                            //mWelcomeTxt.setVisibility(View.VISIBLE);
+                            mLayout.setVisibility(View.VISIBLE);
                             mDisconnectedLayout.setVisibility(View.GONE);
                         } else {
                             mDisconnectedLayout.setVisibility(View.VISIBLE);
-                            //mWelcomeTxt.setVisibility(View.GONE);
+                            mLayout.setVisibility(View.GONE);
                         }
                     }
                 });
@@ -386,10 +392,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/" +
                     "store/apps/details?id=" + appPackageName)));
         }
-    }
-
-    public void onRetryButtonClicked(View view) {
-        connectToWatch();
     }
 
     @Override

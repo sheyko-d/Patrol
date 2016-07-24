@@ -5,6 +5,7 @@
     android:id="@+id/main_drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/white"
     android:fitsSystemWindows="true"
     tools:context="ca.itquality.patrol.MainActivity"
     tools:ignore="MissingPrefix">
@@ -17,6 +18,7 @@
         <android.support.v7.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
+            android:background="@color/colorPrimary"
             android:layout_height="wrap_content"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar" />
 
@@ -36,18 +38,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginLeft="48dp"
-                android:layout_marginRight="48dp"
+                android:layout_marginLeft="64dp"
+                android:layout_marginRight="64dp"
                 android:orientation="vertical"
                 android:visibility="gone">
-
-                <ImageView
-                    android:layout_width="144dp"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:adjustViewBounds="true"
-                    android:contentDescription="@null"
-                    android:src="@drawable/watch" />
 
                 <TextView
                     fontPath="fonts/Roboto-Medium.ttf"
@@ -56,8 +50,8 @@
                     android:layout_gravity="center_horizontal"
                     android:layout_marginTop="48dp"
                     android:text="Watch is disconnected"
-                    android:textColor="@android:color/white"
-                    android:textSize="20sp"
+                    android:textColor="@color/primary_text"
+                    android:textSize="22sp"
                     tools:ignore="MissingPrefix" />
 
                 <TextView
@@ -68,8 +62,8 @@
                     android:gravity="center"
                     android:lineSpacingExtra="4dp"
                     android:text="Download the Android Wear app and pair it with your watch."
-                    android:textColor="@color/secondary_text_light"
-                    android:textSize="14sp"
+                    android:textColor="@color/secondary_text"
+                    android:textSize="16sp"
                     tools:ignore="MissingPrefix" />
 
                 <Button
@@ -77,42 +71,32 @@
                     android:layout_width="180dp"
                     android:layout_height="52dp"
                     android:layout_gravity="center_horizontal"
-                    android:layout_marginBottom="4dp"
-                    android:layout_marginTop="36dp"
+                    android:layout_marginTop="20dp"
                     android:onClick="onDownloadButtonClicked"
                     android:text="Download"
-                    android:textColor="@color/colorPrimary"
-                    android:textSize="14sp"
-                    android:theme="@style/Button" />
-
-                <Button
-                    style="?borderlessButtonStyle"
-                    fontPath="fonts/Roboto-Bold.ttf"
-                    android:layout_width="180dp"
-                    android:layout_height="52dp"
-                    android:layout_gravity="center_horizontal"
-                    android:onClick="onRetryButtonClicked"
-                    android:text="Retry"
                     android:textColor="@android:color/white"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:theme="@style/Button.Primary" />
             </LinearLayout>
 
-            <ScrollView
+            <FrameLayout
+                android:id="@+id/main_layout"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@android:color/white">
+                android:visibility="gone"
+                android:layout_height="wrap_content">
 
-                <LinearLayout
+                <fragment
+                    android:id="@+id/main_map"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:layout_height="@dimen/map_height"
+                    tools:context=".MapsActivity" />
 
-                    <fragment
-                        android:id="@+id/map"
-                        android:name="com.google.android.gms.maps.SupportMapFragment"
-                        android:layout_width="match_parent"
-                        android:layout_height="244dp"
-                        tools:context=".MapsActivity" />
+                <ScrollView
+                    android:id="@+id/main_scroll_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="@dimen/map_height">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -432,8 +416,8 @@
                             </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
-                </LinearLayout>
-            </ScrollView>
+                </ScrollView>
+            </FrameLayout>
         </FrameLayout>
     </LinearLayout>
 

@@ -6,7 +6,7 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="android:windowBackground">@color/colorPrimary</item>
+        <item name="android:windowBackground">@drawable/background</item>
         <item name="android:statusBarColor" tools:ignore="NewApi">@android:color/transparent</item>
     </style>
 
@@ -20,6 +20,10 @@
 
     <style name="Button" parent="Widget.AppCompat.Button">
         <item name="colorButtonNormal">@drawable/white_selector</item>
+    </style>
+
+    <style name="Button.Primary" parent="Widget.AppCompat.Button">
+        <item name="colorButtonNormal">@color/colorPrimary</item>
     </style>
 
     <style name="Button.Facebook" parent="Widget.AppCompat.Button">
