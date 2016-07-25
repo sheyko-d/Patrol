@@ -11,7 +11,7 @@ import ca.itquality.patrol.library.util.app.MyApplication;
  */
 public class Util {
 
-    private static final String LOG_TAG = "PatrolDebug";
+    private static final String LOG_TAG = "StiggDebug";
     public static final String PATH_LOGGED_IN = "/logged_in";
     public static final String DATA_LOGGED_IN = "LoggedIn";
     public static final String PATH_HEART_RATE = "/heart_rate";
@@ -37,5 +37,13 @@ public class Util {
         Resources resources = MyApplication.getContext().getResources();
         DisplayMetrics metrics = resources.getDisplayMetrics();
         return (int) (dp * (metrics.densityDpi / 160f));
+    }
+
+    public static String parseFirstName(String name) {
+        if (name.contains(" ")) {
+            return name.substring(0, name.indexOf(" "));
+        } else {
+            return name;
+        }
     }
 }

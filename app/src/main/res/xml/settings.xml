@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="Patrolling">
+        <Preference
+            android:key="setting_assigned_object"
+            android:title="Place to guard" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Account">
+        <Preference
+            android:key="setting_log_out"
+            android:title="Log out" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -37,7 +38,7 @@ import ca.itquality.patrol.MainActivity;
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.api.ApiClient;
 import ca.itquality.patrol.api.ApiInterface;
-import ca.itquality.patrol.assignedobject.AssignedObjectActivity;
+import ca.itquality.patrol.app.MyApplication;
 import ca.itquality.patrol.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.util.DeviceUtil;
@@ -69,9 +70,19 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
 
+        logOut();
         initStatusBar();
         initFacebookBtn();
         initGoogleClient();
+    }
+
+    private void logOut() {
+        // Log out from Facebook
+        LoginManager.getInstance().logOut();
+
+        // Clear all saved shared preferences
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit().clear()
+                .apply();
     }
 
     private void initGoogleClient() {
@@ -97,7 +108,6 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
     private void initFacebookBtn() {
         mCallbackManager = CallbackManager.Factory.create();
 
-        LoginManager.getInstance().logOut();
         LoginManager.getInstance().registerCallback(mCallbackManager,
                 new FacebookCallback<LoginResult>() {
                     @Override
@@ -173,11 +183,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                     User user = response.body();
                     DeviceUtil.updateProfile(user.getToken(), user.getUserId(), user.getAssignedObject(),
                             user.getName(), user.getEmail(), user.getPhoto());
-                    if (DeviceUtil.isAssigned()) {
-                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                    } else {
-                        startActivity(new Intent(LoginActivity.this, AssignedObjectActivity.class));
-                    }
+                    startActivity(new Intent(LoginActivity.this, MainActivity.class));
                     finish();
                 } else {
                     if (response.code() == 400) {
@@ -238,12 +244,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                         DeviceUtil.updateProfile(user.getToken(), user.getUserId(),
                                 user.getAssignedObject(), user.getName(), user.getEmail(),
                                 user.getPhoto());
-                        if (DeviceUtil.isAssigned()) {
-                            startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                        } else {
-                            startActivity(new Intent(LoginActivity.this,
-                                    AssignedObjectActivity.class));
-                        }
+                        startActivity(new Intent(LoginActivity.this, MainActivity.class));
                         finish();
                     } else {
                         if (response.code() == 403) {

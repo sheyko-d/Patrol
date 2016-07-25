@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <item android:drawable="@color/colorPrimary" />
 
-    <item android:bottom="8dp"
-        android:height="180dp"
+    <item
+        android:width="134dp"
+        android:height="188dp"
+        android:bottom="8dp"
         android:gravity="center"
-        android:width="134dp">
-        <bitmap
-            android:src="@drawable/splash" />
+        tools:targetApi="m">
+        <bitmap android:src="@drawable/splash" />
     </item>
 
 </layer-list>

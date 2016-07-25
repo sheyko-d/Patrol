@@ -1,26 +1,34 @@
 package ca.itquality.patrol;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -29,14 +37,20 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
@@ -52,12 +66,12 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import ca.itquality.patrol.api.ApiClient;
 import ca.itquality.patrol.api.ApiInterface;
-import ca.itquality.patrol.assignedobject.AssignedObjectActivity;
 import ca.itquality.patrol.auth.LoginActivity;
 import ca.itquality.patrol.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.service.ActivityRecognizedService;
 import ca.itquality.patrol.service.ListenerServiceFromWear;
+import ca.itquality.patrol.settings.SettingsActivity;
 import ca.itquality.patrol.util.DeviceUtil;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -67,6 +81,11 @@ import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, DataApi.DataListener {
 
+    // Constants
+    private static final int PLACE_PICKER_REQUEST_CODE = 1;
+    private static final int PERMISSIONS_REQUEST_CODE = 2;
+
+    // Views
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
     @Bind(R.id.main_drawer_layout)
@@ -88,11 +107,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Bind(R.id.main_layout)
     View mLayout;
 
+    // Usual variables
     private GoogleApiClient mGoogleApiClient;
     private Node mNode;
     private SensorManager mSensorManager;
     private GoogleMap mMap;
-    private int mTotalScrollY = 0;
+    private TextView mAssignedObjectTxt;
+    private Marker mAssignedPlaceMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,7 +133,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         initSensorData();
         connectToWatch();
         initFloorListener();
-        updateProfile();
         initMap();
     }
 
@@ -123,6 +143,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             @Override
             public void onMapReady(GoogleMap map) {
                 mMap = map;
+                enableMyLocationOnMap();
                 if (DeviceUtil.isAssigned()) {
                     updateMap();
                 }
@@ -130,10 +151,47 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         });
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_CODE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    enableMyLocationOnMap();
+                }
+            }
+        }
+    }
+
+    private void enableMyLocationOnMap() {
+        if (ActivityCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission
+                (MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            }, PERMISSIONS_REQUEST_CODE);
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+    }
+
     private void updateMap() {
         if (mMap != null) {
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(DeviceUtil
                     .getGetAssignedLatitude(), DeviceUtil.getGetAssignedLongitude()), 17));
+            if (mAssignedPlaceMarker != null) {
+                mAssignedPlaceMarker.remove();
+            }
+            mAssignedPlaceMarker = mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(DeviceUtil.getGetAssignedLatitude(),
+                            DeviceUtil.getGetAssignedLongitude()))
+                    .title("My place to guard")
+                    .snippet(DeviceUtil.getGetAssignedObjectTitle()));
         }
     }
 
@@ -150,18 +208,51 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                             user.getPhoto());
 
                     if (!DeviceUtil.isAssigned()) {
-                        startActivity(new Intent(MainActivity.this, AssignedObjectActivity.class));
-                        finish();
+                        openPlacePicker();
                     } else {
                         updateMap();
                     }
+
+                    // Update assigned text in navigation drawer
+                    mAssignedObjectTxt.setText(TextUtils.isEmpty(DeviceUtil
+                            .getGetAssignedObjectId()) ? getString(R.string.drawer_not_assigned)
+                            : DeviceUtil.getGetAssignedObjectTitle());
                 } else {
-                    //startActivity(new Intent(MainActivity.this, LoginActivity.class));
-                    //finish();
-                    Toast.makeText(MainActivity.this, "Please log in again",
-                            Toast.LENGTH_SHORT).show();
-                    // TODO:
+                    if (response.code() == 403) {
+                        finish();
+                        startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                        Toast.makeText(MainActivity.this, "Please log in again",
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(MainActivity.this, "Check your internet connection",
+                                Toast.LENGTH_SHORT).show();
+                    }
                 }
+            }
+
+            private void openPlacePicker() {
+                AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this,
+                        R.style.MaterialDialogStyle);
+                dialogBuilder.setTitle("Welcome " + Util.parseFirstName(DeviceUtil.getName()) + "!");
+                dialogBuilder.setMessage("Please select what place you were assigned to guard.");
+                dialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        try {
+                            PlacePicker.IntentBuilder intentBuilder =
+                                    new PlacePicker.IntentBuilder();
+                            Intent intent = intentBuilder.build(MainActivity.this);
+                            startActivityForResult(intent, PLACE_PICKER_REQUEST_CODE);
+
+                        } catch (GooglePlayServicesRepairableException
+                                | GooglePlayServicesNotAvailableException e) {
+                            Toast.makeText(MainActivity.this, "Can't open a place picker",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+                dialogBuilder.setNegativeButton("Later", null);
+                dialogBuilder.create().show();
             }
 
             @Override
@@ -170,6 +261,67 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                         Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode,
+                                    int resultCode, Intent data) {
+        if (requestCode == PLACE_PICKER_REQUEST_CODE
+                && resultCode == Activity.RESULT_OK) {
+
+            final Place place = PlacePicker.getPlace(this, data);
+
+            createPlace(place.getName().toString(), place.getLatLng().latitude,
+                    place.getLatLng().longitude);
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    private void createPlace(String title, double latitude, double longitude) {
+        setProgressBarVisible(true);
+
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<User.AssignedObject> call = apiService.assignUser(DeviceUtil.getUserId(), title,
+                latitude, longitude);
+        call.enqueue(new Callback<User.AssignedObject>() {
+            @Override
+            public void onResponse(Call<User.AssignedObject> call,
+                                   Response<User.AssignedObject> response) {
+                if (response.isSuccessful()) {
+                    User.AssignedObject assignedObject = response.body();
+                    DeviceUtil.updateAssignedObject(assignedObject);
+                    Toast.makeText(MainActivity.this, "New place is assigned!",
+                            Toast.LENGTH_SHORT).show();
+
+                    // Update assigned object title in the navigation drawer
+                    mAssignedObjectTxt.setText(assignedObject.getTitle());
+
+                    // Update map position with the new coordinates
+                    updateMap();
+                } else {
+                    if (response.code() == 400) {
+                        Toast.makeText(MainActivity.this, "Some fields are empty.",
+                                Toast.LENGTH_SHORT).show();
+                    } else if (response.code() == 409) {
+                        Toast.makeText(MainActivity.this, "Can't create a new place.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+                setProgressBarVisible(false);
+            }
+
+            @Override
+            public void onFailure(Call<User.AssignedObject> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Error, check your internet connection.",
+                        Toast.LENGTH_SHORT).show();
+                setProgressBarVisible(false);
+            }
+        });
+    }
+
+    private void setProgressBarVisible(boolean visible) {
+        // TODO:
     }
 
     private void updateWearName() {
@@ -203,20 +355,44 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
         View headerView = mNavigationView.getHeaderView(0);
         TextView nameTxt = (TextView) headerView.findViewById(R.id.drawer_name_txt);
-        TextView assignedObjectTxt = (TextView) headerView.findViewById
+        mAssignedObjectTxt = (TextView) headerView.findViewById
                 (R.id.drawer_assigned_object_txt);
         ImageView photoImg = (ImageView) headerView.findViewById(R.id.drawer_photo_img);
         nameTxt.setText(DeviceUtil.getName());
-        assignedObjectTxt.setText(TextUtils.isEmpty(DeviceUtil.getGetAssignedObjectId())
+        mAssignedObjectTxt.setText(TextUtils.isEmpty(DeviceUtil.getGetAssignedObjectId())
                 ? getString(R.string.drawer_not_assigned) : DeviceUtil.getGetAssignedObjectTitle());
         Glide.with(this).load(DeviceUtil.getPhoto()).into(photoImg);
+
+        mNavigationView.setNavigationItemSelectedListener(
+                new NavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(final MenuItem menuItem) {
+                        mDrawerLayout.closeDrawers();
+                        new Handler().postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (menuItem.getItemId() == R.id.drawer_settings) {
+                                    startActivity(new Intent(MainActivity.this,
+                                            SettingsActivity.class));
+                                    finish();
+                                }
+                            }
+                        }, 300);
+                        return false;
+                    }
+                });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Util.Log("Log selected: ");
+        return super.onOptionsItemSelected(item);
     }
 
     private void initActionBar() {
         setSupportActionBar(mToolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
-            actionBar.setHomeButtonEnabled(true);
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowTitleEnabled(false);
             actionBar.setDisplayShowCustomEnabled(true);
@@ -236,6 +412,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onResume() {
         super.onResume();
+        updateProfile();
         connectToWatch();
     }
 

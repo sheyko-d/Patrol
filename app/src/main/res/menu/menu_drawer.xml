@@ -2,16 +2,20 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:icon="@drawable/patrol"
+        android:id="@+id/drawer_patrol"
         android:checked="true"
+        android:icon="@drawable/patrol"
         android:title="@string/patrol" />
     <item
+        android:id="@+id/drawer_settings"
         android:icon="@drawable/settings"
         android:title="@string/settings" />
     <item
+        android:id="@+id/drawer_help"
         android:icon="@drawable/help"
         android:title="@string/help" />
     <item
+        android:id="@+id/drawer_about"
         android:icon="@drawable/about"
         android:title="@string/about" />
 </menu>

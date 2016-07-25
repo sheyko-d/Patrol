@@ -8,8 +8,6 @@ import com.google.android.gms.location.DetectedActivity;
 
 import java.util.List;
 
-import ca.itquality.patrol.library.util.Util;
-
 public class ActivityRecognizedService extends IntentService {
 
     public static final String INTENT_ACTIVITY_UPDATE = "ca.itquality.patrol.ACTIVITY_UPDATE";
@@ -63,7 +61,5 @@ public class ActivityRecognizedService extends IntentService {
         }
         sendBroadcast(new Intent(INTENT_ACTIVITY_UPDATE).putExtra(EXTRA_ACTIVITY,
                 activityName));
-
-        Util.Log("activityName = "+activityName);
     }
 }

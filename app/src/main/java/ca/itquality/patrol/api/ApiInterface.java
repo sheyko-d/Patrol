@@ -26,4 +26,10 @@ public interface ApiInterface {
     @FormUrlEncoded
     @POST("user/profile.php")
     Call<User> getProfile(@Field("id") String id, @Field("token") String token);
+
+    @FormUrlEncoded
+    @POST("assigned_object/assign_user.php")
+    Call<User.AssignedObject> assignUser(@Field("id") String id, @Field("title") String title,
+                                         @Field("latitude") double latitude,
+                                         @Field("longitude") double longitude);
 }

@@ -2,17 +2,17 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:background="@color/drawer_tint"
     android:layout_height="200dp"
+    android:background="@color/drawer_tint"
     tools:ignore="MissingPrefix">
 
     <ImageView
         android:layout_width="match_parent"
-        android:src="@drawable/drawer_header"
+        android:layout_height="match_parent"
         android:alpha="0.1"
         android:contentDescription="@null"
-        android:layout_height="match_parent"
-        android:scaleType="centerCrop" />
+        android:scaleType="centerCrop"
+        android:src="@drawable/drawer_header" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -39,6 +39,8 @@
             fontPath="fonts/Roboto-Medium.ttf"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:textColor="@android:color/white"
             android:textSize="14sp"
             tools:text="Dmitry Sheiko" />
@@ -48,8 +50,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:textColor="@color/secondary_text_light"
             android:textSize="14sp"
             tools:text="sheyko.dmitriy@gmail.com" />
+
     </LinearLayout>
 </FrameLayout>

@@ -51,6 +51,13 @@ public class DeviceUtil {
                     .putString(PREF_ASSIGNED_OBJECT_LONGITUDE, String.valueOf(assignedObject
                             .getLongitude()))
                     .commit();
+        } else {
+            PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                    .remove(PREF_ASSIGNED_OBJECT_ID)
+                    .remove(PREF_ASSIGNED_OBJECT_TITLE)
+                    .remove(PREF_ASSIGNED_OBJECT_LATITUDE)
+                    .remove(PREF_ASSIGNED_OBJECT_LONGITUDE)
+                    .commit();
         }
     }
 
@@ -187,5 +194,16 @@ public class DeviceUtil {
     public static int getSteps() {
         return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
                 .getInt(PREF_STEPS, -1);
+    }
+
+    public static void updateAssignedObject(User.AssignedObject assignedObject) {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putString(PREF_ASSIGNED_OBJECT_ID, assignedObject.getAssignedObjectId())
+                .putString(PREF_ASSIGNED_OBJECT_TITLE, assignedObject.getTitle())
+                .putString(PREF_ASSIGNED_OBJECT_LATITUDE, String.valueOf(assignedObject
+                        .getLatitude()))
+                .putString(PREF_ASSIGNED_OBJECT_LONGITUDE, String.valueOf(assignedObject
+                        .getLongitude()))
+                .commit();
     }
 }
