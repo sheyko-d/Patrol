@@ -29,7 +29,8 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
 
     // Usual variables
     private ArrayList<ListItem> mItems;
-    private String mLastMessage = "Dmitry: Hey there \uD83D\uDE0E";
+    private String mLastMessageTitleText;
+    private String mLastMessageText;
     private String mActivityStatus;
     private Integer mStepsCount;
     private Integer mHeartRate;
@@ -54,7 +55,8 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
         if (position == POS_ALERT) {
             holder.valueTxt.setText("I need backup!");
         } else if (position == POS_MESSAGES) {
-            holder.valueTxt.setText(TextUtils.isEmpty(mLastMessage) ? "—" : mLastMessage);
+            holder.titleTxt.setText(mLastMessageTitleText);
+            holder.valueTxt.setText(TextUtils.isEmpty(mLastMessageText) ? "—" : mLastMessageText);
         } else if (position == POS_ACTIVITY) {
             holder.valueTxt.setText(TextUtils.isEmpty(mActivityStatus) ? "—" : mActivityStatus);
         } else if (position == POS_STEPS) {
@@ -74,7 +76,7 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
         return mItems.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    class ViewHolder extends RecyclerView.ViewHolder {
 
         @Bind(R.id.main_title_txt)
         TextView titleTxt;
@@ -89,8 +91,9 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
         }
     }
 
-    public void updateLastMessage(String lastMessage) {
-        mLastMessage = lastMessage;
+    public void updateLastMessage(String title, String text) {
+        mLastMessageTitleText = title;
+        mLastMessageText = text;
         notifyItemChanged(POS_MESSAGES);
     }
 

@@ -199,7 +199,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
             @Override
             public void onFailure(Call<User> call, Throwable t) {
-                Toast.makeText(LoginActivity.this, "Error, check your internet connection.",
+                Toast.makeText(LoginActivity.this, "Server error.",
                         Toast.LENGTH_SHORT).show();
                 setFacebookProgressBarVisible(false);
             }
@@ -241,6 +241,9 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 public void onResponse(Call<User> call, Response<User> response) {
                     if (response.isSuccessful()) {
                         User user = response.body();
+                        Util.Log("logged in: "+user.getToken()+", "+user.getUserId()+", "+
+                                user.getAssignedObject()+", "+ user.getName()+", "+ user.getEmail()+", "+
+                                user.getPhoto());
                         DeviceUtil.updateProfile(user.getToken(), user.getUserId(),
                                 user.getAssignedObject(), user.getName(), user.getEmail(),
                                 user.getPhoto());
@@ -260,7 +263,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
                 @Override
                 public void onFailure(Call<User> call, Throwable t) {
-                    Toast.makeText(LoginActivity.this, "Error, check your internet connection",
+                    Toast.makeText(LoginActivity.this, "Server error.",
                             Toast.LENGTH_SHORT).show();
                     setProgressBarVisible(false);
                 }

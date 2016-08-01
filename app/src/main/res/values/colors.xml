@@ -5,5 +5,5 @@
     <color name="white_disabled">#ddffffff</color>
     <color name="divider">#ddd</color>
     <color name="drawer_tint">#c2151b</color>
-    <color name="background">#fafafa</color>
+    <color name="background">#f5f5f5</color>
 </resources>

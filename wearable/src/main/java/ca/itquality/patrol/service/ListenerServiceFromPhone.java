@@ -27,6 +27,10 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
     public static final String EXTRA_ACTIVITY = "Activity";
     public static final String INTENT_NAME_UPDATE = "ca.itquality.patrol.NAME_UPDATE";
     public static final String EXTRA_NAME = "Name";
+    public static final String INTENT_LAST_MESSAGE_UPDATE
+            = "ca.itquality.patrol.LAST_MESSAGE_UPDATE";
+    public static final String EXTRA_LAST_MESSAGE_TITLE = "LastMessageTitle";
+    public static final String EXTRA_LAST_MESSAGE_TEXT = "LastMessageText";
 
     private GoogleApiClient mGoogleApiClient;
 
@@ -84,16 +88,26 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                             sendBroadcast(new Intent(INTENT_ACTIVITY_UPDATE)
                                     .putExtra(EXTRA_ACTIVITY, activity));
                         } else if ((item.getUri().getPath()).equals(Util.PATH_NAME)) {
-                            Util.Log("receive name");
                             String name = dataItem.getDataMap().getString(Util.DATA_NAME);
                             WearUtil.setName(name);
                             sendBroadcast(new Intent(INTENT_NAME_UPDATE)
                                     .putExtra(EXTRA_NAME, name));
+                        } else if ((item.getUri().getPath()).equals(Util.PATH_LAST_MESSAGE)) {
+                            parseLastMessage(dataItem);
                         }
                     }
                 }
             }
         });
+    }
+
+    private void parseLastMessage(DataMapItem dataItem) {
+        String title = dataItem.getDataMap().getString(Util.DATA_LAST_MESSAGE_TITLE);
+        String text = dataItem.getDataMap().getString(Util.DATA_LAST_MESSAGE_TEXT);
+        WearUtil.setLastMessage(title, text);
+        sendBroadcast(new Intent(INTENT_LAST_MESSAGE_UPDATE)
+                .putExtra(EXTRA_LAST_MESSAGE_TITLE, title)
+                .putExtra(EXTRA_LAST_MESSAGE_TEXT, text));
     }
 
     @Override

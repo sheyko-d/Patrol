@@ -8,6 +8,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:name=".app.MyApplication"
@@ -33,13 +34,27 @@
         <activity
             android:name=".auth.RegisterActivity"
             android:theme="@style/AppTheme.Auth" />
-        <activity android:name=".settings.SettingsActivity"
-            android:label="@string/settings"/>
+        <activity
+            android:name=".settings.SettingsActivity"
+            android:label="@string/settings" />
         <activity
             android:name="com.facebook.FacebookActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity
+            android:name=".alert.AlertActivity"
+            android:theme="@style/AppTheme.Dialog" />
+        <activity
+            android:name=".messages.ThreadsActivity"
+            android:label="@string/messages" />
+        <activity
+            android:name=".messages.ContactsActivity"
+            android:label="@string/contacts_title" />
+        <activity
+            android:name=".messages.ChatActivity"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="stateHidden" />
 
         <service
             android:name=".service.ListenerServiceFromWear"
@@ -56,6 +71,21 @@
         <service
             android:name=".service.ActivityRecognizedService"
             android:exported="false" />
+        <service android:name=".service.LocationService" />
+        <service
+            android:name=".service.MyFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".service.MyFirebaseInstanceIDService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
+            </intent-filter>
+        </service>
 
         <meta-data
             android:name="com.google.android.gms.version"

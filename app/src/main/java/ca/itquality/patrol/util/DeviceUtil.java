@@ -4,8 +4,12 @@ import android.annotation.SuppressLint;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
+import com.google.android.gms.maps.model.LatLng;
+
+import ca.itquality.patrol.R;
 import ca.itquality.patrol.app.MyApplication;
 import ca.itquality.patrol.auth.data.User;
+import ca.itquality.patrol.library.util.Util;
 
 
 public class DeviceUtil {
@@ -23,6 +27,14 @@ public class DeviceUtil {
     private static final String PREF_ACTIVITY = "Activity";
     private static final String PREF_HEART_RATE = "HeartRate";
     private static final String PREF_STEPS = "Steps";
+    private static final String PREF_MY_LATITUDE = "Latitude";
+    private static final String PREF_MY_LONGITUDE = "Longitude";
+    private static final String PREF_CHAT_LAST_SEEN = "ChatLastSeen";
+    private static final String PREF_LAST_MESSAGE_TITLE = "LastMessageTitle";
+    private static final String PREF_LAST_MESSAGE_TEXT = "LastMessageText";
+    private static final String PREF_ORIGIN_FLOOR = "OriginFloor";
+    private static final String PREF_ORIGIN_PRESSURE = "OriginPressure";
+    public static final int MAP_PADDING = Util.convertDpToPixel(MyApplication.getContext(), 64);
 
     public static boolean isValidEmail(String email) {
         return !TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email)
@@ -157,7 +169,7 @@ public class DeviceUtil {
     }
 
     /**
-     * Saves the activity status in preferences.
+     * Retrieves the activity status from preferences.
      */
     public static String getActivity() {
         return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
@@ -173,7 +185,7 @@ public class DeviceUtil {
     }
 
     /**
-     * Saves the activity status in preferences.
+     * Retrieves the activity status from preferences.
      */
     public static int getHeartRate() {
         return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
@@ -189,7 +201,7 @@ public class DeviceUtil {
     }
 
     /**
-     * Saves the steps count in preferences.
+     * Retrieves the steps count from preferences.
      */
     public static int getSteps() {
         return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
@@ -204,6 +216,93 @@ public class DeviceUtil {
                         .getLatitude()))
                 .putString(PREF_ASSIGNED_OBJECT_LONGITUDE, String.valueOf(assignedObject
                         .getLongitude()))
-                .commit();
+                .apply();
+    }
+
+    /**
+     * Saves my location in preferences.
+     */
+    public static void setMyLocation(float latitude, float longitude) {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putFloat(PREF_MY_LATITUDE, latitude).putFloat(PREF_MY_LONGITUDE, longitude)
+                .apply();
+    }
+
+    /**
+     * Retrieves my location from preferences.
+     */
+    public static LatLng getMyLocation() {
+        return new LatLng(PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+                .getFloat(PREF_MY_LATITUDE, 0), PreferenceManager.getDefaultSharedPreferences
+                (MyApplication.getContext()).getFloat(PREF_MY_LONGITUDE, 0));
+    }
+
+    /**
+     * Saves the time when chat screen was last opened in preferences.
+     */
+    public static void updateChatLastSeenTime() {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putLong(PREF_CHAT_LAST_SEEN, System.currentTimeMillis()).apply();
+    }
+
+    /**
+     * Retrieves the time when chat screen was last opened from preferences.
+     */
+    public static Long getChatLastSeenTime() {
+        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+                .getLong(PREF_CHAT_LAST_SEEN, System.currentTimeMillis());
+    }
+
+    /**
+     * Saves the title and text of the last message in preferences.
+     */
+    public static void setLastMessage(String title, String text) {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putString(PREF_LAST_MESSAGE_TITLE, title)
+                .putString(PREF_LAST_MESSAGE_TEXT, text)
+                .apply();
+    }
+
+    /**
+     * Retrieves the title of the last message from preferences.
+     */
+    public static String getLastMessageTitle() {
+        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+                .getString(PREF_LAST_MESSAGE_TITLE, MyApplication.getContext()
+                        .getString(R.string.main_messages_title_placeholder));
+    }
+
+    /**
+     * Retrieves the text of the last message from preferences.
+     */
+    public static String getLastMessageText() {
+        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+                .getString(PREF_LAST_MESSAGE_TEXT, MyApplication.getContext()
+                        .getString(R.string.main_value_placeholder));
+    }
+
+    /**
+     * Saves the floor and pressure when user calibrated the barometer to preferences.
+     */
+    public static void setOriginFloor(int floor, int pressure) {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putInt(PREF_ORIGIN_FLOOR, floor)
+                .putInt(PREF_ORIGIN_PRESSURE, pressure).apply();
+    }
+
+    /**
+     * Retrieves the floor user was on when he calibrated the barometer from preferences.
+     */
+    public static int getOriginFloor() {
+        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+                .getInt(PREF_ORIGIN_FLOOR, -1);
+    }
+
+    /**
+     * Retrieves the pressure when user calibrated the barometer from preferences.
+     */
+    public static Integer getOriginPressure() {
+        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+                .getInt(PREF_ORIGIN_PRESSURE, -1);
     }
 }

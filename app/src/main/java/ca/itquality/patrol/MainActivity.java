@@ -13,6 +13,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -28,8 +29,10 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -42,6 +45,7 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -61,6 +65,9 @@ import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
+import com.google.firebase.iid.FirebaseInstanceId;
+
+import java.util.ArrayList;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -69,14 +76,20 @@ import ca.itquality.patrol.api.ApiInterface;
 import ca.itquality.patrol.auth.LoginActivity;
 import ca.itquality.patrol.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
+import ca.itquality.patrol.messages.ThreadsActivity;
+import ca.itquality.patrol.messages.data.Message;
 import ca.itquality.patrol.service.ActivityRecognizedService;
 import ca.itquality.patrol.service.ListenerServiceFromWear;
+import ca.itquality.patrol.service.LocationService;
 import ca.itquality.patrol.settings.SettingsActivity;
 import ca.itquality.patrol.util.DeviceUtil;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
+
+import static ca.itquality.patrol.messages.ChatActivity.INCOMING_MESSAGE_INTENT;
+import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, DataApi.DataListener {
@@ -94,12 +107,18 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     ProgressBar mProgressBar;
     @Bind(R.id.main_disconnected_layout)
     View mDisconnectedLayout;
+    @Bind(R.id.main_messages_txt)
+    TextView mMessagesTxt;
+    @Bind(R.id.main_messages_title_txt)
+    TextView mMessagesTitleTxt;
     @Bind(R.id.main_heart_rate_txt)
     TextView mHeartRateTxt;
     @Bind(R.id.main_steps_txt)
     TextView mStepsTxt;
     @Bind(R.id.main_activity_txt)
     TextView mActivityTxt;
+    @Bind(R.id.main_floor_txt)
+    TextView mFloorTxt;
     @Bind(R.id.main_navigation_view)
     NavigationView mNavigationView;
     @Bind(R.id.main_scroll_view)
@@ -114,6 +133,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private GoogleMap mMap;
     private TextView mAssignedObjectTxt;
     private Marker mAssignedPlaceMarker;
+    private float mPressure;
+    private boolean mSupportsWatch = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,13 +148,72 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             return;
         }
 
+        askPermissions();
         initActionBar();
         initDrawer();
         initGoogleClient();
         initSensorData();
         connectToWatch();
+        registerActivityStatusListener();
         initFloorListener();
         initMap();
+        startActivityService();
+        registerIncomingMessagesListener();
+        calibrateBarometer();
+    }
+
+    private void calibrateBarometer() {
+        if (DeviceUtil.getOriginFloor() == -1) {
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this,
+                    R.style.MaterialDialogStyle);
+            dialogBuilder.setTitle("What floor are you at right now?");
+            dialogBuilder.setMessage("(Enter 0 if you're outside.)");
+            View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_floor, null);
+            final EditText editTxt = (EditText) dialogView.findViewById(R.id.floor_edit_txt);
+            dialogBuilder.setView(dialogView);
+            dialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    if (TextUtils.isEmpty(editTxt.getText().toString())) {
+                        Toast.makeText(MainActivity.this, "Floor number is empty",
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        int floor = Integer.valueOf(editTxt.getText().toString()) - 1;
+                        DeviceUtil.setOriginFloor(floor, (int) mPressure);
+                    }
+                }
+            });
+            dialogBuilder.create().show();
+        }
+    }
+
+    private void registerIncomingMessagesListener() {
+        IntentFilter intentFilter = new IntentFilter(INCOMING_MESSAGE_INTENT);
+        registerReceiver(mMessagesReceiver, intentFilter);
+    }
+
+    private BroadcastReceiver mMessagesReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            loadUnreadMessages();
+        }
+    };
+
+    private void startActivityService() {
+        startService(new Intent(this, LocationService.class));
+    }
+
+    private void askPermissions() {
+        if (ActivityCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission
+                (MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+            }, PERMISSIONS_REQUEST_CODE);
+        }
     }
 
     private void initMap() {
@@ -166,18 +246,13 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private void enableMyLocationOnMap() {
-        if (ActivityCompat.checkSelfPermission(MainActivity.this,
+        if (!(ActivityCompat.checkSelfPermission(MainActivity.this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission
                 (MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-            }, PERMISSIONS_REQUEST_CODE);
-            return;
+                != PackageManager.PERMISSION_GRANTED)) {
+            mMap.setMyLocationEnabled(true);
         }
-        mMap.setMyLocationEnabled(true);
     }
 
     private void updateMap() {
@@ -196,8 +271,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private void updateProfile() {
+        String googleToken = FirebaseInstanceId.getInstance().getToken();
+
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<User> call = apiService.getProfile(DeviceUtil.getUserId(), DeviceUtil.getToken());
+        Call<User> call = apiService.updateProfile(DeviceUtil.getUserId(), DeviceUtil.getToken(),
+                googleToken);
         call.enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
@@ -257,7 +335,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             @Override
             public void onFailure(Call<User> call, Throwable t) {
-                Toast.makeText(MainActivity.this, "Error, check your internet connection",
+                Toast.makeText(MainActivity.this, "Server error.",
                         Toast.LENGTH_SHORT).show();
             }
         });
@@ -313,7 +391,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             @Override
             public void onFailure(Call<User.AssignedObject> call, Throwable t) {
-                Toast.makeText(MainActivity.this, "Error, check your internet connection.",
+                Toast.makeText(MainActivity.this, "Server error.",
                         Toast.LENGTH_SHORT).show();
                 setProgressBarVisible(false);
             }
@@ -325,11 +403,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private void updateWearName() {
-        PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_NAME);
-        putDataMapReq.setUrgent();
-        putDataMapReq.getDataMap().putString(Util.DATA_NAME, DeviceUtil.getName());
-        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-        Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        try {
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_NAME);
+            putDataMapReq.setUrgent();
+            putDataMapReq.getDataMap().putString(Util.DATA_NAME, DeviceUtil.getName());
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        } catch (Exception e) {
+            // Watch is not supported
+        }
     }
 
     private void initDrawer() {
@@ -361,7 +443,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         nameTxt.setText(DeviceUtil.getName());
         mAssignedObjectTxt.setText(TextUtils.isEmpty(DeviceUtil.getGetAssignedObjectId())
                 ? getString(R.string.drawer_not_assigned) : DeviceUtil.getGetAssignedObjectTitle());
-        Glide.with(this).load(DeviceUtil.getPhoto()).into(photoImg);
+        Glide.with(this).load(DeviceUtil.getPhoto()).error(R.drawable.avatar_placeholder)
+                .into(photoImg);
 
         mNavigationView.setNavigationItemSelectedListener(
                 new NavigationView.OnNavigationItemSelectedListener() {
@@ -383,12 +466,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 });
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        Util.Log("Log selected: ");
-        return super.onOptionsItemSelected(item);
-    }
-
     private void initActionBar() {
         setSupportActionBar(mToolbar);
         ActionBar actionBar = getSupportActionBar();
@@ -403,6 +480,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private void initSensorData() {
         mActivityTxt.setText(TextUtils.isEmpty(DeviceUtil.getActivity()) ? "—"
                 : DeviceUtil.getActivity());
+        mMessagesTitleTxt.setText(DeviceUtil.getLastMessageTitle());
+        mMessagesTxt.setText(DeviceUtil.getLastMessageText());
         mStepsTxt.setText(DeviceUtil.getSteps() == -1 ? "—"
                 : String.valueOf(DeviceUtil.getSteps()));
         mHeartRateTxt.setText(DeviceUtil.getHeartRate() == -1 ? "—"
@@ -413,20 +492,93 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     protected void onResume() {
         super.onResume();
         updateProfile();
-        connectToWatch();
+        if (mSupportsWatch) {
+            connectToWatch();
+        }
+        registerActivityStatusListener();
+        loadUnreadMessages();
+    }
+
+    private void loadUnreadMessages() {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<ArrayList<Message>> call = apiService.getUnreadMessages(DeviceUtil.getToken(),
+                DeviceUtil.getChatLastSeenTime());
+        call.enqueue(new Callback<ArrayList<Message>>() {
+            @Override
+            public void onResponse(Call<ArrayList<Message>> call,
+                                   Response<ArrayList<Message>> response) {
+                if (response.isSuccessful()) {
+                    ArrayList<Message> messages = response.body();
+                    if (messages.size() > 0) {
+                        String lastMessageTitle;
+                        if (messages.get(0).getTime() > DeviceUtil.getChatLastSeenTime()) {
+                            lastMessageTitle = getString(R.string.main_messages_title,
+                                    messages.size());
+                        } else {
+                            lastMessageTitle = getString(R.string.main_messages_title_placeholder);
+                        }
+                        mMessagesTitleTxt.setText(lastMessageTitle);
+                        Message message = messages.get(messages.size() - 1);
+                        String lastMessageText;
+                        if (message.getUserId().equals(DeviceUtil.getUserId())) {
+                            lastMessageText = "Me: "
+                                    + message.getText();
+                        } else {
+                            lastMessageText = message.getUserName() + ": "
+                                    + message.getText();
+                        }
+                        mMessagesTxt.setText(lastMessageText);
+
+                        DeviceUtil.setLastMessage(lastMessageTitle, lastMessageText);
+                        updateWearLastMessage(lastMessageTitle, lastMessageText);
+                    }
+                } else {
+                    Toast.makeText(MainActivity.this, "Can't retrieve messages",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ArrayList<Message>> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Server error.",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateWearLastMessage(String title, String text) {
+        try {
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_LAST_MESSAGE);
+            putDataMapReq.setUrgent();
+            putDataMapReq.getDataMap().putString(Util.DATA_LAST_MESSAGE_TITLE, title);
+            putDataMapReq.getDataMap().putString(Util.DATA_LAST_MESSAGE_TEXT, text);
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        } catch (Exception e) {
+            // Watch is not supported
+        }
     }
 
     private void initFloorListener() {
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         Sensor sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
-        //mSensorManager.registerListener
-        //        (mBarometerListener, sensor, SensorManager.SENSOR_DELAY_GAME);
+        mSensorManager.registerListener(mBarometerListener, sensor,
+                SensorManager.SENSOR_DELAY_GAME);
     }
 
-    SensorEventListener mBarometerListener = new SensorEventListener() {
+    private SensorEventListener mBarometerListener = new SensorEventListener() {
         @Override
         public void onSensorChanged(SensorEvent event) {
-            Util.Log("barometer: " + event.values[0]);
+            mPressure = event.values[0];
+
+            int floorHeight = 3;
+            int originFloor = DeviceUtil.getOriginFloor();
+            if (originFloor == -1) return;
+
+            float heightDelta = (DeviceUtil.getOriginPressure() - mPressure) * 9;
+
+            float currentHeight = floorHeight * originFloor - heightDelta;
+            mFloorTxt.setText(String.valueOf(Math.round(currentHeight / floorHeight + 1)));
         }
 
         @Override
@@ -440,6 +592,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
                 .addApi(Wearable.API)
+                .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
@@ -450,29 +603,32 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
      */
     private void connectToWatch() {
         mProgressBar.setVisibility(View.VISIBLE);
-        Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).setResultCallback
-                (new ResultCallback<NodeApi.GetConnectedNodesResult>() {
-                    @Override
-                    public void onResult(@NonNull NodeApi.GetConnectedNodesResult nodes) {
-                        for (Node node : nodes.getNodes()) {
-                            mNode = node;
+        try {
+            Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).setResultCallback
+                    (new ResultCallback<NodeApi.GetConnectedNodesResult>() {
+                        @Override
+                        public void onResult(@NonNull NodeApi.GetConnectedNodesResult nodes) {
+                            for (Node node : nodes.getNodes()) {
+                                mNode = node;
+                            }
+
+                            Wearable.MessageApi.addListener(mGoogleApiClient,
+                                    new ListenerServiceFromWear());
+
+                            mProgressBar.setVisibility(View.GONE);
+                            if (mNode != null) {
+
+                                mLayout.setVisibility(View.VISIBLE);
+                                mDisconnectedLayout.setVisibility(View.GONE);
+                            } else {
+                                mDisconnectedLayout.setVisibility(View.VISIBLE);
+                                mLayout.setVisibility(View.GONE);
+                            }
                         }
-
-                        Wearable.MessageApi.addListener(mGoogleApiClient,
-                                new ListenerServiceFromWear());
-
-                        mProgressBar.setVisibility(View.GONE);
-                        if (mNode != null) {
-                            registerActivityStatusListener();
-
-                            mLayout.setVisibility(View.VISIBLE);
-                            mDisconnectedLayout.setVisibility(View.GONE);
-                        } else {
-                            mDisconnectedLayout.setVisibility(View.VISIBLE);
-                            mLayout.setVisibility(View.GONE);
-                        }
-                    }
-                });
+                    });
+        } catch (Exception e) {
+            // Watch is not supported
+        }
     }
 
     private void registerActivityStatusListener() {
@@ -481,7 +637,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         registerReceiver(mActivityStatusReceiver, intentFilter);
     }
 
-    BroadcastReceiver mActivityStatusReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver mActivityStatusReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String activity = intent.getStringExtra(ActivityRecognizedService.EXTRA_ACTIVITY);
@@ -491,32 +647,65 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
     };
 
+
     private void updateWearActivityStatus(final String activity) {
-        PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_ACTIVITY);
-        putDataMapReq.setUrgent();
-        putDataMapReq.getDataMap().putString(Util.DATA_ACTIVITY, activity);
-        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-        Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        try {
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_ACTIVITY);
+            putDataMapReq.setUrgent();
+            putDataMapReq.getDataMap().putString(Util.DATA_ACTIVITY, activity);
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        } catch (Exception e) {
+            // Watch is not supported
+        }
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        logInOnTheWatch();
+        if (mSupportsWatch) {
+            logInOnTheWatch();
+            updateWearName();
+        } else {
+            mLayout.setVisibility(View.VISIBLE);
+            mDisconnectedLayout.setVisibility(View.GONE);
+        }
         listenForActivityStatus();
         listenForWearSensors();
-        updateWearName();
+        saveLastKnownLocation();
+    }
+
+    private void saveLastKnownLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        try {
+            Location location = FusedLocationApi.getLastLocation(mGoogleApiClient);
+            DeviceUtil.setMyLocation((float) location.getLatitude(), (float) location.getLongitude());
+        } catch (Exception e) {
+            // Location is not available
+        }
     }
 
     private void listenForWearSensors() {
-        Wearable.DataApi.addListener(mGoogleApiClient, this);
+        try {
+            Wearable.DataApi.addListener(mGoogleApiClient, this);
+        } catch (Exception e) {
+            // Watch is not supported
+        }
     }
 
     private void logInOnTheWatch() {
-        PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_LOGGED_IN);
-        putDataMapReq.setUrgent();
-        putDataMapReq.getDataMap().putBoolean(Util.DATA_LOGGED_IN, true);
-        PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-        Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        try {
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_LOGGED_IN);
+            putDataMapReq.setUrgent();
+            putDataMapReq.getDataMap().putBoolean(Util.DATA_LOGGED_IN, true);
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        } catch (Exception e) {
+            // Watch is not supported
+        }
     }
 
     private void listenForActivityStatus() {
@@ -535,15 +724,33 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     protected void onStop() {
-        Wearable.DataApi.removeListener(mGoogleApiClient, this);
+        try {
+            Wearable.DataApi.removeListener(mGoogleApiClient, this);
+        } catch (Exception e) {
+            // Watch is not supported
+        }
         mGoogleApiClient.disconnect();
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        try {
+            mSensorManager.unregisterListener(mBarometerListener);
+        } catch (Exception e) {
+            // Receiver wasn't registered
+        }
         try {
             unregisterReceiver(mActivityStatusReceiver);
         } catch (Exception e) {
             // Receiver wasn't registered
         }
-        mSensorManager.unregisterListener(mBarometerListener);
-        super.onStop();
+        try {
+            unregisterReceiver(mMessagesReceiver);
+        } catch (Exception e) {
+            // Received wasn't registered
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -553,7 +760,30 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Util.Log("connection failed");
+        Util.Log("connection failed: " + connectionResult.getErrorCode());
+        mDisconnectedLayout.setVisibility(View.GONE);
+        mLayout.setVisibility(View.GONE);
+        mProgressBar.setVisibility(View.GONE);
+        if (connectionResult.getErrorCode() == 16) {
+            Toast.makeText(MainActivity.this, "This device doesn't support working with the watch",
+                    Toast.LENGTH_LONG).show();
+
+            if (mSupportsWatch) {
+                mSupportsWatch = false;
+                mGoogleApiClient = new GoogleApiClient.Builder(this)
+                        .addApi(ActivityRecognition.API)
+                        .addConnectionCallbacks(this)
+                        .addOnConnectionFailedListener(this)
+                        .build();
+                mGoogleApiClient.connect();
+            }
+        } else if (connectionResult.getErrorCode() == 2) {
+            Toast.makeText(MainActivity.this, "Google Play Services need to be updated",
+                    Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(MainActivity.this, "Google Play Services error", Toast.LENGTH_LONG)
+                    .show();
+        }
     }
 
     /**
@@ -594,5 +824,34 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 }
             }
         }
+    }
+
+    public void onAlertButtonClicked(View view) {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        LatLng myLocation = DeviceUtil.getMyLocation();
+        Call<Void> call = apiService.sendAlert(DeviceUtil.getToken(), myLocation.latitude,
+                myLocation.longitude);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(MainActivity.this, "Alert is sent!",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "Can't send alert",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(MainActivity.this, "Server error.",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    public void onMessagesButtonClicked(View view) {
+        startActivity(new Intent(this, ThreadsActivity.class));
     }
 }

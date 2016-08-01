@@ -1,10 +1,10 @@
 package ca.itquality.patrol.library.util;
 
+import android.content.Context;
 import android.content.res.Resources;
+import android.text.format.DateUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
-
-import ca.itquality.patrol.library.util.app.MyApplication;
 
 /**
  * Helper class.
@@ -22,6 +22,10 @@ public class Util {
     public static final String DATA_STEPS = "Steps";
     public static final String PATH_NAME = "/name";
     public static final String DATA_NAME = "Name";
+    public static final String PATH_LAST_MESSAGE = "/last_message";
+    public static final String DATA_LAST_MESSAGE_TITLE = "LastMessageTitle";
+    public static final String DATA_LAST_MESSAGE_TEXT = "LastMessageText";
+    private static final int DAY_DURATION = 1000 * 60 * 60 * 24;
 
     /**
      * Adds a message to LogCat.
@@ -33,8 +37,8 @@ public class Util {
     /**
      * Converts from DP (density-independent pixels) to regular pixels.
      */
-    public static int convertDpToPixel(float dp) {
-        Resources resources = MyApplication.getContext().getResources();
+    public static int convertDpToPixel(Context context, float dp) {
+        Resources resources = context.getResources();
         DisplayMetrics metrics = resources.getDisplayMetrics();
         return (int) (dp * (metrics.densityDpi / 160f));
     }
@@ -44,6 +48,16 @@ public class Util {
             return name.substring(0, name.indexOf(" "));
         } else {
             return name;
+        }
+    }
+
+    public static String formatTime(Context context, Long time) {
+        if (System.currentTimeMillis() - time < DAY_DURATION) {
+            return DateUtils.formatDateTime(context, time, DateUtils.FORMAT_ABBREV_ALL
+                    | DateUtils.FORMAT_SHOW_TIME);
+        } else {
+            return DateUtils.formatDateTime(context, time, DateUtils.FORMAT_ABBREV_ALL
+                    | DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE);
         }
     }
 }

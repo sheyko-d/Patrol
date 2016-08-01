@@ -5,6 +5,7 @@ import android.preference.PreferenceManager;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+import ca.itquality.patrol.R;
 import ca.itquality.patrol.library.util.app.MyApplication;
 
 /**
@@ -17,6 +18,8 @@ public class WearUtil {
     private static final String PREF_ACTIVITY_STATUS = "ActivityStatus";
     private static final String PREF_LOGGED_IN = "LoggedIn";
     private static final String PREF_NAME = "Name";
+    private static final String PREF_LAST_MESSAGE_TITLE = "LastMessageTitle";
+    private static final String PREF_LAST_MESSAGE_TEXT = "LastMessageText";
 
     /**
      * Saves an activity status in shared preferences.
@@ -58,5 +61,33 @@ public class WearUtil {
     public static String getName() {
         return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_NAME, null);
+    }
+
+    /**
+     * Saves the title and text of the last message in preferences.
+     */
+    public static void setLastMessage(String title, String text) {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putString(PREF_LAST_MESSAGE_TITLE, title)
+                .putString(PREF_LAST_MESSAGE_TEXT, text)
+                .apply();
+    }
+
+    /**
+     * Retrieves the title of the last message from preferences.
+     */
+    public static String getLastMessageTitle() {
+        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+                .getString(PREF_LAST_MESSAGE_TITLE, MyApplication.getContext()
+                        .getString(R.string.main_messages_title_placeholder));
+    }
+
+    /**
+     * Retrieves the text of the last message from preferences.
+     */
+    public static String getLastMessageText() {
+        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+                .getString(PREF_LAST_MESSAGE_TEXT, MyApplication.getContext()
+                        .getString(R.string.main_value_placeholder));
     }
 }

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="end"
+    android:orientation="horizontal"
+    android:paddingBottom="4dp"
+    android:paddingEnd="48dp"
+    android:paddingLeft="8dp"
+    android:paddingRight="48dp"
+    android:paddingStart="8dp"
+    android:paddingTop="4dp"
+    tools:ignore="UselessParent">
+
+    <TextView
+        android:id="@+id/messages_text_txt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_msg_in"
+        android:gravity="center"
+        android:paddingBottom="6dp"
+        android:paddingEnd="12dp"
+        android:paddingLeft="22dp"
+        android:paddingRight="12dp"
+        android:paddingStart="22dp"
+        android:paddingTop="4dp"
+        android:textColor="@color/primary_text"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/messages_time_txt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="12dp"
+        android:layout_marginStart="12dp"
+        android:textColor="@color/secondary_text"
+        android:textSize="12sp" />
+</LinearLayout>

@@ -97,8 +97,13 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         updateTime();
         initName();
         initActivity();
+        initLastMessage();
         initPermissions();
         registerWearListener();
+    }
+
+    private void initLastMessage() {
+        mAdapter.updateLastMessage(WearUtil.getLastMessageTitle(), WearUtil.getLastMessageText());
     }
 
     private void initName() {
@@ -145,6 +150,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ListenerServiceFromPhone.INTENT_ACTIVITY_UPDATE);
         intentFilter.addAction(ListenerServiceFromPhone.INTENT_NAME_UPDATE);
+        intentFilter.addAction(ListenerServiceFromPhone.INTENT_LAST_MESSAGE_UPDATE);
         intentFilter.addAction(INTENT_LOGIN_STATE);
         registerReceiver(mReceiver, intentFilter);
     }
@@ -153,7 +159,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         mAdapter.updateActivityStatus(WearUtil.getActivityStatus());
     }
 
-    BroadcastReceiver mReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(INTENT_LOGIN_STATE)) {
@@ -168,6 +174,11 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
             } else if (intent.getAction().equals(ListenerServiceFromPhone.INTENT_NAME_UPDATE)) {
                 mNameTxt.setText(intent.getStringExtra(ListenerServiceFromPhone
                         .EXTRA_NAME));
+            } else if (intent.getAction().equals
+                    (ListenerServiceFromPhone.INTENT_LAST_MESSAGE_UPDATE)) {
+                mAdapter.updateLastMessage(intent.getStringExtra(ListenerServiceFromPhone
+                        .EXTRA_LAST_MESSAGE_TITLE), intent.getStringExtra(ListenerServiceFromPhone
+                        .EXTRA_LAST_MESSAGE_TEXT));
             }
         }
     };

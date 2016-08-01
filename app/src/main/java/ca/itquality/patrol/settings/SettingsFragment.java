@@ -108,7 +108,7 @@ class SettingsFragment extends PreferenceFragment {
 
             @Override
             public void onFailure(Call<User.AssignedObject> call, Throwable t) {
-                Toast.makeText(MyApplication.getContext(), "Error, check your internet connection.",
+                Toast.makeText(MyApplication.getContext(), "Server error.",
                         Toast.LENGTH_SHORT).show();
                 setProgressBarVisible(false);
             }

@@ -122,7 +122,7 @@ public class RegisterActivity extends AppCompatActivity {
 
                 @Override
                 public void onFailure(Call<User> call, Throwable t) {
-                    Toast.makeText(RegisterActivity.this, "Error, check your internet connection.",
+                    Toast.makeText(RegisterActivity.this, "Server error.",
                             Toast.LENGTH_SHORT).show();
                     setProgressBarVisible(false);
                 }
