@@ -163,7 +163,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private void calibrateBarometer() {
-        if (DeviceUtil.getOriginFloor() == -1) {
+        if (DeviceUtil.getOriginFloor() == -2) {
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this,
                     R.style.MaterialDialogStyle);
             dialogBuilder.setTitle("What floor are you at right now?");
@@ -573,7 +573,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
             int floorHeight = 3;
             int originFloor = DeviceUtil.getOriginFloor();
-            if (originFloor == -1) return;
+            if (originFloor == -2) return;
 
             float heightDelta = (DeviceUtil.getOriginPressure() - mPressure) * 9;
 

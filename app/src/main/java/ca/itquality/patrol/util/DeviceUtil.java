@@ -295,7 +295,7 @@ public class DeviceUtil {
      */
     public static int getOriginFloor() {
         return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
-                .getInt(PREF_ORIGIN_FLOOR, -1);
+                .getInt(PREF_ORIGIN_FLOOR, -2);
     }
 
     /**

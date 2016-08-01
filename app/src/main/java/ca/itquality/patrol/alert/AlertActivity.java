@@ -1,10 +1,8 @@
 package ca.itquality.patrol.alert;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Vibrator;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -32,6 +30,7 @@ public class AlertActivity extends AppCompatActivity {
     public static final String EXTRA_NAME = "Name";
     public static final String EXTRA_LATITUDE = "Latitude";
     public static final String EXTRA_LONGITUDE = "Longitude";
+    public static final int NOTIFICATION_ID_ALERT = 1;
 
     // Views
     @Bind(R.id.toolbar)
@@ -51,7 +50,6 @@ public class AlertActivity extends AppCompatActivity {
         ButterKnife.bind(this);
 
         getExtras();
-        vibrate();
         initActionBar();
         initMap();
     }
@@ -60,10 +58,6 @@ public class AlertActivity extends AppCompatActivity {
         mName = getIntent().getStringExtra(EXTRA_NAME);
         mLatitude = getIntent().getDoubleExtra(EXTRA_LATITUDE, 0);
         mLongitude = getIntent().getDoubleExtra(EXTRA_LONGITUDE, 0);
-    }
-
-    private void vibrate() {
-        ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(1000);
     }
 
     private void initActionBar() {
