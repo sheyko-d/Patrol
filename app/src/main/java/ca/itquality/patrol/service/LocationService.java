@@ -74,6 +74,7 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         public void onLocationChanged(final Location location) {
             DeviceUtil.setMyLocation((float) location.getLatitude(),
                     (float) location.getLongitude());
+
         }
 
         @Override

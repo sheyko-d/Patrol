@@ -29,10 +29,8 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -66,7 +64,10 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import butterknife.Bind;
@@ -83,6 +84,8 @@ import ca.itquality.patrol.service.ListenerServiceFromWear;
 import ca.itquality.patrol.service.LocationService;
 import ca.itquality.patrol.settings.SettingsActivity;
 import ca.itquality.patrol.util.DeviceUtil;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -133,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private GoogleMap mMap;
     private TextView mAssignedObjectTxt;
     private Marker mAssignedPlaceMarker;
-    private float mPressure;
+    private Float mPressure;
     private boolean mSupportsWatch = true;
 
     @Override
@@ -159,32 +162,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         initMap();
         startActivityService();
         registerIncomingMessagesListener();
-        calibrateBarometer();
-    }
-
-    private void calibrateBarometer() {
-        if (DeviceUtil.getOriginFloor() == -2) {
-            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this,
-                    R.style.MaterialDialogStyle);
-            dialogBuilder.setTitle("What floor are you at right now?");
-            dialogBuilder.setMessage("(Enter 0 if you're outside.)");
-            View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_floor, null);
-            final EditText editTxt = (EditText) dialogView.findViewById(R.id.floor_edit_txt);
-            dialogBuilder.setView(dialogView);
-            dialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    if (TextUtils.isEmpty(editTxt.getText().toString())) {
-                        Toast.makeText(MainActivity.this, "Floor number is empty",
-                                Toast.LENGTH_SHORT).show();
-                    } else {
-                        int floor = Integer.valueOf(editTxt.getText().toString()) - 1;
-                        DeviceUtil.setOriginFloor(floor, (int) mPressure);
-                    }
-                }
-            });
-            dialogBuilder.create().show();
-        }
     }
 
     private void registerIncomingMessagesListener() {
@@ -564,21 +541,51 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Sensor sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
         mSensorManager.registerListener(mBarometerListener, sensor,
                 SensorManager.SENSOR_DELAY_GAME);
+
+        updatePressure();
+    }
+
+    private void updatePressure() {
+        LatLng myLocation = DeviceUtil.getMyLocation();
+        Request request = new Request.Builder()
+                .url("https://api.forecast.io/forecast/6c90f68229779660ddd746347b75e0d4/"
+                        + myLocation.latitude + "," + myLocation.longitude)
+                .build();
+
+        OkHttpClient client = new OkHttpClient();
+        Util.Log("response: " + "https://api.forecast.io/forecast/6c90f68229779660ddd746347b75e0d4/"
+                + myLocation.latitude + "," + myLocation.longitude);
+        client.newCall(request).enqueue(new okhttp3.Callback() {
+            @Override
+            public void onFailure(okhttp3.Call call, IOException e) {
+                Util.Log("Can't retrieve pressure");
+            }
+
+            @Override
+            public void onResponse(okhttp3.Call call, okhttp3.Response response)
+                    throws IOException {
+                JsonObject responseJson = new JsonParser().parse(response.body().string())
+                        .getAsJsonObject();
+                mPressure = responseJson.get("currently").getAsJsonObject().get("pressure")
+                        .getAsFloat();
+            }
+        });
     }
 
     private SensorEventListener mBarometerListener = new SensorEventListener() {
         @Override
         public void onSensorChanged(SensorEvent event) {
-            mPressure = event.values[0];
+            if (mPressure == null) return;
 
             int floorHeight = 3;
-            int originFloor = DeviceUtil.getOriginFloor();
-            if (originFloor == -2) return;
 
-            float heightDelta = (DeviceUtil.getOriginPressure() - mPressure) * 9;
+            // TODO: Calibrate to the altimeter height in Canada
+            int forecastAltimeterHeight = 77;
 
-            float currentHeight = floorHeight * originFloor - heightDelta;
-            mFloorTxt.setText(String.valueOf(Math.round(currentHeight / floorHeight + 1)));
+            float currentPressure = event.values[0];
+            float elevation = ((mPressure - currentPressure) * 9) - forecastAltimeterHeight;
+
+            mFloorTxt.setText(String.valueOf((int) elevation / floorHeight));
         }
 
         @Override
