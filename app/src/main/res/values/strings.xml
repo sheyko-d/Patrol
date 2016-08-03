@@ -16,6 +16,7 @@
     <string name="messages">Messages</string>
     <string name="contacts_title">New message</string>
     <string name="contacts">Contacts</string>
+    <string name="group_title">New group</string>
     <string name="about">About</string>
     <string name="help">Help</string>
     <string name="drawer_not_assigned">Not assigned</string>

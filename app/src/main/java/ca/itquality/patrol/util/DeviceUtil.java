@@ -11,6 +11,8 @@ import ca.itquality.patrol.app.MyApplication;
 import ca.itquality.patrol.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
 
+import static android.preference.PreferenceManager.getDefaultSharedPreferences;
+
 
 public class DeviceUtil {
 
@@ -32,8 +34,7 @@ public class DeviceUtil {
     private static final String PREF_CHAT_LAST_SEEN = "ChatLastSeen";
     private static final String PREF_LAST_MESSAGE_TITLE = "LastMessageTitle";
     private static final String PREF_LAST_MESSAGE_TEXT = "LastMessageText";
-    private static final String PREF_ORIGIN_FLOOR = "OriginFloor";
-    private static final String PREF_ORIGIN_PRESSURE = "OriginPressure";
+    private static final String PREF_QR = "QR";
     public static final int MAP_PADDING = Util.convertDpToPixel(MyApplication.getContext(), 64);
 
     public static boolean isValidEmail(String email) {
@@ -47,7 +48,7 @@ public class DeviceUtil {
     @SuppressLint("CommitPrefEdits")
     public static void updateProfile(String token, String userId, User.AssignedObject assignedObject,
                                      String name, String email, String photo) {
-        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putString(PREF_TOKEN, token)
                 .putString(PREF_USER_ID, userId)
                 .putString(PREF_NAME, name)
@@ -55,7 +56,7 @@ public class DeviceUtil {
                 .putString(PREF_PHOTO, photo)
                 .commit();
         if (assignedObject != null) {
-            PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+            getDefaultSharedPreferences(MyApplication.getContext()).edit()
                     .putString(PREF_ASSIGNED_OBJECT_ID, assignedObject.getAssignedObjectId())
                     .putString(PREF_ASSIGNED_OBJECT_TITLE, assignedObject.getTitle())
                     .putString(PREF_ASSIGNED_OBJECT_LATITUDE, String.valueOf(assignedObject
@@ -64,7 +65,7 @@ public class DeviceUtil {
                             .getLongitude()))
                     .commit();
         } else {
-            PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+            getDefaultSharedPreferences(MyApplication.getContext()).edit()
                     .remove(PREF_ASSIGNED_OBJECT_ID)
                     .remove(PREF_ASSIGNED_OBJECT_TITLE)
                     .remove(PREF_ASSIGNED_OBJECT_LATITUDE)
@@ -84,7 +85,7 @@ public class DeviceUtil {
      * Retrieves token from preferences.
      */
     public static String getToken() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_TOKEN, null);
     }
 
@@ -92,7 +93,7 @@ public class DeviceUtil {
      * Retrieves user id from preferences.
      */
     public static String getUserId() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_USER_ID, null);
     }
 
@@ -100,7 +101,7 @@ public class DeviceUtil {
      * Checks if user is already assigned to the specific object to guard.
      */
     public static Boolean isAssigned() {
-        return !TextUtils.isEmpty(PreferenceManager.getDefaultSharedPreferences
+        return !TextUtils.isEmpty(getDefaultSharedPreferences
                 (MyApplication.getContext()).getString(PREF_ASSIGNED_OBJECT_ID, null));
     }
 
@@ -108,7 +109,7 @@ public class DeviceUtil {
      * Retrieves user's assigned object id from preferences.
      */
     public static String getGetAssignedObjectId() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_ASSIGNED_OBJECT_ID, null);
     }
 
@@ -116,7 +117,7 @@ public class DeviceUtil {
      * Retrieves user's assigned object title from preferences.
      */
     public static String getGetAssignedObjectTitle() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_ASSIGNED_OBJECT_TITLE, null);
     }
 
@@ -124,7 +125,7 @@ public class DeviceUtil {
      * Retrieves user's assigned object latitude from preferences.
      */
     public static Double getGetAssignedLatitude() {
-        return Double.parseDouble(PreferenceManager.getDefaultSharedPreferences
+        return Double.parseDouble(getDefaultSharedPreferences
                 (MyApplication.getContext()).getString(PREF_ASSIGNED_OBJECT_LATITUDE, "-1"));
     }
 
@@ -132,7 +133,7 @@ public class DeviceUtil {
      * Retrieves user's assigned object longitude from preferences.
      */
     public static Double getGetAssignedLongitude() {
-        return Double.parseDouble(PreferenceManager.getDefaultSharedPreferences
+        return Double.parseDouble(getDefaultSharedPreferences
                 (MyApplication.getContext()).getString(PREF_ASSIGNED_OBJECT_LONGITUDE, "-1"));
     }
 
@@ -140,7 +141,7 @@ public class DeviceUtil {
      * Retrieves user full name from preferences.
      */
     public static String getName() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_NAME, null);
     }
 
@@ -148,7 +149,7 @@ public class DeviceUtil {
      * Retrieves user email from preferences.
      */
     public static String getEmail() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_EMAIL, null);
     }
 
@@ -156,7 +157,7 @@ public class DeviceUtil {
      * Retrieves user photo from preferences.
      */
     public static String getPhoto() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_PHOTO, null);
     }
 
@@ -164,7 +165,7 @@ public class DeviceUtil {
      * Saves the activity status in preferences.
      */
     public static void setActivity(String activity) {
-        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putString(PREF_ACTIVITY, activity).apply();
     }
 
@@ -172,7 +173,7 @@ public class DeviceUtil {
      * Retrieves the activity status from preferences.
      */
     public static String getActivity() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_ACTIVITY, null);
     }
 
@@ -180,7 +181,7 @@ public class DeviceUtil {
      * Saves the heart rate in preferences.
      */
     public static void setHeartRate(int heartRate) {
-        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putInt(PREF_HEART_RATE, heartRate).apply();
     }
 
@@ -188,7 +189,7 @@ public class DeviceUtil {
      * Retrieves the activity status from preferences.
      */
     public static int getHeartRate() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getInt(PREF_HEART_RATE, -1);
     }
 
@@ -196,7 +197,7 @@ public class DeviceUtil {
      * Saves the steps count in preferences.
      */
     public static void setSteps(int steps) {
-        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putInt(PREF_STEPS, steps).apply();
     }
 
@@ -204,12 +205,12 @@ public class DeviceUtil {
      * Retrieves the steps count from preferences.
      */
     public static int getSteps() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getInt(PREF_STEPS, -1);
     }
 
     public static void updateAssignedObject(User.AssignedObject assignedObject) {
-        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putString(PREF_ASSIGNED_OBJECT_ID, assignedObject.getAssignedObjectId())
                 .putString(PREF_ASSIGNED_OBJECT_TITLE, assignedObject.getTitle())
                 .putString(PREF_ASSIGNED_OBJECT_LATITUDE, String.valueOf(assignedObject
@@ -223,7 +224,7 @@ public class DeviceUtil {
      * Saves my location in preferences.
      */
     public static void setMyLocation(float latitude, float longitude) {
-        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putFloat(PREF_MY_LATITUDE, latitude).putFloat(PREF_MY_LONGITUDE, longitude)
                 .apply();
     }
@@ -232,8 +233,8 @@ public class DeviceUtil {
      * Retrieves my location from preferences.
      */
     public static LatLng getMyLocation() {
-        return new LatLng(PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
-                .getFloat(PREF_MY_LATITUDE, 0), PreferenceManager.getDefaultSharedPreferences
+        return new LatLng(getDefaultSharedPreferences(MyApplication.getContext())
+                .getFloat(PREF_MY_LATITUDE, 0), getDefaultSharedPreferences
                 (MyApplication.getContext()).getFloat(PREF_MY_LONGITUDE, 0));
     }
 
@@ -241,7 +242,7 @@ public class DeviceUtil {
      * Saves the time when chat screen was last opened in preferences.
      */
     public static void updateChatLastSeenTime() {
-        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putLong(PREF_CHAT_LAST_SEEN, System.currentTimeMillis()).apply();
     }
 
@@ -249,7 +250,7 @@ public class DeviceUtil {
      * Retrieves the time when chat screen was last opened from preferences.
      */
     public static Long getChatLastSeenTime() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getLong(PREF_CHAT_LAST_SEEN, System.currentTimeMillis());
     }
 
@@ -257,7 +258,7 @@ public class DeviceUtil {
      * Saves the title and text of the last message in preferences.
      */
     public static void setLastMessage(String title, String text) {
-        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putString(PREF_LAST_MESSAGE_TITLE, title)
                 .putString(PREF_LAST_MESSAGE_TEXT, text)
                 .apply();
@@ -267,7 +268,7 @@ public class DeviceUtil {
      * Retrieves the title of the last message from preferences.
      */
     public static String getLastMessageTitle() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_LAST_MESSAGE_TITLE, MyApplication.getContext()
                         .getString(R.string.main_messages_title_placeholder));
     }
@@ -276,33 +277,19 @@ public class DeviceUtil {
      * Retrieves the text of the last message from preferences.
      */
     public static String getLastMessageText() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_LAST_MESSAGE_TEXT, MyApplication.getContext()
                         .getString(R.string.main_value_placeholder));
     }
 
-    /**
-     * Saves the floor and pressure when user calibrated the barometer to preferences.
-     */
-    public static void setOriginFloor(int floor, int pressure) {
-        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
-                .putInt(PREF_ORIGIN_FLOOR, floor)
-                .putInt(PREF_ORIGIN_PRESSURE, pressure).apply();
+    public static void setQr(String qr) {
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putString(PREF_QR, qr)
+                .apply();
     }
 
-    /**
-     * Retrieves the floor user was on when he calibrated the barometer from preferences.
-     */
-    public static int getOriginFloor() {
+    public static String getQr() {
         return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
-                .getInt(PREF_ORIGIN_FLOOR, -2);
-    }
-
-    /**
-     * Retrieves the pressure when user calibrated the barometer from preferences.
-     */
-    public static Integer getOriginPressure() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
-                .getInt(PREF_ORIGIN_PRESSURE, -1);
+                .getString(PREF_QR, null);
     }
 }

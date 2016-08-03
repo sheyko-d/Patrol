@@ -52,6 +52,9 @@
             android:name=".messages.ContactsActivity"
             android:label="@string/contacts_title" />
         <activity
+            android:name=".messages.GroupActivity"
+            android:label="@string/group_title" />
+        <activity
             android:name=".messages.ChatActivity"
             android:launchMode="singleTop"
             android:windowSoftInputMode="stateHidden" />

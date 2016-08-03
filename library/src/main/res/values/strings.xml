@@ -3,6 +3,7 @@
     <string name="google_key">AIzaSyAuRL8xlcLn3HUE8YOqWyDu2_5GXNobpzk</string>
     <string name="facebook_app_id">1719336118315630</string>
     <string name="main_heart_rate">%1$d BPM</string>
+    <string name="main_qr">Last scanned: %1$s</string>
     <string name="main_value_placeholder">—</string>
     <string name="main_messages_title_placeholder">No new messages</string>
 </resources>

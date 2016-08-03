@@ -9,8 +9,11 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -21,33 +24,36 @@ import ca.itquality.patrol.R;
 import ca.itquality.patrol.api.ApiClient;
 import ca.itquality.patrol.api.ApiInterface;
 import ca.itquality.patrol.auth.data.User;
-import ca.itquality.patrol.messages.adapter.ContactsAdapter;
+import ca.itquality.patrol.library.util.Util;
+import ca.itquality.patrol.messages.adapter.GroupAdapter;
 import ca.itquality.patrol.util.DeviceUtil;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
-public class ContactsActivity extends AppCompatActivity {
+public class GroupActivity extends AppCompatActivity {
 
     // Views
     @Bind(R.id.toolbar)
     Toolbar mToolbar;
-    @Bind(R.id.contacts_placeholder_layout)
+    @Bind(R.id.group_title_edit_txt)
+    EditText mTitleEditTxt;
+    @Bind(R.id.group_placeholder_layout)
     View mPlaceholderLayout;
-    @Bind(R.id.contacts_recycler)
+    @Bind(R.id.group_recycler)
     RecyclerView mRecycler;
-    @Bind(R.id.contacts_layout)
+    @Bind(R.id.group_layout)
     View mLayout;
 
     // Usual variables
-    private ContactsAdapter mAdapter;
+    private GroupAdapter mAdapter;
     private ArrayList<User> mContacts = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_contacts);
+        setContentView(R.layout.activity_group);
         ButterKnife.bind(this);
 
         initActionBar();
@@ -67,7 +73,7 @@ public class ContactsActivity extends AppCompatActivity {
         mRecycler.setHasFixedSize(true);
         mRecycler.setLayoutManager(new LinearLayoutManager(this));
         mRecycler.setItemAnimator(new DefaultItemAnimator());
-        mAdapter = new ContactsAdapter(this, mContacts);
+        mAdapter = new GroupAdapter(this, mContacts);
         mRecycler.setAdapter(mAdapter);
     }
 
@@ -93,14 +99,14 @@ public class ContactsActivity extends AppCompatActivity {
                         mLayout.setVisibility(View.VISIBLE);
                     }
                 } else {
-                    Toast.makeText(ContactsActivity.this, "Can't retrieve contracts",
+                    Toast.makeText(GroupActivity.this, "Can't retrieve contracts",
                             Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<ArrayList<User>> call, Throwable t) {
-                Toast.makeText(ContactsActivity.this, "Server error.",
+                Toast.makeText(GroupActivity.this, "Server error.",
                         Toast.LENGTH_SHORT).show();
             }
         });
@@ -108,7 +114,18 @@ public class ContactsActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        finish();
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            startActivity(new Intent(this, ContactsActivity.class));
+        } else {
+            openGroupChat();
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_group, menu);
         return true;
     }
 
@@ -120,17 +137,33 @@ public class ContactsActivity extends AppCompatActivity {
         super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
     }
 
-    public void openPrivateChat(final User contact) {
+    public void openGroupChat() {
+        String groupTitle = mTitleEditTxt.getText().toString();
+        if (TextUtils.isEmpty(groupTitle)) {
+            Toast.makeText(this, "Title is empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (mAdapter.getSelectedIds().size() <= 1) {
+            Toast.makeText(this, "Select at least 2 people", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         ArrayList<String> participants = new ArrayList<>();
-        participants.add(contact.getUserId());
+        for (String id : mAdapter.getSelectedIds()){
+            participants.add(id);
+            Util.Log("add selected id: "+id);
+        }
         startActivity(new Intent(this, ChatActivity.class)
                 .putStringArrayListExtra(ChatActivity.EXTRA_PARTICIPANTS, participants)
-                .putExtra(ChatActivity.EXTRA_THREAD_TITLE, contact.getName()));
+                .putExtra(ChatActivity.EXTRA_THREAD_TITLE, groupTitle));
         finish();
     }
 
-    public void onGroupButtonClicked(View view) {
-        startActivity(new Intent(this, GroupActivity.class));
+    @Override
+    public void onBackPressed() {
         finish();
+        startActivity(new Intent(this, ContactsActivity.class));
     }
+
 }

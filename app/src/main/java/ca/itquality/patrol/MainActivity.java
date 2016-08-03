@@ -2,6 +2,7 @@ package ca.itquality.patrol;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -21,12 +22,15 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.MenuItem;
@@ -79,6 +83,8 @@ import ca.itquality.patrol.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.messages.ThreadsActivity;
 import ca.itquality.patrol.messages.data.Message;
+import ca.itquality.patrol.qr.IntentIntegrator;
+import ca.itquality.patrol.qr.IntentResult;
 import ca.itquality.patrol.service.ActivityRecognizedService;
 import ca.itquality.patrol.service.ListenerServiceFromWear;
 import ca.itquality.patrol.service.LocationService;
@@ -122,6 +128,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     TextView mActivityTxt;
     @Bind(R.id.main_floor_txt)
     TextView mFloorTxt;
+    @Bind(R.id.main_qr_txt)
+    TextView mQrTxt;
     @Bind(R.id.main_navigation_view)
     NavigationView mNavigationView;
     @Bind(R.id.main_scroll_view)
@@ -162,6 +170,26 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         initMap();
         startActivityService();
         registerIncomingMessagesListener();
+
+        // TODO Remove showBackupNotification();
+    }
+
+    private void showBackupNotification() {
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
+                (this);
+        notificationBuilder.setContentTitle("Do you need backup?");
+        notificationBuilder.setAutoCancel(true);
+        notificationBuilder.setSmallIcon(R.drawable.backup_notification);
+        notificationBuilder.setColor(ContextCompat.getColor(this,
+                R.color.colorPrimary));
+        notificationBuilder.setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        Notification notification = notificationBuilder.build();
+        notification.defaults |= Notification.DEFAULT_VIBRATE;
+        notification.defaults |= Notification.DEFAULT_SOUND;
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from
+                (getApplicationContext());
+        notificationManager.notify(3, notification);
     }
 
     private void registerIncomingMessagesListener() {
@@ -321,6 +349,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onActivityResult(int requestCode,
                                     int resultCode, Intent data) {
+        IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode,
+                data);
+        if (scanResult != null) {
+            String scannedTxt = scanResult.getContents();
+            if (!TextUtils.isEmpty(scannedTxt)) {
+                DeviceUtil.setQr(scannedTxt);
+                mQrTxt.setText(getString(R.string.main_qr, scannedTxt));
+            }
+        }
         if (requestCode == PLACE_PICKER_REQUEST_CODE
                 && resultCode == Activity.RESULT_OK) {
 
@@ -463,6 +500,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 : String.valueOf(DeviceUtil.getSteps()));
         mHeartRateTxt.setText(DeviceUtil.getHeartRate() == -1 ? "—"
                 : getString(R.string.main_heart_rate, DeviceUtil.getHeartRate()));
+        mQrTxt.setText(getString(R.string.main_qr, TextUtils.isEmpty(DeviceUtil.getQr()) ? "Never"
+                : DeviceUtil.getQr()));
     }
 
     @Override
@@ -860,5 +899,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     public void onMessagesButtonClicked(View view) {
         startActivity(new Intent(this, ThreadsActivity.class));
+    }
+
+    public void onQrButtonClicked(View view) {
+        IntentIntegrator integrator = new IntentIntegrator(this);
+        integrator.initiateScan();
     }
 }
