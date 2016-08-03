@@ -29,7 +29,6 @@ import butterknife.ButterKnife;
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.api.ApiClient;
 import ca.itquality.patrol.api.ApiInterface;
-import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.messages.adapter.ChatAdapter;
 import ca.itquality.patrol.messages.data.Message;
 import ca.itquality.patrol.messages.data.MessageThread;
@@ -217,8 +216,6 @@ public class ChatActivity extends AppCompatActivity {
                 DeviceUtil.getPhoto(), message, System.currentTimeMillis(), true));
         mAdapter.notifyItemInserted(mMessages.size() - 1);
         mRecycler.scrollToPosition(mMessages.size() - 1);
-
-        Util.Log("sent message");
 
         // Upload message to server
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);

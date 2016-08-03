@@ -42,7 +42,7 @@ public class ActivityRecognizedService extends IntentService {
                     break;
                 }
                 case DetectedActivity.ON_FOOT: {
-                    activityName = "In Vehicle";
+                    activityName = "On Foot";
                     break;
                 }
                 case DetectedActivity.RUNNING: {
@@ -51,10 +51,6 @@ public class ActivityRecognizedService extends IntentService {
                 }
                 case DetectedActivity.STILL: {
                     activityName = "Still";
-                    break;
-                }
-                case DetectedActivity.TILTING: {
-                    activityName = "Tilting";
                     break;
                 }
             }

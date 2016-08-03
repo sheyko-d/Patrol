@@ -24,7 +24,6 @@ import ca.itquality.patrol.R;
 import ca.itquality.patrol.api.ApiClient;
 import ca.itquality.patrol.api.ApiInterface;
 import ca.itquality.patrol.auth.data.User;
-import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.messages.adapter.GroupAdapter;
 import ca.itquality.patrol.util.DeviceUtil;
 import retrofit2.Call;
@@ -152,7 +151,6 @@ public class GroupActivity extends AppCompatActivity {
         ArrayList<String> participants = new ArrayList<>();
         for (String id : mAdapter.getSelectedIds()){
             participants.add(id);
-            Util.Log("add selected id: "+id);
         }
         startActivity(new Intent(this, ChatActivity.class)
                 .putStringArrayListExtra(ChatActivity.EXTRA_PARTICIPANTS, participants)
