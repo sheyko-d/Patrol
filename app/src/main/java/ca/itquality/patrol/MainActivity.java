@@ -18,6 +18,7 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
@@ -873,6 +874,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     public void onAlertButtonClicked(View view) {
+        ((Vibrator) getSystemService(Context.VIBRATOR_SERVICE)).vibrate(500);
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
         LatLng myLocation = DeviceUtil.getMyLocation();
         Call<Void> call = apiService.sendAlert(DeviceUtil.getToken(), myLocation.latitude,
