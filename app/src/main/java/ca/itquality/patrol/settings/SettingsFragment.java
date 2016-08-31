@@ -13,11 +13,11 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.ui.PlacePicker;
 
 import ca.itquality.patrol.R;
-import ca.itquality.patrol.api.ApiClient;
-import ca.itquality.patrol.api.ApiInterface;
+import ca.itquality.patrol.library.util.api.ApiClient;
+import ca.itquality.patrol.library.util.api.ApiInterface;
 import ca.itquality.patrol.app.MyApplication;
 import ca.itquality.patrol.auth.LoginActivity;
-import ca.itquality.patrol.auth.data.User;
+import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.util.DeviceUtil;
 import retrofit2.Call;
 import retrofit2.Callback;

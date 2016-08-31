@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import ca.itquality.patrol.R;
-import ca.itquality.patrol.auth.data.User;
+import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.messages.ContactsActivity;
 
 public class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> {

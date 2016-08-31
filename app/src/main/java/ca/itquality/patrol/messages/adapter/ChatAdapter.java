@@ -13,7 +13,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.library.util.Util;
-import ca.itquality.patrol.messages.data.Message;
+import ca.itquality.patrol.library.util.messages.data.Message;
 import ca.itquality.patrol.util.DeviceUtil;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ViewHolder> {

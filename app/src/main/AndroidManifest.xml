@@ -60,7 +60,7 @@
             android:windowSoftInputMode="stateHidden" />
 
         <service
-            android:name=".service.ListenerServiceFromWear"
+            android:name=".service.WearMessageListenerService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
@@ -71,6 +71,7 @@
                     android:scheme="wear" />
             </intent-filter>
         </service>
+        <service android:name=".service.WearDataListenerService" />
         <service
             android:name=".service.ActivityRecognizedService"
             android:exported="false" />

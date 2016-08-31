@@ -36,11 +36,11 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import ca.itquality.patrol.MainActivity;
 import ca.itquality.patrol.R;
-import ca.itquality.patrol.api.ApiClient;
-import ca.itquality.patrol.api.ApiInterface;
 import ca.itquality.patrol.app.MyApplication;
-import ca.itquality.patrol.auth.data.User;
+import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
+import ca.itquality.patrol.library.util.api.ApiClient;
+import ca.itquality.patrol.library.util.api.ApiInterface;
 import ca.itquality.patrol.util.DeviceUtil;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -174,7 +174,6 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
 
     private void signInOnServer(String id, String name, String email, String photo) {
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-
         Call<User> call = apiService.signInFacebook(id, name, email, photo);
         call.enqueue(new Callback<User>() {
             @Override

@@ -5,7 +5,6 @@ import android.preference.PreferenceManager;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
-import ca.itquality.patrol.R;
 import ca.itquality.patrol.library.util.app.MyApplication;
 
 /**
@@ -78,8 +77,7 @@ public class WearUtil {
      */
     public static String getLastMessageTitle() {
         return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
-                .getString(PREF_LAST_MESSAGE_TITLE, MyApplication.getContext()
-                        .getString(R.string.main_messages_title_placeholder));
+                .getString(PREF_LAST_MESSAGE_TITLE, "—");
     }
 
     /**
@@ -87,7 +85,6 @@ public class WearUtil {
      */
     public static String getLastMessageText() {
         return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
-                .getString(PREF_LAST_MESSAGE_TEXT, MyApplication.getContext()
-                        .getString(R.string.main_value_placeholder));
+                .getString(PREF_LAST_MESSAGE_TEXT, "—");
     }
 }

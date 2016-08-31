@@ -16,6 +16,8 @@ public class Util {
     public static final String DATA_LOGGED_IN = "LoggedIn";
     public static final String PATH_HEART_RATE = "/heart_rate";
     public static final String DATA_HEART_RATE = "HeartRate";
+    public static final String PATH_HEART_RATE_HISTORY = "/heart_rate_history";
+    public static final String DATA_HEART_RATE_VALUES = "HeartRateValues";
     public static final String PATH_ACTIVITY = "/activity";
     public static final String DATA_ACTIVITY = "Activity";
     public static final String PATH_STEPS = "/steps";

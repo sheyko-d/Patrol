@@ -16,7 +16,7 @@ import butterknife.ButterKnife;
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.messages.ThreadsActivity;
-import ca.itquality.patrol.messages.data.MessageThread;
+import ca.itquality.patrol.library.util.messages.data.MessageThread;
 import ca.itquality.patrol.util.DeviceUtil;
 
 public class ThreadsAdapter extends RecyclerView.Adapter<ThreadsAdapter.ViewHolder> {

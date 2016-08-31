@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import ca.itquality.patrol.R;
-import ca.itquality.patrol.auth.data.User;
+import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.messages.GroupActivity;
 
 public class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.ViewHolder> {

@@ -1,0 +1,138 @@
+package ca.itquality.patrol.library.util.auth.data;
+
+import com.google.gson.annotations.SerializedName;
+
+public class User {
+
+    @SerializedName("token")
+    private String token;
+    @SerializedName("user_id")
+    private String userId;
+    @SerializedName("assigned_shift")
+    private AssignedShift assignedShift;
+    @SerializedName("assigned_object")
+    private AssignedObject assignedObject;
+    @SerializedName("name")
+    private String name;
+    @SerializedName("email")
+    private String email;
+    @SerializedName("photo")
+    private String photo;
+
+    public User(String token, String userId, AssignedObject assignedObject, String name,
+                String email, String photo) {
+        this.token = token;
+        this.assignedObject = assignedObject;
+        this.userId = userId;
+        this.name = name;
+        this.email = email;
+        this.photo = photo;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public AssignedObject getAssignedObject() {
+        return assignedObject;
+    }
+
+    public AssignedShift getAssignedShift() {
+        return assignedShift;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPhoto() {
+        return photo;
+    }
+
+    public class AssignedObject {
+
+        @SerializedName("assigned_object_id")
+        private String assignedObjectId;
+        @SerializedName("title")
+        private String title;
+        @SerializedName("latitude")
+        private Float latitude;
+        @SerializedName("longitude")
+        private Float longitude;
+
+        public AssignedObject(String assignedObjectId, String title, Float latitude,
+                              Float longitude) {
+            this.assignedObjectId = assignedObjectId;
+            this.title = title;
+            this.latitude = latitude;
+            this.longitude = longitude;
+        }
+
+        public String getAssignedObjectId() {
+            return assignedObjectId;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public Float getLatitude() {
+            return latitude;
+        }
+
+        public Float getLongitude() {
+            return longitude;
+        }
+    }
+
+    public class AssignedShift {
+
+        @SerializedName("assigned_shift_id")
+        private String assignedShiftId;
+        @SerializedName("assigned_object_id")
+        private String assignedObjectId;
+        @SerializedName("name")
+        private String name;
+        @SerializedName("start_time")
+        private Long startTime;
+        @SerializedName("end_time")
+        private Long endTime;
+
+        public AssignedShift(String assignedShiftId, String assignedObjectId, String name,
+                             Long startTime, Long endTime) {
+            this.assignedShiftId = assignedShiftId;
+            this.assignedObjectId = assignedObjectId;
+            this.name = name;
+            this.startTime = startTime;
+            this.endTime = endTime;
+        }
+
+        public String getAssignedShiftId() {
+            return assignedShiftId;
+        }
+
+        public String getAssignedObjectId() {
+            return assignedObjectId;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Long getStartTime() {
+            return startTime;
+        }
+
+        public Long getEndTime() {
+            return endTime;
+        }
+    }
+}

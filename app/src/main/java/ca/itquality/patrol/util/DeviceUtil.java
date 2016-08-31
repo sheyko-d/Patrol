@@ -1,14 +1,13 @@
 package ca.itquality.patrol.util;
 
 import android.annotation.SuppressLint;
-import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 import com.google.android.gms.maps.model.LatLng;
 
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.app.MyApplication;
-import ca.itquality.patrol.auth.data.User;
+import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
 
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
@@ -34,6 +33,9 @@ public class DeviceUtil {
     private static final String PREF_CHAT_LAST_SEEN = "ChatLastSeen";
     private static final String PREF_LAST_MESSAGE_TITLE = "LastMessageTitle";
     private static final String PREF_LAST_MESSAGE_TEXT = "LastMessageText";
+    private static final String PREF_ORIGIN_FLOOR = "OriginFloor";
+    private static final String PREF_ORIGIN_PRESSURE = "OriginPressure";
+    private static final String PREF_ORIGIN_WEATHER_PRESSURE = "OriginWeatherPressure";
     private static final String PREF_QR = "QR";
     public static final int MAP_PADDING = Util.convertDpToPixel(MyApplication.getContext(), 64);
 
@@ -289,7 +291,30 @@ public class DeviceUtil {
     }
 
     public static String getQr() {
-        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+        return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_QR, null);
+    }
+
+    public static void setBarometerOrigin(int floor, float pressure, float weatherPressure) {
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putInt(PREF_ORIGIN_FLOOR, floor)
+                .putFloat(PREF_ORIGIN_PRESSURE, pressure)
+                .putFloat(PREF_ORIGIN_WEATHER_PRESSURE, weatherPressure)
+                .apply();
+    }
+
+    public static int getOriginFloor() {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getInt(PREF_ORIGIN_FLOOR, -1);
+    }
+
+    public static float getOriginPressure() {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getFloat(PREF_ORIGIN_PRESSURE, -1);
+    }
+
+    public static float getOriginWeatherPressure() {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getFloat(PREF_ORIGIN_WEATHER_PRESSURE, -1);
     }
 }

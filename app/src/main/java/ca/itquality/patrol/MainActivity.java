@@ -69,30 +69,26 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import ca.itquality.patrol.api.ApiClient;
-import ca.itquality.patrol.api.ApiInterface;
 import ca.itquality.patrol.auth.LoginActivity;
-import ca.itquality.patrol.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
+import ca.itquality.patrol.library.util.api.ApiClient;
+import ca.itquality.patrol.library.util.api.ApiInterface;
+import ca.itquality.patrol.library.util.auth.data.User;
+import ca.itquality.patrol.library.util.messages.data.Message;
 import ca.itquality.patrol.messages.ThreadsActivity;
-import ca.itquality.patrol.messages.data.Message;
 import ca.itquality.patrol.qr.IntentIntegrator;
 import ca.itquality.patrol.qr.IntentResult;
 import ca.itquality.patrol.service.ActivityRecognizedService;
-import ca.itquality.patrol.service.ListenerServiceFromWear;
 import ca.itquality.patrol.service.LocationService;
+import ca.itquality.patrol.service.WearDataListenerService;
+import ca.itquality.patrol.service.WearMessageListenerService;
 import ca.itquality.patrol.settings.SettingsActivity;
 import ca.itquality.patrol.util.DeviceUtil;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -145,8 +141,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private GoogleMap mMap;
     private TextView mAssignedObjectTxt;
     private Marker mAssignedPlaceMarker;
-    private Float mPressure;
+    private Float mWeatherPressure;
     private boolean mSupportsWatch = true;
+    private float mCurrentPressure;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -170,9 +167,14 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         initFloorListener();
         initMap();
         startActivityService();
+        startWearDataListenerService();
         registerIncomingMessagesListener();
 
         // TODO Remove showBackupNotification();
+    }
+
+    private void startWearDataListenerService() {
+        startService(new Intent(this, WearDataListenerService.class));
     }
 
     private void showBackupNotification() {
@@ -581,51 +583,25 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Sensor sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
         mSensorManager.registerListener(mBarometerListener, sensor,
                 SensorManager.SENSOR_DELAY_GAME);
-
-        updatePressure();
-    }
-
-    private void updatePressure() {
-        LatLng myLocation = DeviceUtil.getMyLocation();
-        Request request = new Request.Builder()
-                .url("https://api.forecast.io/forecast/6c90f68229779660ddd746347b75e0d4/"
-                        + myLocation.latitude + "," + myLocation.longitude)
-                .build();
-
-        OkHttpClient client = new OkHttpClient();
-        Util.Log("response: " + "https://api.forecast.io/forecast/6c90f68229779660ddd746347b75e0d4/"
-                + myLocation.latitude + "," + myLocation.longitude);
-        client.newCall(request).enqueue(new okhttp3.Callback() {
-            @Override
-            public void onFailure(okhttp3.Call call, IOException e) {
-                Util.Log("Can't retrieve pressure");
-            }
-
-            @Override
-            public void onResponse(okhttp3.Call call, okhttp3.Response response)
-                    throws IOException {
-                JsonObject responseJson = new JsonParser().parse(response.body().string())
-                        .getAsJsonObject();
-                mPressure = responseJson.get("currently").getAsJsonObject().get("pressure")
-                        .getAsFloat();
-            }
-        });
     }
 
     private SensorEventListener mBarometerListener = new SensorEventListener() {
         @Override
         public void onSensorChanged(SensorEvent event) {
-            if (mPressure == null) return;
+            mCurrentPressure = event.values[0];
+            if (mWeatherPressure == null) return;
+            if (DeviceUtil.getOriginFloor() == -1) return;
+
+            /*float weatherCorrection = mWeatherPressure - DeviceUtil.getOriginWeatherPressure();
 
             int floorHeight = 3;
+            float elevation = (mCurrentPressure - DeviceUtil.getOriginPressure()
+                    + weatherCorrection) * 9;
 
-            // TODO: Calibrate to the altimeter height in Canada
-            int forecastAltimeterHeight = 77;
+            int currentFloor = (int) ((DeviceUtil.getOriginFloor() * floorHeight - elevation)
+                    / floorHeight);
+            mFloorTxt.setText(String.valueOf(currentFloor));*/
 
-            float currentPressure = event.values[0];
-            float elevation = ((mPressure - currentPressure) * 9) - forecastAltimeterHeight;
-
-            mFloorTxt.setText(String.valueOf((int) elevation / floorHeight));
         }
 
         @Override
@@ -660,7 +636,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                             }
 
                             Wearable.MessageApi.addListener(mGoogleApiClient,
-                                    new ListenerServiceFromWear());
+                                    new WearMessageListenerService());
 
                             mProgressBar.setVisibility(View.GONE);
                             if (mNode != null) {
