@@ -87,11 +87,35 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
 
         mSensorManager = ((SensorManager) getSystemService(SENSOR_SERVICE));
 
-        getHeartRateSensorData();
-        getStepsSensorData();
+        setHeartRateListener();
+        setStepsListener();
     }
 
-    private void getHeartRateSensorData() {
+    private void setStepsListener() {
+        Sensor stepCounterSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
+        mSensorManager.registerListener(new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                int steps = (int) event.values[0];
+                updateStepsOnDevice(steps);
+                //TODO: mAdapter.updateStepsCount(steps);
+            }
+
+            private void updateStepsOnDevice(int steps) {
+                PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_STEPS);
+                putDataMapReq.setUrgent();
+                putDataMapReq.getDataMap().putInt(Util.DATA_STEPS, steps);
+                PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+                Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            }
+        }, stepCounterSensor, SensorManager.SENSOR_DELAY_FASTEST);
+    }
+
+    private void setHeartRateListener() {
         final Sensor heartRateSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
         mSensorManager.registerListener(new SensorEventListener() {
             int mDismissRemainingSec;
@@ -247,35 +271,10 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
         }, heartRateSensor, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
-    private void getStepsSensorData() {
-        Sensor stepCounterSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-        mSensorManager.registerListener(new SensorEventListener() {
-            @Override
-            public void onSensorChanged(SensorEvent event) {
-                int steps = (int) event.values[0];
-                Util.Log("steps sensor changed: "+steps);
-                updateStepsOnDevice(steps);
-                //TODO: mAdapter.updateStepsCount(steps);
-            }
-
-            private void updateStepsOnDevice(int steps) {
-                PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_STEPS);
-                putDataMapReq.setUrgent();
-                putDataMapReq.getDataMap().putInt(Util.DATA_STEPS, steps);
-                PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-                Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
-            }
-
-            @Override
-            public void onAccuracyChanged(Sensor sensor, int accuracy) {
-            }
-        }, stepCounterSensor, SensorManager.SENSOR_DELAY_FASTEST);
-    }
-
     private Runnable mMeasureHeartRateRunnable = new Runnable() {
         @Override
         public void run() {
-            getHeartRateSensorData();
+            setHeartRateListener();
         }
     };
 

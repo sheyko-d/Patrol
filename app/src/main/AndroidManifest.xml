@@ -60,7 +60,7 @@
             android:windowSoftInputMode="stateHidden" />
 
         <service
-            android:name=".service.WearMessageListenerService"
+            android:name=".service.wear.WearMessageListenerService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
@@ -71,20 +71,20 @@
                     android:scheme="wear" />
             </intent-filter>
         </service>
-        <service android:name=".service.WearDataListenerService" />
+        <service android:name=".service.wear.WearDataListenerService" />
         <service
             android:name=".service.ActivityRecognizedService"
             android:exported="false" />
-        <service android:name=".service.LocationService" />
+        <service android:name=".service.BackgroundService" />
         <service
-            android:name=".service.MyFirebaseMessagingService"
+            android:name=".service.firebase.MyFirebaseMessagingService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
         <service
-            android:name=".service.MyFirebaseInstanceIDService"
+            android:name=".service.firebase.MyFirebaseInstanceIDService"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />

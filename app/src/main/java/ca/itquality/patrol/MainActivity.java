@@ -2,6 +2,7 @@ package ca.itquality.patrol;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -9,6 +10,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -23,6 +25,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -43,6 +46,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -84,9 +88,9 @@ import ca.itquality.patrol.messages.ThreadsActivity;
 import ca.itquality.patrol.qr.IntentIntegrator;
 import ca.itquality.patrol.qr.IntentResult;
 import ca.itquality.patrol.service.ActivityRecognizedService;
-import ca.itquality.patrol.service.LocationService;
-import ca.itquality.patrol.service.WearDataListenerService;
-import ca.itquality.patrol.service.WearMessageListenerService;
+import ca.itquality.patrol.service.BackgroundService;
+import ca.itquality.patrol.service.wear.WearDataListenerService;
+import ca.itquality.patrol.service.wear.WearMessageListenerService;
 import ca.itquality.patrol.settings.SettingsActivity;
 import ca.itquality.patrol.util.DeviceUtil;
 import retrofit2.Call;
@@ -103,6 +107,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     // Constants
     private static final int PLACE_PICKER_REQUEST_CODE = 1;
     private static final int PERMISSIONS_REQUEST_CODE = 2;
+    private static final int REQUEST_RESOLVE_ERROR = 1001;
+    private static final String DIALOG_ERROR = "dialog_error";
 
     // Views
     @Bind(R.id.toolbar)
@@ -144,6 +150,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private Float mWeatherPressure;
     private boolean mSupportsWatch = true;
     private float mCurrentPressure;
+    private boolean mResolvingError = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -166,7 +173,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         registerActivityStatusListener();
         initFloorListener();
         initMap();
-        startActivityService();
         startWearDataListenerService();
         registerIncomingMessagesListener();
 
@@ -207,8 +213,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
     };
 
-    private void startActivityService() {
-        startService(new Intent(this, LocationService.class));
+    private void startBackgroundService() {
+        Util.Log("Will start background service");
+        startService(new Intent(this, BackgroundService.class));
     }
 
     private void askPermissions() {
@@ -616,6 +623,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 .addApi(ActivityRecognition.API)
                 .addApi(Wearable.API)
                 .addApi(LocationServices.API)
+                .useDefaultAccount()
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
@@ -685,6 +693,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        Util.Log("Google API connected in MainActivity");
         if (mSupportsWatch) {
             logInOnTheWatch();
             updateWearName();
@@ -695,6 +704,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         listenForActivityStatus();
         listenForWearSensors();
         saveLastKnownLocation();
+        startBackgroundService();
     }
 
     private void saveLastKnownLocation() {
@@ -783,6 +793,23 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        if (mResolvingError) {
+            // Already attempting to resolve an error.
+            return;
+        } else if (connectionResult.hasResolution()) {
+            try {
+                mResolvingError = true;
+                connectionResult.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
+            } catch (IntentSender.SendIntentException e) {
+                // There was an error with the resolution intent. Try again.
+                mGoogleApiClient.connect();
+            }
+        } else {
+            // Show dialog using GoogleApiAvailability.getErrorDialog()
+            showErrorDialog(connectionResult.getErrorCode());
+            mResolvingError = true;
+        }
+
         Util.Log("connection failed: " + connectionResult.getErrorCode());
         mDisconnectedLayout.setVisibility(View.GONE);
         mLayout.setVisibility(View.GONE);
@@ -795,17 +822,48 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 mSupportsWatch = false;
                 mGoogleApiClient = new GoogleApiClient.Builder(this)
                         .addApi(ActivityRecognition.API)
+                        .addApi(LocationServices.API)
                         .addConnectionCallbacks(this)
                         .addOnConnectionFailedListener(this)
                         .build();
                 mGoogleApiClient.connect();
             }
-        } else if (connectionResult.getErrorCode() == 2) {
-            Toast.makeText(MainActivity.this, "Google Play Services need to be updated",
-                    Toast.LENGTH_LONG).show();
-        } else {
-            Toast.makeText(MainActivity.this, "Google Play Services error", Toast.LENGTH_LONG)
-                    .show();
+        }
+    }
+
+    // The rest of this code is all about building the error dialog
+
+    /* Creates a dialog for an error message */
+    private void showErrorDialog(int errorCode) {
+        // Create a fragment for the error dialog
+        ErrorDialogFragment dialogFragment = new ErrorDialogFragment();
+        // Pass the error that should be displayed
+        Bundle args = new Bundle();
+        args.putInt(DIALOG_ERROR, errorCode);
+        dialogFragment.setArguments(args);
+        dialogFragment.show(getSupportFragmentManager(), "errordialog");
+    }
+
+    /* Called from ErrorDialogFragment when the dialog is dismissed. */
+    public void onDialogDismissed() {
+        mResolvingError = false;
+    }
+
+    /* A fragment to display an error dialog */
+    public static class ErrorDialogFragment extends DialogFragment {
+        public ErrorDialogFragment() { }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Get the error code and retrieve the appropriate dialog
+            int errorCode = this.getArguments().getInt(DIALOG_ERROR);
+            return GoogleApiAvailability.getInstance().getErrorDialog(
+                    this.getActivity(), errorCode, REQUEST_RESOLVE_ERROR);
+        }
+
+        @Override
+        public void onDismiss(DialogInterface dialog) {
+            ((MainActivity) getActivity()).onDialogDismissed();
         }
     }
 

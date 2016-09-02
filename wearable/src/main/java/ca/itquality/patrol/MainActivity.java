@@ -26,6 +26,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import ca.itquality.patrol.adapter.MainAdapter;
 import ca.itquality.patrol.adapter.data.ListItem;
+import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.service.ListenerServiceFromPhone;
 import ca.itquality.patrol.service.SensorsService;
 import ca.itquality.patrol.service.ShakeListenerService;
@@ -193,6 +194,7 @@ public class MainActivity extends WearableActivity {
     }
 
     private void initSensors() {
+        Util.Log("Launch sensors service");
         startService(new Intent(this, SensorsService.class));
     }
 

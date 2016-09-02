@@ -15,9 +15,10 @@ import android.support.v4.app.ActivityCompat;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
+import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.util.DeviceUtil;
 
-public class LocationService extends Service implements GoogleApiClient.ConnectionCallbacks {
+public class BackgroundService extends Service implements GoogleApiClient.ConnectionCallbacks {
 
     // Constants
     private static final long LOCATION_REFRESH_TIME = 1000 * 30;
@@ -35,6 +36,8 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
     @Override
     public void onCreate() {
         super.onCreate();
+        Util.Log("Background service created");
+
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -45,48 +48,54 @@ public class LocationService extends Service implements GoogleApiClient.Connecti
         mGoogleApiClient.connect();
     }
 
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mGoogleApiClient.disconnect();
+    private void getDailySteps() {
+        // TODO:
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        Util.Log("Background service connected");
+        getDailySteps();
+        setLocationListener();
+    }
 
+    private void setLocationListener() {
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME,
-                LOCATION_REFRESH_DISTANCE, mLocationListener);
+                LOCATION_REFRESH_DISTANCE, new LocationListener() {
+                    @Override
+                    public void onLocationChanged(final Location location) {
+                        DeviceUtil.setMyLocation((float) location.getLatitude(),
+                                (float) location.getLongitude());
+
+                    }
+
+                    @Override
+                    public void onStatusChanged(String s, int i, Bundle bundle) {
+                    }
+
+                    @Override
+                    public void onProviderEnabled(String s) {
+                    }
+
+                    @Override
+                    public void onProviderDisabled(String s) {
+                    }
+                });
     }
 
     @Override
     public void onConnectionSuspended(int i) {
     }
 
-    private final LocationListener mLocationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(final Location location) {
-            DeviceUtil.setMyLocation((float) location.getLatitude(),
-                    (float) location.getLongitude());
-
-        }
-
-        @Override
-        public void onStatusChanged(String s, int i, Bundle bundle) {
-        }
-
-        @Override
-        public void onProviderEnabled(String s) {
-        }
-
-        @Override
-        public void onProviderDisabled(String s) {
-        }
-    };
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mGoogleApiClient.disconnect();
+    }
 }

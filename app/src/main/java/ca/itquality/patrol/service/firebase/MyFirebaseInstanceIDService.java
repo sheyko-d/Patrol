@@ -1,4 +1,4 @@
-package ca.itquality.patrol.service;
+package ca.itquality.patrol.service.firebase;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.iid.FirebaseInstanceIdService;

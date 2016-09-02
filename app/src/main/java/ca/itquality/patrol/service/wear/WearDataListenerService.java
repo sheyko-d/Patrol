@@ -1,4 +1,4 @@
-package ca.itquality.patrol.service;
+package ca.itquality.patrol.service.wear;
 
 import android.app.Service;
 import android.content.Intent;

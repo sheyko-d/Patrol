@@ -1,4 +1,4 @@
-package ca.itquality.patrol.service;
+package ca.itquality.patrol.service.firebase;
 
 import android.app.Notification;
 import android.app.PendingIntent;
