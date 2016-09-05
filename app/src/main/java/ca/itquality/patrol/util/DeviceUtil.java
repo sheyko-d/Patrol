@@ -29,6 +29,8 @@ public class DeviceUtil {
     private static final String PREF_LAST_MESSAGE_TITLE = "LastMessageTitle";
     private static final String PREF_LAST_MESSAGE_TEXT = "LastMessageText";
     private static final String PREF_QR = "QR";
+    private static final String PREF_SHIFT_TITLE = "ShiftTitle";
+    private static final String PREF_SHIFT_TEXT = "ShiftText";
     public static final int MAP_PADDING = Util.convertDpToPixel(MyApplication.getContext(), 64);
 
     public static boolean isValidEmail(String email) {
@@ -287,5 +289,33 @@ public class DeviceUtil {
             nextShift = assignedShifts.get(0);
         }
         return nextShift;
+    }
+
+    /**
+     * Saves the shift in preferences.
+     */
+    public static void setShift(String shift, String shiftTitle) {
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putString(PREF_SHIFT_TITLE, shift)
+                .putString(PREF_SHIFT_TEXT, shiftTitle)
+                .apply();
+    }
+
+    /**
+     * Retrieves the shift title from preferences.
+     */
+    public static String getShiftTitle() {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getString(PREF_SHIFT_TITLE, MyApplication.getContext()
+                        .getString(R.string.main_shift_title_placeholder));
+    }
+
+    /**
+     * Retrieves the shift text from preferences.
+     */
+    public static String getShift() {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getString(PREF_SHIFT_TEXT, MyApplication.getContext()
+                        .getString(R.string.main_shift_placeholder));
     }
 }

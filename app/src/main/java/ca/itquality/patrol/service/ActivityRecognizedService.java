@@ -10,8 +10,8 @@ import java.util.List;
 
 public class ActivityRecognizedService extends IntentService {
 
-    public static final String INTENT_ACTIVITY_UPDATE = "ca.itquality.patrol.ACTIVITY_UPDATE";
-    public static final String EXTRA_ACTIVITY = "Activity";
+    public static final String ACTIVITY_UPDATE_INTENT = "ca.itquality.patrol.ACTIVITY_UPDATE";
+    public static final String ACTIVITY_EXTRA = "Activity";
 
     public ActivityRecognizedService() {
         super("ActivityRecognizedService");
@@ -55,7 +55,7 @@ public class ActivityRecognizedService extends IntentService {
                 }
             }
         }
-        sendBroadcast(new Intent(INTENT_ACTIVITY_UPDATE).putExtra(EXTRA_ACTIVITY,
+        sendBroadcast(new Intent(ACTIVITY_UPDATE_INTENT).putExtra(ACTIVITY_EXTRA,
                 activityName));
     }
 }

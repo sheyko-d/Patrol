@@ -31,6 +31,11 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
             = "ca.itquality.patrol.LAST_MESSAGE_UPDATE";
     public static final String EXTRA_LAST_MESSAGE_TITLE = "LastMessageTitle";
     public static final String EXTRA_LAST_MESSAGE_TEXT = "LastMessageText";
+    public static final String INTENT_LOCATION_UPDATE = "ca.itquality.patrol.LOCATION_UPDATE";
+    public static final String EXTRA_LOCATION = "Location";
+    public static final String INTENT_SHIFT_UPDATE = "ca.itquality.patrol.SHIFT_UPDATE";
+    public static final String EXTRA_SHIFT_TITLE = "ShiftTitle";
+    public static final String EXTRA_SHIFT = "Shift";
 
     private GoogleApiClient mGoogleApiClient;
 
@@ -81,12 +86,19 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
 
                             sendBroadcast(new Intent(MainActivity.INTENT_LOGIN_STATE)
                                     .putExtra(MainActivity.LOGIN_STATE_EXTRA, isLoggedIn));
-                        } else if ((item.getUri().getPath()).
-                                equals(Util.PATH_ACTIVITY)) {
+                        } else if ((item.getUri().getPath()).equals(Util.PATH_ACTIVITY)) {
                             String activity = dataItem.getDataMap().getString(Util.DATA_ACTIVITY);
                             WearUtil.setActivityStatus(activity);
                             sendBroadcast(new Intent(INTENT_ACTIVITY_UPDATE)
                                     .putExtra(EXTRA_ACTIVITY, activity));
+                        } else if ((item.getUri().getPath()).equals(Util.PATH_SHIFT)) {
+                            String shiftTitle = dataItem.getDataMap()
+                                    .getString(Util.DATA_SHIFT_TITLE);
+                            String shift = dataItem.getDataMap().getString(Util.DATA_SHIFT);
+                            WearUtil.setShift(shiftTitle, shift);
+                            sendBroadcast(new Intent(INTENT_SHIFT_UPDATE)
+                                    .putExtra(EXTRA_SHIFT_TITLE, shiftTitle)
+                                    .putExtra(EXTRA_SHIFT, shift));
                         } else if ((item.getUri().getPath()).equals(Util.PATH_NAME)) {
                             String name = dataItem.getDataMap().getString(Util.DATA_NAME);
                             WearUtil.setName(name);
@@ -94,6 +106,8 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                                     .putExtra(EXTRA_NAME, name));
                         } else if ((item.getUri().getPath()).equals(Util.PATH_LAST_MESSAGE)) {
                             parseLastMessage(dataItem);
+                        } else if ((item.getUri().getPath()).equals(Util.PATH_LOCATION)) {
+                            parseLocation(dataItem);
                         }
                     }
                 }
@@ -108,6 +122,14 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
         sendBroadcast(new Intent(INTENT_LAST_MESSAGE_UPDATE)
                 .putExtra(EXTRA_LAST_MESSAGE_TITLE, title)
                 .putExtra(EXTRA_LAST_MESSAGE_TEXT, text));
+    }
+
+    private void parseLocation(DataMapItem dataItem) {
+        Util.Log("received location");
+        String location = dataItem.getDataMap().getString(Util.DATA_LOCATION);
+        WearUtil.setLocation(location);
+        sendBroadcast(new Intent(INTENT_LOCATION_UPDATE)
+                .putExtra(EXTRA_LOCATION, location));
     }
 
     @Override

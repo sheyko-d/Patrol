@@ -32,7 +32,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.text.format.DateUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -71,8 +70,6 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Locale;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -109,6 +106,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private static final String DIALOG_ERROR = "dialog_error";
     public static final String LOCATION_CHANGED_INTENT = "ca.itquality.patrol.LOCATION_CHANGED";
     public static final String LOCATION_ADDRESS_EXTRA = "Address";
+    public static final String SHIFT_CHANGED_INTENT = "ca.itquality.patrol.SHIFT_CHANGED";
+    public static final String SHIFT_TITLE_EXTRA = "ShiftTitle";
+    public static final String SHIFT_EXTRA = "Shift";
 
     // Views
     @Bind(R.id.toolbar)
@@ -129,8 +129,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     TextView mStepsTxt;
     @Bind(R.id.main_activity_txt)
     TextView mActivityTxt;
-    @Bind(R.id.main_floor_txt)
-    TextView mFloorTxt;
+    @Bind(R.id.main_location_txt)
+    TextView mLocationTxt;
     @Bind(R.id.main_qr_txt)
     TextView mQrTxt;
     @Bind(R.id.main_shift_title_txt)
@@ -169,82 +169,29 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         initGoogleClient();
         initSensorData();
         connectToWatch();
-        registerActivityStatusListener();
         initMap();
         startWearDataListenerService();
-        registerIncomingMessagesListener();
-        registerLocationChangedListener();
+        registerListener();
         initShiftTxt();
 
         // TODO Remove showBackupNotification();
     }
 
-    private void registerLocationChangedListener() {
-        registerReceiver(mLocationReceiver, new IntentFilter(LOCATION_CHANGED_INTENT));
+    private void initShiftTxt() {
+        mShiftTitleTxt.setText(DeviceUtil.getShiftTitle());
+        mShiftTxt.setText(DeviceUtil.getShift());
     }
 
-    private BroadcastReceiver mLocationReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String address = intent.getStringExtra(LOCATION_ADDRESS_EXTRA);
-            if (!TextUtils.isEmpty(address)) {
-                mFloorTxt.setText(address);
-            }
-        }
-    };
-
-    private void initShiftTxt() {
-        Calendar calendar = Calendar.getInstance();
-        long currentTime = calendar.getTimeInMillis();
-        calendar.set(Calendar.MILLISECOND, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.HOUR_OF_DAY, 24);
-        calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
-        long weekStartTime = calendar.getTimeInMillis();
-        calendar.add(Calendar.WEEK_OF_MONTH, 1);
-        long nextWeekStartTime = calendar.getTimeInMillis();
-        long timeSinceWeekStart = currentTime - weekStartTime;
-
-        Util.Log(DateUtils.formatDateTime(this, weekStartTime,
-                DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_TIME));
-
-        User.AssignedShift currentShift = DeviceUtil.getCurrentShift(timeSinceWeekStart);
-        User.AssignedShift nextShift = DeviceUtil.getNextShift(timeSinceWeekStart);
-        User.AssignedShift nextWeekShift = DeviceUtil.getNextWeekShift();
-        if (currentShift != null) {
-            // Display the current shift
-            if (currentShift.getName().toLowerCase(Locale.getDefault()).contains("shift")) {
-                mShiftTitleTxt.setText(currentShift.getName());
-            } else {
-                mShiftTitleTxt.setText(getString(R.string.main_shift, currentShift.getName()));
-            }
-            mShiftTxt.setText(getString(R.string.main_shift_current,
-                    DateUtils.getRelativeTimeSpanString(weekStartTime + currentShift.getEndTime(),
-                            System.currentTimeMillis(), 0).toString()
-                            .toLowerCase(Locale.getDefault())));
-        } else if (nextShift != null) {
-            // Display the next shift in a week
-            if (nextShift.getName().toLowerCase(Locale.getDefault()).contains("shift")) {
-                mShiftTitleTxt.setText(nextShift.getName());
-            } else {
-                mShiftTitleTxt.setText(getString(R.string.main_shift, nextShift.getName()));
-            }
-            mShiftTxt.setText(getString(R.string.main_shift_next,
-                    DateUtils.getRelativeTimeSpanString(weekStartTime + nextShift.getStartTime(),
-                            System.currentTimeMillis(), 0).toString()
-                            .toLowerCase(Locale.getDefault())));
-        } else if (nextWeekShift != null) {
-            // Display the next shift in a week
-            if (nextWeekShift.getName().toLowerCase(Locale.getDefault()).contains("shift")) {
-                mShiftTitleTxt.setText(nextWeekShift.getName());
-            } else {
-                mShiftTitleTxt.setText(getString(R.string.main_shift, nextWeekShift.getName()));
-            }
-            mShiftTxt.setText(getString(R.string.main_shift_next,
-                    DateUtils.getRelativeTimeSpanString(nextWeekStartTime
-                            + nextWeekShift.getStartTime(), System.currentTimeMillis(), 0)
-                            .toString().toLowerCase(Locale.getDefault())));
+    private void updateWearLocation(String address) {
+        try {
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_LOCATION);
+            putDataMapReq.setUrgent();
+            putDataMapReq.getDataMap().putString(Util.DATA_LOCATION, address);
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+            Util.Log("Update wear location: " + address);
+        } catch (Exception e) {
+            // Watch is not supported
         }
     }
 
@@ -270,17 +217,55 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         notificationManager.notify(3, notification);
     }
 
-    private void registerIncomingMessagesListener() {
-        IntentFilter intentFilter = new IntentFilter(INCOMING_MESSAGE_INTENT);
-        registerReceiver(mMessagesReceiver, intentFilter);
+    private void registerListener() {
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(INCOMING_MESSAGE_INTENT);
+        intentFilter.addAction(LOCATION_CHANGED_INTENT);
+        intentFilter.addAction(SHIFT_CHANGED_INTENT);
+        intentFilter.addAction(ActivityRecognizedService.ACTIVITY_UPDATE_INTENT);
+        registerReceiver(mReceiver, intentFilter);
     }
 
-    private BroadcastReceiver mMessagesReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            loadUnreadMessages();
+            if (intent.getAction().equals(INCOMING_MESSAGE_INTENT)) {
+                loadUnreadMessages();
+            } else if (intent.getAction().equals(LOCATION_CHANGED_INTENT)) {
+                String address = intent.getStringExtra(LOCATION_ADDRESS_EXTRA);
+                if (!TextUtils.isEmpty(address)) {
+                    mLocationTxt.setText(address);
+                    updateWearLocation(address);
+                }
+            } else if (intent.getAction().equals(SHIFT_CHANGED_INTENT)) {
+                String shiftTitle = intent.getStringExtra(SHIFT_TITLE_EXTRA);
+                String shift = intent.getStringExtra(SHIFT_EXTRA);
+                mShiftTitleTxt.setText(shiftTitle);
+                mShiftTxt.setText(shift);
+                DeviceUtil.setShift(shiftTitle, shift);
+                updateWearShift(shiftTitle, shift);
+            } else if (intent.getAction().equals
+                    (ActivityRecognizedService.ACTIVITY_UPDATE_INTENT)) {
+                String activity = intent.getStringExtra(ActivityRecognizedService.ACTIVITY_EXTRA);
+                updateWearActivityStatus(activity);
+                DeviceUtil.setActivity(activity);
+                mActivityTxt.setText(activity);
+            }
         }
     };
+
+    private void updateWearShift(String shiftTitle, String shift) {
+        try {
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_SHIFT);
+            putDataMapReq.setUrgent();
+            putDataMapReq.getDataMap().putString(Util.DATA_SHIFT_TITLE, shiftTitle);
+            putDataMapReq.getDataMap().putString(Util.DATA_SHIFT, shift);
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        } catch (Exception e) {
+            // Watch is not supported
+        }
+    }
 
     private void startBackgroundService() {
         Util.Log("Will start background service");
@@ -588,7 +573,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         if (mSupportsWatch) {
             connectToWatch();
         }
-        registerActivityStatusListener();
         loadUnreadMessages();
     }
 
@@ -697,23 +681,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
     }
 
-    private void registerActivityStatusListener() {
-        IntentFilter intentFilter = new IntentFilter
-                (ActivityRecognizedService.INTENT_ACTIVITY_UPDATE);
-        registerReceiver(mActivityStatusReceiver, intentFilter);
-    }
-
-    private BroadcastReceiver mActivityStatusReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String activity = intent.getStringExtra(ActivityRecognizedService.EXTRA_ACTIVITY);
-            updateWearActivityStatus(activity);
-            DeviceUtil.setActivity(activity);
-            mActivityTxt.setText(activity);
-        }
-    };
-
-
     private void updateWearActivityStatus(final String activity) {
         try {
             PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_ACTIVITY);
@@ -804,19 +771,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onDestroy() {
         try {
-            unregisterReceiver(mActivityStatusReceiver);
+            unregisterReceiver(mReceiver);
         } catch (Exception e) {
             // Receiver wasn't registered
-        }
-        try {
-            unregisterReceiver(mMessagesReceiver);
-        } catch (Exception e) {
-            // Received wasn't registered
-        }
-        try {
-            unregisterReceiver(mLocationReceiver);
-        } catch (Exception e) {
-            // Received wasn't registered
         }
         super.onDestroy();
     }

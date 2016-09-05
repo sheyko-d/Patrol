@@ -27,6 +27,11 @@ public class Util {
     public static final String PATH_LAST_MESSAGE = "/last_message";
     public static final String DATA_LAST_MESSAGE_TITLE = "LastMessageTitle";
     public static final String DATA_LAST_MESSAGE_TEXT = "LastMessageText";
+    public static final String PATH_LOCATION = "/location";
+    public static final String DATA_LOCATION = "Location";
+    public static final String PATH_SHIFT = "/shift";
+    public static final String DATA_SHIFT_TITLE = "ShiftTitle";
+    public static final String DATA_SHIFT = "Shift";
     private static final int DAY_DURATION = 1000 * 60 * 60 * 24;
 
     /**

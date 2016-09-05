@@ -22,19 +22,22 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
     // Constants
     private final static int POS_ALERT = 0;
     private final static int POS_MESSAGES = 1;
-    private final static int POS_ACTIVITY = 2;
-    private final static int POS_STEPS = 3;
-    private final static int POS_HEART_RATE = 4;
-    private final static int POS_FLOOR = 5;
+    private final static int POS_SHIFT = 2;
+    private final static int POS_ACTIVITY = 3;
+    private final static int POS_STEPS = 4;
+    private final static int POS_HEART_RATE = 5;
+    private final static int POS_LOCATION = 6;
 
     // Usual variables
     private ArrayList<ListItem> mItems;
     private String mLastMessageTitleText;
     private String mLastMessageText;
+    private String mShiftTitle;
+    private String mShift;
     private String mActivityStatus;
     private Integer mStepsCount;
     private Integer mHeartRate;
-    private Integer mFloorNumber;
+    private String mLocation;
     private final Context mContext;
 
     public MainAdapter(Context context, ArrayList<ListItem> items) {
@@ -57,6 +60,11 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
         } else if (position == POS_MESSAGES) {
             holder.titleTxt.setText(mLastMessageTitleText);
             holder.valueTxt.setText(TextUtils.isEmpty(mLastMessageText) ? "—" : mLastMessageText);
+        } else if (position == POS_SHIFT) {
+            holder.titleTxt.setText(TextUtils.isEmpty(mShiftTitle)
+                    ? mContext.getString(R.string.main_shift_title_placeholder) : mShiftTitle);
+            holder.valueTxt.setText(TextUtils.isEmpty(mShift)
+                    ? mContext.getString(R.string.main_shift_placeholder) : mShift);
         } else if (position == POS_ACTIVITY) {
             holder.valueTxt.setText(TextUtils.isEmpty(mActivityStatus) ? "—" : mActivityStatus);
         } else if (position == POS_STEPS) {
@@ -64,8 +72,8 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
         } else if (position == POS_HEART_RATE) {
             holder.valueTxt.setText(mHeartRate == null ? "—" : mContext.getString
                     (R.string.main_heart_rate, mHeartRate));
-        } else if (position == POS_FLOOR) {
-            holder.valueTxt.setText("Not implemented yet");
+        } else if (position == POS_LOCATION) {
+            holder.valueTxt.setText(TextUtils.isEmpty(mLocation) ? "—" : mLocation);
         }
         holder.img.setImageResource(item.getImage());
         holder.img.setBackgroundResource(item.getBackground());
@@ -113,8 +121,14 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.ViewHolder> {
         notifyItemChanged(POS_HEART_RATE);
     }
 
-    public void updateFloorNumber(Integer floorNumber) {
-        mFloorNumber = floorNumber;
-        notifyItemChanged(POS_FLOOR);
+    public void updateLocation(String location) {
+        mLocation = location;
+        notifyItemChanged(POS_LOCATION);
+    }
+
+    public void updateShift(String shiftTitle, String shift) {
+        mShiftTitle = shiftTitle;
+        mShift = shift;
+        notifyItemChanged(POS_SHIFT);
     }
 }

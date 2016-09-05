@@ -10,19 +10,25 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.text.TextUtils;
+import android.text.format.DateUtils;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
 import ca.itquality.patrol.MainActivity;
+import ca.itquality.patrol.R;
 import ca.itquality.patrol.library.util.Util;
+import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.util.DeviceUtil;
 
 public class BackgroundService extends Service implements GoogleApiClient.ConnectionCallbacks {
@@ -30,9 +36,11 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     // Constants
     private static final long LOCATION_REFRESH_TIME = 1000 * 30;
     private static final float LOCATION_REFRESH_DISTANCE = 0;
+    private static final long SHIFT_UPDATE_INTERVAL = 60 * 1000;
 
     // Usual variables
     private GoogleApiClient mGoogleApiClient;
+    private Handler mHandler = new Handler();
 
     @Nullable
     @Override
@@ -43,8 +51,6 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     @Override
     public void onCreate() {
         super.onCreate();
-        Util.Log("Background service created");
-
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -53,6 +59,81 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                     .build();
         }
         mGoogleApiClient.connect();
+
+        startShiftUpdateTask();
+    }
+
+    private void startShiftUpdateTask() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                updateShift();
+                mHandler.postDelayed(this, SHIFT_UPDATE_INTERVAL);
+            }
+        });
+    }
+
+    private void updateShift() {
+        Calendar calendar = Calendar.getInstance();
+        long currentTime = calendar.getTimeInMillis();
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.HOUR_OF_DAY, 24);
+        calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
+        long weekStartTime = calendar.getTimeInMillis();
+        calendar.add(Calendar.WEEK_OF_MONTH, 1);
+        long nextWeekStartTime = calendar.getTimeInMillis();
+        long timeSinceWeekStart = currentTime - weekStartTime;
+
+        Util.Log(DateUtils.formatDateTime(this, weekStartTime,
+                DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_TIME));
+
+        User.AssignedShift currentShift = DeviceUtil.getCurrentShift(timeSinceWeekStart);
+        User.AssignedShift nextShift = DeviceUtil.getNextShift(timeSinceWeekStart);
+        User.AssignedShift nextWeekShift = DeviceUtil.getNextWeekShift();
+
+        String shiftTitleTxt = null;
+        String shiftTxt = null;
+        if (currentShift != null) {
+            // Display the current shift
+            if (currentShift.getName().toLowerCase(Locale.getDefault()).contains("shift")) {
+                shiftTitleTxt = currentShift.getName();
+            } else {
+                shiftTitleTxt = getString(R.string.main_shift, currentShift.getName());
+            }
+            shiftTxt = getString(R.string.main_shift_current,
+                    DateUtils.getRelativeTimeSpanString(weekStartTime + currentShift.getEndTime(),
+                            System.currentTimeMillis(), 0).toString()
+                            .toLowerCase(Locale.getDefault()));
+        } else if (nextShift != null) {
+            // Display the next shift in a week
+            if (nextShift.getName().toLowerCase(Locale.getDefault()).contains("shift")) {
+                shiftTitleTxt = nextShift.getName();
+            } else {
+                shiftTitleTxt = getString(R.string.main_shift, nextShift.getName());
+            }
+            shiftTxt = getString(R.string.main_shift_next,
+                    DateUtils.getRelativeTimeSpanString(weekStartTime + nextShift.getStartTime(),
+                            System.currentTimeMillis(), 0).toString()
+                            .toLowerCase(Locale.getDefault()));
+        } else if (nextWeekShift != null) {
+            // Display the next shift in a week
+            if (nextWeekShift.getName().toLowerCase(Locale.getDefault()).contains("shift")) {
+                shiftTitleTxt = nextWeekShift.getName();
+            } else {
+                shiftTitleTxt = getString(R.string.main_shift, nextWeekShift.getName());
+            }
+            shiftTxt = getString(R.string.main_shift_next,
+                    DateUtils.getRelativeTimeSpanString(nextWeekStartTime
+                            + nextWeekShift.getStartTime(), System.currentTimeMillis(), 0)
+                            .toString().toLowerCase(Locale.getDefault()));
+        }
+        if (!TextUtils.isEmpty(shiftTitleTxt) && !TextUtils.isEmpty(shiftTxt)) {
+            sendBroadcast(new Intent(MainActivity.SHIFT_CHANGED_INTENT)
+                    .putExtra(MainActivity.SHIFT_TITLE_EXTRA, shiftTitleTxt)
+                    .putExtra(MainActivity.SHIFT_EXTRA, shiftTxt));
+        }
     }
 
     private void getDailySteps() {
@@ -61,7 +142,6 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Util.Log("Background service connected");
         getDailySteps();
         setLocationListener();
     }

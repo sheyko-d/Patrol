@@ -5,7 +5,10 @@ import android.preference.PreferenceManager;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+import ca.itquality.patrol.R;
 import ca.itquality.patrol.library.util.app.MyApplication;
+
+import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 
 /**
  * Helper class.
@@ -19,6 +22,9 @@ public class WearUtil {
     private static final String PREF_NAME = "Name";
     private static final String PREF_LAST_MESSAGE_TITLE = "LastMessageTitle";
     private static final String PREF_LAST_MESSAGE_TEXT = "LastMessageText";
+    private static final String PREF_LOCATION = "Location";
+    private static final String PREF_SHIFT_TITLE = "ShiftTitle";
+    private static final String PREF_SHIFT_TEXT = "ShiftText";
 
     /**
      * Saves an activity status in shared preferences.
@@ -86,5 +92,50 @@ public class WearUtil {
     public static String getLastMessageText() {
         return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_LAST_MESSAGE_TEXT, "—");
+    }
+
+    /**
+     * Saves the location in preferences.
+     */
+    public static void setLocation(String location) {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putString(PREF_LOCATION, location)
+                .apply();
+    }
+
+    /**
+     * Retrieves the location from preferences.
+     */
+    public static String getLocation() {
+        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+                .getString(PREF_LOCATION, "—");
+    }
+
+    /**
+     * Saves the shift in preferences.
+     */
+    public static void setShift(String shift, String shiftTitle) {
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putString(PREF_SHIFT_TITLE, shift)
+                .putString(PREF_SHIFT_TEXT, shiftTitle)
+                .apply();
+    }
+
+    /**
+     * Retrieves the shift title from preferences.
+     */
+    public static String getShiftTitle() {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getString(PREF_SHIFT_TITLE, MyApplication.getContext()
+                        .getString(R.string.main_shift_title_placeholder));
+    }
+
+    /**
+     * Retrieves the shift text from preferences.
+     */
+    public static String getShift() {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getString(PREF_SHIFT_TEXT, MyApplication.getContext()
+                        .getString(R.string.main_shift_placeholder));
     }
 }

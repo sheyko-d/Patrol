@@ -79,6 +79,7 @@ public class MainActivity extends WearableActivity {
         initName();
         initActivity();
         initLastMessage();
+        initLastLocation();
         initPermissions();
         registerWearListener();
         registerShakeListener();
@@ -92,18 +93,23 @@ public class MainActivity extends WearableActivity {
         mAdapter.updateLastMessage(WearUtil.getLastMessageTitle(), WearUtil.getLastMessageText());
     }
 
+    private void initLastLocation() {
+        mAdapter.updateLocation(WearUtil.getLocation());
+    }
+
     private void initName() {
         mNameTxt.setText(TextUtils.isEmpty(WearUtil.getName()) ? "—" : WearUtil.getName());
     }
 
     private void initRecycler() {
         mItems.add(new ListItem("Alert guards", R.drawable.alert, R.drawable.primary_circle_bg));
-        mItems.add(new ListItem("1 new message", R.drawable.messages, R.drawable.blue_circle_bg));
+        mItems.add(new ListItem("No new messages", R.drawable.messages, R.drawable.blue_circle_bg));
+        mItems.add(new ListItem("No shifts found", R.drawable.shift, R.drawable.teal_circle_bg));
         mItems.add(new ListItem("Activity", R.drawable.activity_walking,
                 R.drawable.green_circle_bg));
         mItems.add(new ListItem("Steps", R.drawable.steps, R.drawable.orange_circle_bg));
         mItems.add(new ListItem("Heart rate", R.drawable.heart_rate, R.drawable.red_circle_bg));
-        mItems.add(new ListItem("Floor", R.drawable.location, R.drawable.purple_circle_bg));
+        mItems.add(new ListItem("Location", R.drawable.location, R.drawable.purple_circle_bg));
 
         mRecycler.setLayoutManager(new LinearLayoutManager(this));
         mRecycler.setHasFixedSize(true);
@@ -126,9 +132,11 @@ public class MainActivity extends WearableActivity {
 
     private void registerWearListener() {
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(ListenerServiceFromPhone.INTENT_ACTIVITY_UPDATE);
         intentFilter.addAction(ListenerServiceFromPhone.INTENT_NAME_UPDATE);
+        intentFilter.addAction(ListenerServiceFromPhone.INTENT_ACTIVITY_UPDATE);
+        intentFilter.addAction(ListenerServiceFromPhone.INTENT_SHIFT_UPDATE);
         intentFilter.addAction(ListenerServiceFromPhone.INTENT_LAST_MESSAGE_UPDATE);
+        intentFilter.addAction(ListenerServiceFromPhone.INTENT_LOCATION_UPDATE);
         intentFilter.addAction(SensorsService.INTENT_HEART_RATE);
         intentFilter.addAction(SensorsService.INTENT_STEPS);
         intentFilter.addAction(INTENT_LOGIN_STATE);
@@ -148,17 +156,24 @@ public class MainActivity extends WearableActivity {
                     finish();
                     startActivity(new Intent(MainActivity.this, LaunchActivity.class));
                 }
-            } else if (intent.getAction().equals(ListenerServiceFromPhone.INTENT_ACTIVITY_UPDATE)) {
-                mAdapter.updateActivityStatus(intent.getStringExtra(ListenerServiceFromPhone
-                        .EXTRA_ACTIVITY));
             } else if (intent.getAction().equals(ListenerServiceFromPhone.INTENT_NAME_UPDATE)) {
                 mNameTxt.setText(intent.getStringExtra(ListenerServiceFromPhone
                         .EXTRA_NAME));
+            } else if (intent.getAction().equals(ListenerServiceFromPhone.INTENT_ACTIVITY_UPDATE)) {
+                mAdapter.updateActivityStatus(intent.getStringExtra(ListenerServiceFromPhone
+                        .EXTRA_ACTIVITY));
+            } else if (intent.getAction().equals(ListenerServiceFromPhone.INTENT_SHIFT_UPDATE)) {
+                mAdapter.updateShift(intent.getStringExtra(ListenerServiceFromPhone
+                        .EXTRA_SHIFT_TITLE), intent.getStringExtra(ListenerServiceFromPhone
+                        .EXTRA_SHIFT));
             } else if (intent.getAction().equals
                     (ListenerServiceFromPhone.INTENT_LAST_MESSAGE_UPDATE)) {
                 mAdapter.updateLastMessage(intent.getStringExtra(ListenerServiceFromPhone
                         .EXTRA_LAST_MESSAGE_TITLE), intent.getStringExtra(ListenerServiceFromPhone
                         .EXTRA_LAST_MESSAGE_TEXT));
+            } else if (intent.getAction().equals(ListenerServiceFromPhone.INTENT_LOCATION_UPDATE)) {
+                mAdapter.updateLocation(intent.getStringExtra(ListenerServiceFromPhone
+                        .EXTRA_LOCATION));
             } else if (intent.getAction().equals(SensorsService.INTENT_HEART_RATE)) {
                 mAdapter.updateHeartRate(intent.getIntExtra(SensorsService.EXTRA_HEART_RATE, 0));
             } else if (intent.getAction().equals(SensorsService.INTENT_STEPS)) {
