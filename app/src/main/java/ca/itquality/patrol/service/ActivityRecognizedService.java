@@ -2,6 +2,7 @@ package ca.itquality.patrol.service;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.text.TextUtils;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
@@ -55,7 +56,12 @@ public class ActivityRecognizedService extends IntentService {
                 }
             }
         }
-        sendBroadcast(new Intent(ACTIVITY_UPDATE_INTENT).putExtra(ACTIVITY_EXTRA,
-                activityName));
+
+        if (!TextUtils.isEmpty(activityName)) {
+            sendBroadcast(new Intent(ACTIVITY_UPDATE_INTENT).putExtra(ACTIVITY_EXTRA,
+                    activityName));
+
+            BackgroundService.updateWearActivityStatus(activityName);
+        }
     }
 }

@@ -187,19 +187,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mShiftTxt.setText(DeviceUtil.getShift());
     }
 
-    private void updateWearLocation(String address) {
-        try {
-            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_LOCATION);
-            putDataMapReq.setUrgent();
-            putDataMapReq.getDataMap().putString(Util.DATA_LOCATION, address);
-            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
-            Util.Log("Update wear location: " + address);
-        } catch (Exception e) {
-            // Watch is not supported
-        }
-    }
-
     private void startWearDataListenerService() {
         startService(new Intent(this, WearDataListenerService.class));
     }
@@ -239,57 +226,25 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 loadUnreadMessages();
             } else if (intent.getAction().equals(LOCATION_CHANGED_INTENT)) {
                 String address = intent.getStringExtra(LOCATION_ADDRESS_EXTRA);
-                if (!TextUtils.isEmpty(address)) {
                     mLocationTxt.setText(address);
-                    updateWearLocation(address);
-                }
             } else if (intent.getAction().equals(SHIFT_CHANGED_INTENT)) {
                 String shiftTitle = intent.getStringExtra(SHIFT_TITLE_EXTRA);
                 String shift = intent.getStringExtra(SHIFT_EXTRA);
                 mShiftTitleTxt.setText(shiftTitle);
                 mShiftTxt.setText(shift);
                 DeviceUtil.setShift(shiftTitle, shift);
-                updateWearShift(shiftTitle, shift);
             } else if (intent.getAction().equals
                     (ActivityRecognizedService.ACTIVITY_UPDATE_INTENT)) {
                 String activity = intent.getStringExtra(ActivityRecognizedService.ACTIVITY_EXTRA);
-                updateWearActivityStatus(activity);
                 DeviceUtil.setActivity(activity);
                 mActivityTxt.setText(activity);
             } else if (intent.getAction().equals(STEPS_CHANGED_INTENT)) {
                 int steps = intent.getIntExtra(STEPS_EXTRA, 0);
-                updateWearSteps(steps);
                 DeviceUtil.setSteps(steps);
                 mStepsTxt.setText(String.valueOf(steps));
             }
         }
     };
-
-    private void updateWearShift(String shiftTitle, String shift) {
-        try {
-            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_SHIFT);
-            putDataMapReq.setUrgent();
-            putDataMapReq.getDataMap().putString(Util.DATA_SHIFT_TITLE, shiftTitle);
-            putDataMapReq.getDataMap().putString(Util.DATA_SHIFT, shift);
-            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
-        } catch (Exception e) {
-            // Watch is not supported
-        }
-    }
-
-    private void updateWearSteps(int steps) {
-        try {
-            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_STEPS);
-            putDataMapReq.setUrgent();
-            putDataMapReq.getDataMap().putInt(Util.DATA_STEPS, steps);
-            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
-            Util.Log("update wear steps: "+steps);
-        } catch (Exception e) {
-            // Watch is not supported
-        }
-    }
 
     private void startBackgroundService() {
         Util.Log("Will start background service");
@@ -509,6 +464,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_NAME);
             putDataMapReq.setUrgent();
             putDataMapReq.getDataMap().putString(Util.DATA_NAME, DeviceUtil.getName());
+            putDataMapReq.getDataMap().putLong(Util.DATA_TIME, System.currentTimeMillis());
             PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
             Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
         } catch (Exception e) {
@@ -655,6 +611,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             putDataMapReq.setUrgent();
             putDataMapReq.getDataMap().putString(Util.DATA_LAST_MESSAGE_TITLE, title);
             putDataMapReq.getDataMap().putString(Util.DATA_LAST_MESSAGE_TEXT, text);
+            putDataMapReq.getDataMap().putLong(Util.DATA_TIME, System.currentTimeMillis());
             PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
             Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
         } catch (Exception e) {
@@ -704,18 +661,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                             }
                         }
                     });
-        } catch (Exception e) {
-            // Watch is not supported
-        }
-    }
-
-    private void updateWearActivityStatus(final String activity) {
-        try {
-            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_ACTIVITY);
-            putDataMapReq.setUrgent();
-            putDataMapReq.getDataMap().putString(Util.DATA_ACTIVITY, activity);
-            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
         } catch (Exception e) {
             // Watch is not supported
         }

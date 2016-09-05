@@ -32,6 +32,7 @@ public class Util {
     public static final String PATH_SHIFT = "/shift";
     public static final String DATA_SHIFT_TITLE = "ShiftTitle";
     public static final String DATA_SHIFT = "Shift";
+    public static final String DATA_TIME = "Time";
     private static final int DAY_DURATION = 1000 * 60 * 60 * 24;
 
     /**

@@ -98,6 +98,7 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                                     .getString(Util.DATA_SHIFT_TITLE);
                             String shift = dataItem.getDataMap().getString(Util.DATA_SHIFT);
                             WearUtil.setShift(shiftTitle, shift);
+                            Util.Log("Received shift: "+shiftTitle+", "+shift);
                             sendBroadcast(new Intent(INTENT_SHIFT_UPDATE)
                                     .putExtra(EXTRA_SHIFT_TITLE, shiftTitle)
                                     .putExtra(EXTRA_SHIFT, shift));

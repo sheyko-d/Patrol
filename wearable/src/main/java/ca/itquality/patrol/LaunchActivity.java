@@ -61,10 +61,10 @@ public class LaunchActivity extends WearableActivity implements GoogleApiClient.
         setContentView(R.layout.activity_launch);
         ButterKnife.bind(this);
 
-        /*initGoogleClient();
+        initGoogleClient();
         updateTime();
         startPhoneListenerService();
-        registerLoginStateListener();*/
+        registerLoginStateListener();
 
 
         // TODO: Improve login listener

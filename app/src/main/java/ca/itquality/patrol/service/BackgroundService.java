@@ -37,6 +37,9 @@ import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DailyTotalResult;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -53,12 +56,13 @@ import ca.itquality.patrol.util.DeviceUtil;
 public class BackgroundService extends Service implements GoogleApiClient.ConnectionCallbacks {
 
     // Constants
+    private static final long STEPS_REFRESH_TIME = 1000 * 60 * 5;
     private static final long LOCATION_REFRESH_TIME = 1000 * 60 * 5;
     private static final float LOCATION_REFRESH_DISTANCE = 0;
     private static final long SHIFT_UPDATE_INTERVAL = 60 * 1000;
 
     // Usual variables
-    private GoogleApiClient mGoogleApiClient;
+    private static GoogleApiClient mGoogleApiClient;
     private Handler mHandler = new Handler();
 
     @Nullable
@@ -74,6 +78,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
+                    .addApi(Wearable.API)
                     .addApi(LocationServices.API)
                     .addApi(Fitness.SENSORS_API)
                     .addApi(Fitness.HISTORY_API)
@@ -112,7 +117,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         SensorRequest request = new SensorRequest.Builder()
                 .setDataSource(dataSource)
                 .setDataType(dataType)
-                .setSamplingRate(3, TimeUnit.SECONDS)
+                .setSamplingRate(STEPS_REFRESH_TIME, TimeUnit.MICROSECONDS)
                 .build();
 
         Fitness.SensorsApi.add(mGoogleApiClient, request, mStepsListener);
@@ -131,6 +136,8 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                             .getValue(Field.FIELD_STEPS).asInt();
                     sendBroadcast(new Intent(MainActivity.STEPS_CHANGED_INTENT)
                             .putExtra(MainActivity.STEPS_EXTRA, steps));
+
+                    updateWearSteps(steps);
                 }
             }
         }
@@ -206,6 +213,22 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
             sendBroadcast(new Intent(MainActivity.SHIFT_CHANGED_INTENT)
                     .putExtra(MainActivity.SHIFT_TITLE_EXTRA, shiftTitleTxt)
                     .putExtra(MainActivity.SHIFT_EXTRA, shiftTxt));
+
+            updateWearShift(shiftTitleTxt, shiftTxt);
+        }
+    }
+
+    private void updateWearLocation(String address) {
+        try {
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_LOCATION);
+            putDataMapReq.setUrgent();
+            putDataMapReq.getDataMap().putString(Util.DATA_LOCATION, address);
+            putDataMapReq.getDataMap().putLong(Util.DATA_TIME, System.currentTimeMillis());
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+            Util.Log("Update wear location: " + address);
+        } catch (Exception e) {
+            // Watch is not supported
         }
     }
 
@@ -277,8 +300,57 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
             for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
                 addressFragments.add(address.getAddressLine(i));
             }
-            sendBroadcast(new Intent(MainActivity.LOCATION_CHANGED_INTENT)
-                    .putExtra(MainActivity.LOCATION_ADDRESS_EXTRA, addressFragments.get(0)));
+
+            String addressTxt = addressFragments.get(0);
+            if (!TextUtils.isEmpty(addressTxt)) {
+                sendBroadcast(new Intent(MainActivity.LOCATION_CHANGED_INTENT)
+                        .putExtra(MainActivity.LOCATION_ADDRESS_EXTRA, addressFragments.get(0)));
+                updateWearLocation(addressTxt);
+            }
+        }
+    }
+
+
+
+    private void updateWearShift(String shiftTitle, String shift) {
+        try {
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_SHIFT);
+            putDataMapReq.setUrgent();
+            putDataMapReq.getDataMap().putString(Util.DATA_SHIFT_TITLE, shiftTitle);
+            putDataMapReq.getDataMap().putString(Util.DATA_SHIFT, shift);
+            putDataMapReq.getDataMap().putLong(Util.DATA_TIME, System.currentTimeMillis());
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Util.Log("update wear shift: "+shift);
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        } catch (Exception e) {
+            // Watch is not supported
+        }
+    }
+
+    private void updateWearSteps(int steps) {
+        try {
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_STEPS);
+            putDataMapReq.setUrgent();
+            putDataMapReq.getDataMap().putInt(Util.DATA_STEPS, steps);
+            putDataMapReq.getDataMap().putLong(Util.DATA_TIME, System.currentTimeMillis());
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+            Util.Log("update wear steps: "+steps);
+        } catch (Exception e) {
+            // Watch is not supported
+        }
+    }
+
+    public static void updateWearActivityStatus(final String activity) {
+        try {
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_ACTIVITY);
+            putDataMapReq.setUrgent();
+            putDataMapReq.getDataMap().putString(Util.DATA_ACTIVITY, activity);
+            putDataMapReq.getDataMap().putLong(Util.DATA_TIME, System.currentTimeMillis());
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        } catch (Exception e) {
+            // Watch is not supported
         }
     }
 
