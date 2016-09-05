@@ -9,6 +9,7 @@ import com.google.android.gms.location.DetectedActivity;
 
 import java.util.List;
 
+
 public class ActivityRecognizedService extends IntentService {
 
     public static final String ACTIVITY_UPDATE_INTENT = "ca.itquality.patrol.ACTIVITY_UPDATE";
@@ -32,7 +33,12 @@ public class ActivityRecognizedService extends IntentService {
 
     private void handleDetectedActivities(List<DetectedActivity> probableActivities) {
         String activityName = null;
+        int maxConfidence = 0;
         for (DetectedActivity activity : probableActivities) {
+            if (activity.getConfidence() <= maxConfidence) continue;
+
+            maxConfidence = activity.getConfidence();
+
             switch (activity.getType()) {
                 case DetectedActivity.IN_VEHICLE: {
                     activityName = "In Vehicle";
