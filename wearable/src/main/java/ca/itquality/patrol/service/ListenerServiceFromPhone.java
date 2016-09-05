@@ -36,6 +36,8 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
     public static final String INTENT_SHIFT_UPDATE = "ca.itquality.patrol.SHIFT_UPDATE";
     public static final String EXTRA_SHIFT_TITLE = "ShiftTitle";
     public static final String EXTRA_SHIFT = "Shift";
+    public static final String INTENT_STEPS_UPDATE = "ca.itquality.patrol.STEPS_UPDATE";
+    public static final String EXTRA_STEPS = "Steps";
 
     private GoogleApiClient mGoogleApiClient;
 
@@ -75,23 +77,23 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
             @Override
             public void onDataChanged(DataEventBuffer dataEventBuffer) {
                 for (DataEvent event : dataEventBuffer) {
+
                     if (event.getType() == DataEvent.TYPE_CHANGED) {
                         DataItem item = event.getDataItem();
+                        Util.Log("Received data: "+item.getUri().getPath());
                         DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
-                        if ((item.getUri().getPath()).
-                                equals(Util.PATH_LOGGED_IN)) {
+                        if (item.getUri().getPath().equals(Util.PATH_LOGGED_IN)) {
                             Boolean isLoggedIn = dataItem.getDataMap().getBoolean
                                     (Util.DATA_LOGGED_IN);
                             WearUtil.setLoggedIn(isLoggedIn);
-
                             sendBroadcast(new Intent(MainActivity.INTENT_LOGIN_STATE)
                                     .putExtra(MainActivity.LOGIN_STATE_EXTRA, isLoggedIn));
-                        } else if ((item.getUri().getPath()).equals(Util.PATH_ACTIVITY)) {
+                        } else if (item.getUri().getPath().equals(Util.PATH_ACTIVITY)) {
                             String activity = dataItem.getDataMap().getString(Util.DATA_ACTIVITY);
                             WearUtil.setActivityStatus(activity);
                             sendBroadcast(new Intent(INTENT_ACTIVITY_UPDATE)
                                     .putExtra(EXTRA_ACTIVITY, activity));
-                        } else if ((item.getUri().getPath()).equals(Util.PATH_SHIFT)) {
+                        } else if (item.getUri().getPath().equals(Util.PATH_SHIFT)) {
                             String shiftTitle = dataItem.getDataMap()
                                     .getString(Util.DATA_SHIFT_TITLE);
                             String shift = dataItem.getDataMap().getString(Util.DATA_SHIFT);
@@ -99,15 +101,17 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                             sendBroadcast(new Intent(INTENT_SHIFT_UPDATE)
                                     .putExtra(EXTRA_SHIFT_TITLE, shiftTitle)
                                     .putExtra(EXTRA_SHIFT, shift));
-                        } else if ((item.getUri().getPath()).equals(Util.PATH_NAME)) {
+                        } else if (item.getUri().getPath().equals(Util.PATH_NAME)) {
                             String name = dataItem.getDataMap().getString(Util.DATA_NAME);
                             WearUtil.setName(name);
                             sendBroadcast(new Intent(INTENT_NAME_UPDATE)
                                     .putExtra(EXTRA_NAME, name));
-                        } else if ((item.getUri().getPath()).equals(Util.PATH_LAST_MESSAGE)) {
+                        } else if (item.getUri().getPath().equals(Util.PATH_LAST_MESSAGE)) {
                             parseLastMessage(dataItem);
-                        } else if ((item.getUri().getPath()).equals(Util.PATH_LOCATION)) {
+                        } else if (item.getUri().getPath().equals(Util.PATH_LOCATION)) {
                             parseLocation(dataItem);
+                        } else if (item.getUri().getPath().equals(Util.PATH_STEPS)) {
+                            parseSteps(dataItem);
                         }
                     }
                 }
@@ -125,11 +129,18 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
     }
 
     private void parseLocation(DataMapItem dataItem) {
-        Util.Log("received location");
         String location = dataItem.getDataMap().getString(Util.DATA_LOCATION);
         WearUtil.setLocation(location);
         sendBroadcast(new Intent(INTENT_LOCATION_UPDATE)
                 .putExtra(EXTRA_LOCATION, location));
+    }
+
+    private void parseSteps(DataMapItem dataItem) {
+        int steps = dataItem.getDataMap().getInt(Util.DATA_STEPS);
+        WearUtil.setSteps(steps);
+        sendBroadcast(new Intent(INTENT_STEPS_UPDATE)
+                .putExtra(EXTRA_STEPS, steps));
+        Util.Log("Received steps: " + steps);
     }
 
     @Override

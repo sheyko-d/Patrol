@@ -25,6 +25,7 @@ public class WearUtil {
     private static final String PREF_LOCATION = "Location";
     private static final String PREF_SHIFT_TITLE = "ShiftTitle";
     private static final String PREF_SHIFT_TEXT = "ShiftText";
+    private static final String PREF_STEPS = "Steps";
 
     /**
      * Saves an activity status in shared preferences.
@@ -137,5 +138,22 @@ public class WearUtil {
         return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_SHIFT_TEXT, MyApplication.getContext()
                         .getString(R.string.main_shift_placeholder));
+    }
+
+    /**
+     * Saves the steps in preferences.
+     */
+    public static void setSteps(int steps) {
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putInt(PREF_STEPS, steps)
+                .apply();
+    }
+
+    /**
+     * Retrieves the steps from preferences.
+     */
+    public static int getSteps() {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getInt(PREF_STEPS, 0);
     }
 }

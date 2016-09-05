@@ -5,6 +5,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
@@ -12,18 +13,36 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
+import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.fitness.Fitness;
+import com.google.android.gms.fitness.data.DataPoint;
+import com.google.android.gms.fitness.data.DataSet;
+import com.google.android.gms.fitness.data.DataSource;
+import com.google.android.gms.fitness.data.DataType;
+import com.google.android.gms.fitness.data.Field;
+import com.google.android.gms.fitness.request.DataSourcesRequest;
+import com.google.android.gms.fitness.request.OnDataPointListener;
+import com.google.android.gms.fitness.request.SensorRequest;
+import com.google.android.gms.fitness.result.DailyTotalResult;
+import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.google.android.gms.location.LocationServices;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import ca.itquality.patrol.MainActivity;
 import ca.itquality.patrol.R;
@@ -34,7 +53,7 @@ import ca.itquality.patrol.util.DeviceUtil;
 public class BackgroundService extends Service implements GoogleApiClient.ConnectionCallbacks {
 
     // Constants
-    private static final long LOCATION_REFRESH_TIME = 1000 * 30;
+    private static final long LOCATION_REFRESH_TIME = 1000 * 60 * 5;
     private static final float LOCATION_REFRESH_DISTANCE = 0;
     private static final long SHIFT_UPDATE_INTERVAL = 60 * 1000;
 
@@ -56,12 +75,66 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
                     .addApi(LocationServices.API)
+                    .addApi(Fitness.SENSORS_API)
+                    .addApi(Fitness.HISTORY_API)
+                    .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
                     .build();
         }
         mGoogleApiClient.connect();
 
         startShiftUpdateTask();
+        listenForSteps();
     }
+
+    private void listenForSteps() {
+        DataSourcesRequest dataSourceRequest = new DataSourcesRequest.Builder()
+                .setDataTypes(DataType.TYPE_STEP_COUNT_CUMULATIVE)
+                .setDataSourceTypes(DataSource.TYPE_RAW)
+                .build();
+
+        ResultCallback<DataSourcesResult> dataSourcesResultCallback
+                = new ResultCallback<DataSourcesResult>() {
+            @Override
+            public void onResult(@NonNull DataSourcesResult dataSourcesResult) {
+                for (DataSource dataSource : dataSourcesResult.getDataSources()) {
+                    if (DataType.TYPE_STEP_COUNT_CUMULATIVE.equals(dataSource.getDataType())) {
+                        registerFitnessDataListener(dataSource, DataType.TYPE_STEP_COUNT_CUMULATIVE);
+                    }
+                }
+            }
+        };
+
+        Fitness.SensorsApi.findDataSources(mGoogleApiClient, dataSourceRequest)
+                .setResultCallback(dataSourcesResultCallback);
+    }
+
+    private void registerFitnessDataListener(DataSource dataSource, DataType dataType) {
+        SensorRequest request = new SensorRequest.Builder()
+                .setDataSource(dataSource)
+                .setDataType(dataType)
+                .setSamplingRate(3, TimeUnit.SECONDS)
+                .build();
+
+        Fitness.SensorsApi.add(mGoogleApiClient, request, mStepsListener);
+    }
+
+    private OnDataPointListener mStepsListener = new OnDataPointListener() {
+        @Override
+        public void onDataPoint(DataPoint dataPoint) {
+            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal
+                    (mGoogleApiClient, DataType.AGGREGATE_STEP_COUNT_DELTA);
+            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
+            if (totalResult.getStatus().isSuccess()) {
+                DataSet totalSet = totalResult.getTotal();
+                if (totalSet != null) {
+                    int steps = totalSet.isEmpty() ? -1 : totalSet.getDataPoints().get(0)
+                            .getValue(Field.FIELD_STEPS).asInt();
+                    sendBroadcast(new Intent(MainActivity.STEPS_CHANGED_INTENT)
+                            .putExtra(MainActivity.STEPS_EXTRA, steps));
+                }
+            }
+        }
+    };
 
     private void startShiftUpdateTask() {
         mHandler.post(new Runnable() {
@@ -153,8 +226,10 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                 Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, LOCATION_REFRESH_TIME,
-                LOCATION_REFRESH_DISTANCE, new LocationListener() {
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE);
+        locationManager.requestLocationUpdates(locationManager.getBestProvider(criteria, true),
+                LOCATION_REFRESH_TIME, LOCATION_REFRESH_DISTANCE, new LocationListener() {
                     @Override
                     public void onLocationChanged(final Location location) {
                         DeviceUtil.setMyLocation((float) location.getLatitude(),
@@ -213,7 +288,19 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
 
     @Override
     public void onDestroy() {
+        Fitness.SensorsApi.remove(mGoogleApiClient, mStepsListener)
+                .setResultCallback(new ResultCallback<Status>() {
+                    @Override
+                    public void onResult(@NonNull Status status) {
+                        if (status.isSuccess()) {
+                            try {
+                                mGoogleApiClient.disconnect();
+                            } catch (Exception e) {
+                                // Google client is already destroyed
+                            }
+                        }
+                    }
+                });
         super.onDestroy();
-        mGoogleApiClient.disconnect();
     }
 }

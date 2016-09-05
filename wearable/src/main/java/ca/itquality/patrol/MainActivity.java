@@ -81,8 +81,13 @@ public class MainActivity extends WearableActivity {
         initLastMessage();
         initLastLocation();
         initPermissions();
+        initSteps();
         registerWearListener();
         registerShakeListener();
+    }
+
+    private void initSteps() {
+        mAdapter.updateStepsCount(WearUtil.getSteps());
     }
 
     private void registerShakeListener() {
@@ -106,7 +111,7 @@ public class MainActivity extends WearableActivity {
         mItems.add(new ListItem("No new messages", R.drawable.messages, R.drawable.blue_circle_bg));
         mItems.add(new ListItem("No shifts found", R.drawable.shift, R.drawable.teal_circle_bg));
         mItems.add(new ListItem("Activity", R.drawable.activity_walking,
-                R.drawable.green_circle_bg));
+                R.drawable.yellow_circle_bg));
         mItems.add(new ListItem("Steps", R.drawable.steps, R.drawable.orange_circle_bg));
         mItems.add(new ListItem("Heart rate", R.drawable.heart_rate, R.drawable.red_circle_bg));
         mItems.add(new ListItem("Location", R.drawable.location, R.drawable.purple_circle_bg));
@@ -137,8 +142,8 @@ public class MainActivity extends WearableActivity {
         intentFilter.addAction(ListenerServiceFromPhone.INTENT_SHIFT_UPDATE);
         intentFilter.addAction(ListenerServiceFromPhone.INTENT_LAST_MESSAGE_UPDATE);
         intentFilter.addAction(ListenerServiceFromPhone.INTENT_LOCATION_UPDATE);
+        intentFilter.addAction(ListenerServiceFromPhone.INTENT_STEPS_UPDATE);
         intentFilter.addAction(SensorsService.INTENT_HEART_RATE);
-        intentFilter.addAction(SensorsService.INTENT_STEPS);
         intentFilter.addAction(INTENT_LOGIN_STATE);
         registerReceiver(mReceiver, intentFilter);
     }
@@ -176,8 +181,9 @@ public class MainActivity extends WearableActivity {
                         .EXTRA_LOCATION));
             } else if (intent.getAction().equals(SensorsService.INTENT_HEART_RATE)) {
                 mAdapter.updateHeartRate(intent.getIntExtra(SensorsService.EXTRA_HEART_RATE, 0));
-            } else if (intent.getAction().equals(SensorsService.INTENT_STEPS)) {
-                mAdapter.updateStepsCount(intent.getIntExtra(SensorsService.EXTRA_STEPS, 0));
+            } else if (intent.getAction().equals(ListenerServiceFromPhone.INTENT_STEPS_UPDATE)) {
+                mAdapter.updateStepsCount(intent.getIntExtra(ListenerServiceFromPhone.EXTRA_STEPS,
+                        0));
             }
         }
     };

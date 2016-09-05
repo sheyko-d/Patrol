@@ -43,16 +43,14 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
 
     // Constants
     private static final int NOTIFICATION_ID_BACKUP = 0;
-    private static final int HEART_RATE_MEASURE_INTERVAL = 1000;//
-    private static final int HEART_RATE_MIN_UPLOAD_COUNT = 6;
+    private static final int HEART_RATE_MEASURE_INTERVAL = 1000*60;
+    private static final int HEART_RATE_MIN_UPLOAD_COUNT = 5;
     private static final int BACKUP_DISMISS_DURATION = 10;
     private static final int SECOND_DURATION = 1000;
     private static final int HEART_RATE_MAX_BACKUP = 120;
     private static final int HEART_RATE_MIN_SLEEP = 60;
     public static final String INTENT_HEART_RATE = "ca.itquality.patrol.HEART_RATE";
     public static final String EXTRA_HEART_RATE = "HeartRate";
-    public static final String INTENT_STEPS = "ca.itquality.patrol.STEPS";
-    public static final String EXTRA_STEPS = "Steps";
 
     // Usual variables
     private GoogleApiClient mGoogleApiClient;
@@ -88,31 +86,6 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
         mSensorManager = ((SensorManager) getSystemService(SENSOR_SERVICE));
 
         setHeartRateListener();
-        setStepsListener();
-    }
-
-    private void setStepsListener() {
-        Sensor stepCounterSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
-        mSensorManager.registerListener(new SensorEventListener() {
-            @Override
-            public void onSensorChanged(SensorEvent event) {
-                int steps = (int) event.values[0];
-                updateStepsOnDevice(steps);
-                //TODO: mAdapter.updateStepsCount(steps);
-            }
-
-            private void updateStepsOnDevice(int steps) {
-                PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_STEPS);
-                putDataMapReq.setUrgent();
-                putDataMapReq.getDataMap().putInt(Util.DATA_STEPS, steps);
-                PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-                Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
-            }
-
-            @Override
-            public void onAccuracyChanged(Sensor sensor, int accuracy) {
-            }
-        }, stepCounterSensor, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     private void setHeartRateListener() {
@@ -126,8 +99,6 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
                 if (event.values[0] != 0) {
                     int heartRate = (int) event.values[0];
 
-                    Util.Log("heart rate changed: " + heartRate);
-                    //TODO:mAdapter.updateHeartRate((int) event.values[0]);
                     sendBroadcast(new Intent(INTENT_HEART_RATE).putExtra(EXTRA_HEART_RATE,
                             heartRate));
                     mSensorManager.unregisterListener(this, heartRateSensor);
@@ -161,7 +132,6 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
                     PutDataMapRequest putDataMapReq = PutDataMapRequest.create
                             (Util.PATH_HEART_RATE_HISTORY);
                     putDataMapReq.setUrgent();
-                    Util.Log("send data: " + parseJsonArray(heartRateValues).toString());
                     putDataMapReq.getDataMap().putString(Util.DATA_HEART_RATE_VALUES,
                             parseJsonArray(heartRateValues).toString());
                     PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();

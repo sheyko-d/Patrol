@@ -44,8 +44,11 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Scope;
+import com.google.android.gms.fitness.Fitness;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
@@ -106,6 +109,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private static final String DIALOG_ERROR = "dialog_error";
     public static final String LOCATION_CHANGED_INTENT = "ca.itquality.patrol.LOCATION_CHANGED";
     public static final String LOCATION_ADDRESS_EXTRA = "Address";
+    public static final String STEPS_CHANGED_INTENT = "ca.itquality.patrol.STEPS_CHANGED";
+    public static final String STEPS_EXTRA = "STEPS";
     public static final String SHIFT_CHANGED_INTENT = "ca.itquality.patrol.SHIFT_CHANGED";
     public static final String SHIFT_TITLE_EXTRA = "ShiftTitle";
     public static final String SHIFT_EXTRA = "Shift";
@@ -222,6 +227,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         intentFilter.addAction(INCOMING_MESSAGE_INTENT);
         intentFilter.addAction(LOCATION_CHANGED_INTENT);
         intentFilter.addAction(SHIFT_CHANGED_INTENT);
+        intentFilter.addAction(STEPS_CHANGED_INTENT);
         intentFilter.addAction(ActivityRecognizedService.ACTIVITY_UPDATE_INTENT);
         registerReceiver(mReceiver, intentFilter);
     }
@@ -250,6 +256,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 updateWearActivityStatus(activity);
                 DeviceUtil.setActivity(activity);
                 mActivityTxt.setText(activity);
+            } else if (intent.getAction().equals(STEPS_CHANGED_INTENT)) {
+                int steps = intent.getIntExtra(STEPS_EXTRA, 0);
+                updateWearSteps(steps);
+                DeviceUtil.setSteps(steps);
+                mStepsTxt.setText(String.valueOf(steps));
             }
         }
     };
@@ -262,6 +273,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             putDataMapReq.getDataMap().putString(Util.DATA_SHIFT, shift);
             PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
             Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        } catch (Exception e) {
+            // Watch is not supported
+        }
+    }
+
+    private void updateWearSteps(int steps) {
+        try {
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_STEPS);
+            putDataMapReq.setUrgent();
+            putDataMapReq.getDataMap().putInt(Util.DATA_STEPS, steps);
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+            Util.Log("update wear steps: "+steps);
         } catch (Exception e) {
             // Watch is not supported
         }
@@ -362,6 +386,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     mAssignedObjectTxt.setText(TextUtils.isEmpty(DeviceUtil
                             .getAssignedObjectId()) ? getString(R.string.drawer_not_assigned)
                             : DeviceUtil.getAssignedObjectTitle());
+
+                    updateWearName();
                 } else {
                     if (response.code() == 403) {
                         finish();
@@ -642,6 +668,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 .addApi(ActivityRecognition.API)
                 .addApi(Wearable.API)
                 .addApi(LocationServices.API)
+                .addApi(Fitness.SENSORS_API)
+                .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
                 .useDefaultAccount()
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -890,11 +918,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     int heartRate = dataItem.getDataMap().getInt(Util.DATA_HEART_RATE);
                     DeviceUtil.setHeartRate(heartRate);
                     mHeartRateTxt.setText(getString(R.string.main_heart_rate, heartRate));
-                } else if ((item.getUri().getPath()).equals(Util.PATH_STEPS)) {
-                    DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
-                    int steps = dataItem.getDataMap().getInt(Util.DATA_STEPS);
-                    DeviceUtil.setSteps(steps);
-                    mStepsTxt.setText(String.valueOf(steps));
                 }
             }
         }
