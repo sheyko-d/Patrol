@@ -100,9 +100,7 @@ public class RegisterActivity extends AppCompatActivity {
                     if (response.isSuccessful()) {
                         User user = response.body();
                         Util.Log("user id: " + user.getUserId());
-                        DeviceUtil.updateProfile(user.getToken(), user.getUserId(),
-                                user.getAssignedObject(), user.getName(), user.getEmail(),
-                                user.getPhoto());
+                        DeviceUtil.updateProfile(user);
                         startActivity(new Intent(RegisterActivity.this, MainActivity.class));
                         finish();
                     } else {

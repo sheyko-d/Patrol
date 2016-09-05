@@ -55,7 +55,7 @@ class SettingsFragment extends PreferenceFragment {
 
     private void initAssignedObjectPreference() {
         sAssignedObjectPreference = findPreference("setting_assigned_object");
-        sAssignedObjectPreference.setSummary(DeviceUtil.getGetAssignedObjectTitle());
+        sAssignedObjectPreference.setSummary(DeviceUtil.getAssignedObjectTitle());
 
         sAssignedObjectPreference.setOnPreferenceClickListener(new Preference
                 .OnPreferenceClickListener() {
@@ -117,6 +117,6 @@ class SettingsFragment extends PreferenceFragment {
 
     private static void setProgressBarVisible(boolean visible) {
         sAssignedObjectPreference.setSummary(visible ? "Loading..."
-                : DeviceUtil.getGetAssignedObjectTitle());
+                : DeviceUtil.getAssignedObjectTitle());
     }
 }

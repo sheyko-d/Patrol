@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -15,6 +17,11 @@ import android.support.v4.app.ActivityCompat;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import ca.itquality.patrol.MainActivity;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.util.DeviceUtil;
 
@@ -73,6 +80,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                         DeviceUtil.setMyLocation((float) location.getLatitude(),
                                 (float) location.getLongitude());
 
+                        getAddress(location);
                     }
 
                     @Override
@@ -87,6 +95,36 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                     public void onProviderDisabled(String s) {
                     }
                 });
+    }
+
+    private void getAddress(Location location) {
+        // Get the location passed to this service through an extra.
+        List<Address> addresses = null;
+
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            addresses = geocoder.getFromLocation(
+                    location.getLatitude(),
+                    location.getLongitude(),
+                    // In this sample, get just a single address.
+                    1);
+        } catch (Exception exception) {
+            //return null;
+        }
+
+        // Handle case where no address was found.
+        if (!(addresses == null || addresses.size() == 0)) {
+            Address address = addresses.get(0);
+            ArrayList<String> addressFragments = new ArrayList<>();
+
+            // Fetch the address lines using getAddressLine,
+            // join them, and send them to the thread.
+            for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
+                addressFragments.add(address.getAddressLine(i));
+            }
+            sendBroadcast(new Intent(MainActivity.LOCATION_CHANGED_INTENT)
+                    .putExtra(MainActivity.LOCATION_ADDRESS_EXTRA, addressFragments.get(0)));
+        }
     }
 
     @Override

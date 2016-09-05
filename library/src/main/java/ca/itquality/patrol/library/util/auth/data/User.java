@@ -2,14 +2,16 @@ package ca.itquality.patrol.library.util.auth.data;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
+
 public class User {
 
     @SerializedName("token")
     private String token;
     @SerializedName("user_id")
     private String userId;
-    @SerializedName("assigned_shift")
-    private AssignedShift assignedShift;
+    @SerializedName("assigned_shifts")
+    private ArrayList<AssignedShift> assignedShifts;
     @SerializedName("assigned_object")
     private AssignedObject assignedObject;
     @SerializedName("name")
@@ -41,8 +43,8 @@ public class User {
         return assignedObject;
     }
 
-    public AssignedShift getAssignedShift() {
-        return assignedShift;
+    public ArrayList<AssignedShift> getAssignedShifts() {
+        return assignedShifts;
     }
 
     public String getName() {
@@ -55,6 +57,11 @@ public class User {
 
     public String getPhoto() {
         return photo;
+    }
+
+    public User setAssignedObject(AssignedObject assignedObject) {
+        this.assignedObject = assignedObject;
+        return this;
     }
 
     public class AssignedObject {
@@ -97,8 +104,6 @@ public class User {
 
         @SerializedName("assigned_shift_id")
         private String assignedShiftId;
-        @SerializedName("assigned_object_id")
-        private String assignedObjectId;
         @SerializedName("name")
         private String name;
         @SerializedName("start_time")
@@ -109,7 +114,6 @@ public class User {
         public AssignedShift(String assignedShiftId, String assignedObjectId, String name,
                              Long startTime, Long endTime) {
             this.assignedShiftId = assignedShiftId;
-            this.assignedObjectId = assignedObjectId;
             this.name = name;
             this.startTime = startTime;
             this.endTime = endTime;
@@ -117,10 +121,6 @@ public class User {
 
         public String getAssignedShiftId() {
             return assignedShiftId;
-        }
-
-        public String getAssignedObjectId() {
-            return assignedObjectId;
         }
 
         public String getName() {

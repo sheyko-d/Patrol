@@ -26,4 +26,5 @@
     <string name="main_alert_desc">I need backup!</string>
     <string name="main_messages_title">%1$d new message(s)!</string>
     <string name="contacts_group_new">New group</string>
+    <string name="main_location">Location</string>
 </resources>

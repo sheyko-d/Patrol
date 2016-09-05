@@ -6,4 +6,9 @@
     <string name="main_qr">Last scanned: %1$s</string>
     <string name="main_value_placeholder">—</string>
     <string name="main_messages_title_placeholder">No new messages</string>
+    <string name="main_shift_title_placeholder">No shifts found</string>
+    <string name="main_shift_placeholder">You\'re not assigned yet</string>
+    <string name="main_shift">%1$s shift</string>
+    <string name="main_shift_current">Ends %1$s</string>
+    <string name="main_shift_next">Starts %1$s</string>
 </resources>

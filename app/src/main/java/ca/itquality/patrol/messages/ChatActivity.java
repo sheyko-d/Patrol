@@ -121,9 +121,9 @@ public class ChatActivity extends AppCompatActivity {
 
     private void loadMessages() {
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<ArrayList<Message>> call = apiService.getMessages(DeviceUtil.getToken(), threadId,
-                new JSONArray(mParticipants).toString(),
-                (mParticipants != null && mParticipants.size() > 1) ? mThreadTitle : null);
+        Call<ArrayList<Message>> call = apiService.getMessages(DeviceUtil.getUser().getToken(),
+                threadId, new JSONArray(mParticipants).toString(), (mParticipants != null
+                        && mParticipants.size() > 1) ? mThreadTitle : null);
         call.enqueue(new Callback<ArrayList<Message>>() {
             @Override
             public void onResponse(Call<ArrayList<Message>> call,
@@ -212,14 +212,15 @@ public class ChatActivity extends AppCompatActivity {
         mEditTxt.setText("");
 
         // Add pending message to the chat
-        mMessages.add(new Message(null, DeviceUtil.getUserId(), DeviceUtil.getName(),
-                DeviceUtil.getPhoto(), message, System.currentTimeMillis(), true));
+        mMessages.add(new Message(null, DeviceUtil.getUser().getUserId(),
+                DeviceUtil.getUser().getName(), DeviceUtil.getUser().getPhoto(), message,
+                System.currentTimeMillis(), true));
         mAdapter.notifyItemInserted(mMessages.size() - 1);
         mRecycler.scrollToPosition(mMessages.size() - 1);
 
         // Upload message to server
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<MessageThread> call = apiService.sendMessage(DeviceUtil.getToken(), threadId,
+        Call<MessageThread> call = apiService.sendMessage(DeviceUtil.getUser().getToken(), threadId,
                 new JSONArray(mParticipants).toString(),
                 (mParticipants != null && mParticipants.size() > 1) ? mThreadTitle : null, message);
         call.enqueue(new Callback<MessageThread>() {

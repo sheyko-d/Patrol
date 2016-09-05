@@ -12,10 +12,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -29,7 +25,6 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
@@ -37,6 +32,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -75,6 +71,8 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Locale;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -109,6 +107,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private static final int PERMISSIONS_REQUEST_CODE = 2;
     private static final int REQUEST_RESOLVE_ERROR = 1001;
     private static final String DIALOG_ERROR = "dialog_error";
+    public static final String LOCATION_CHANGED_INTENT = "ca.itquality.patrol.LOCATION_CHANGED";
+    public static final String LOCATION_ADDRESS_EXTRA = "Address";
 
     // Views
     @Bind(R.id.toolbar)
@@ -133,23 +133,22 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     TextView mFloorTxt;
     @Bind(R.id.main_qr_txt)
     TextView mQrTxt;
+    @Bind(R.id.main_shift_title_txt)
+    TextView mShiftTitleTxt;
+    @Bind(R.id.main_shift_txt)
+    TextView mShiftTxt;
     @Bind(R.id.main_navigation_view)
     NavigationView mNavigationView;
-    @Bind(R.id.main_scroll_view)
-    NestedScrollView mScrollView;
     @Bind(R.id.main_layout)
     View mLayout;
 
     // Usual variables
     private GoogleApiClient mGoogleApiClient;
     private Node mNode;
-    private SensorManager mSensorManager;
     private GoogleMap mMap;
     private TextView mAssignedObjectTxt;
     private Marker mAssignedPlaceMarker;
-    private Float mWeatherPressure;
     private boolean mSupportsWatch = true;
-    private float mCurrentPressure;
     private boolean mResolvingError = false;
 
     @Override
@@ -171,12 +170,82 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         initSensorData();
         connectToWatch();
         registerActivityStatusListener();
-        initFloorListener();
         initMap();
         startWearDataListenerService();
         registerIncomingMessagesListener();
+        registerLocationChangedListener();
+        initShiftTxt();
 
         // TODO Remove showBackupNotification();
+    }
+
+    private void registerLocationChangedListener() {
+        registerReceiver(mLocationReceiver, new IntentFilter(LOCATION_CHANGED_INTENT));
+    }
+
+    private BroadcastReceiver mLocationReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String address = intent.getStringExtra(LOCATION_ADDRESS_EXTRA);
+            if (!TextUtils.isEmpty(address)) {
+                mFloorTxt.setText(address);
+            }
+        }
+    };
+
+    private void initShiftTxt() {
+        Calendar calendar = Calendar.getInstance();
+        long currentTime = calendar.getTimeInMillis();
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.HOUR_OF_DAY, 24);
+        calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
+        long weekStartTime = calendar.getTimeInMillis();
+        calendar.add(Calendar.WEEK_OF_MONTH, 1);
+        long nextWeekStartTime = calendar.getTimeInMillis();
+        long timeSinceWeekStart = currentTime - weekStartTime;
+
+        Util.Log(DateUtils.formatDateTime(this, weekStartTime,
+                DateUtils.FORMAT_SHOW_DATE | DateUtils.FORMAT_SHOW_TIME));
+
+        User.AssignedShift currentShift = DeviceUtil.getCurrentShift(timeSinceWeekStart);
+        User.AssignedShift nextShift = DeviceUtil.getNextShift(timeSinceWeekStart);
+        User.AssignedShift nextWeekShift = DeviceUtil.getNextWeekShift();
+        if (currentShift != null) {
+            // Display the current shift
+            if (currentShift.getName().toLowerCase(Locale.getDefault()).contains("shift")) {
+                mShiftTitleTxt.setText(currentShift.getName());
+            } else {
+                mShiftTitleTxt.setText(getString(R.string.main_shift, currentShift.getName()));
+            }
+            mShiftTxt.setText(getString(R.string.main_shift_current,
+                    DateUtils.getRelativeTimeSpanString(weekStartTime + currentShift.getEndTime(),
+                            System.currentTimeMillis(), 0).toString()
+                            .toLowerCase(Locale.getDefault())));
+        } else if (nextShift != null) {
+            // Display the next shift in a week
+            if (nextShift.getName().toLowerCase(Locale.getDefault()).contains("shift")) {
+                mShiftTitleTxt.setText(nextShift.getName());
+            } else {
+                mShiftTitleTxt.setText(getString(R.string.main_shift, nextShift.getName()));
+            }
+            mShiftTxt.setText(getString(R.string.main_shift_next,
+                    DateUtils.getRelativeTimeSpanString(weekStartTime + nextShift.getStartTime(),
+                            System.currentTimeMillis(), 0).toString()
+                            .toLowerCase(Locale.getDefault())));
+        } else if (nextWeekShift != null) {
+            // Display the next shift in a week
+            if (nextWeekShift.getName().toLowerCase(Locale.getDefault()).contains("shift")) {
+                mShiftTitleTxt.setText(nextWeekShift.getName());
+            } else {
+                mShiftTitleTxt.setText(getString(R.string.main_shift, nextWeekShift.getName()));
+            }
+            mShiftTxt.setText(getString(R.string.main_shift_next,
+                    DateUtils.getRelativeTimeSpanString(nextWeekStartTime
+                            + nextWeekShift.getStartTime(), System.currentTimeMillis(), 0)
+                            .toString().toLowerCase(Locale.getDefault())));
+        }
     }
 
     private void startWearDataListenerService() {
@@ -273,15 +342,15 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private void updateMap() {
         if (mMap != null) {
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(DeviceUtil
-                    .getGetAssignedLatitude(), DeviceUtil.getGetAssignedLongitude()), 17));
+                    .getAssignedObjectLatitude(), DeviceUtil.getAssignedObjectLongitude()), 17));
             if (mAssignedPlaceMarker != null) {
                 mAssignedPlaceMarker.remove();
             }
             mAssignedPlaceMarker = mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(DeviceUtil.getGetAssignedLatitude(),
-                            DeviceUtil.getGetAssignedLongitude()))
+                    .position(new LatLng(DeviceUtil.getAssignedObjectLatitude(),
+                            DeviceUtil.getAssignedObjectLongitude()))
                     .title("My place to guard")
-                    .snippet(DeviceUtil.getGetAssignedObjectTitle()));
+                    .snippet(DeviceUtil.getAssignedObjectTitle()));
         }
     }
 
@@ -296,9 +365,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             public void onResponse(Call<User> call, Response<User> response) {
                 if (response.isSuccessful()) {
                     User user = response.body();
-                    DeviceUtil.updateProfile(user.getToken(), user.getUserId(),
-                            user.getAssignedObject(), user.getName(), user.getEmail(),
-                            user.getPhoto());
+                    DeviceUtil.updateProfile(user);
 
                     if (!DeviceUtil.isAssigned()) {
                         openPlacePicker();
@@ -308,8 +375,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
                     // Update assigned text in navigation drawer
                     mAssignedObjectTxt.setText(TextUtils.isEmpty(DeviceUtil
-                            .getGetAssignedObjectId()) ? getString(R.string.drawer_not_assigned)
-                            : DeviceUtil.getGetAssignedObjectTitle());
+                            .getAssignedObjectId()) ? getString(R.string.drawer_not_assigned)
+                            : DeviceUtil.getAssignedObjectTitle());
                 } else {
                     if (response.code() == 403) {
                         finish();
@@ -465,8 +532,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 (R.id.drawer_assigned_object_txt);
         ImageView photoImg = (ImageView) headerView.findViewById(R.id.drawer_photo_img);
         nameTxt.setText(DeviceUtil.getName());
-        mAssignedObjectTxt.setText(TextUtils.isEmpty(DeviceUtil.getGetAssignedObjectId())
-                ? getString(R.string.drawer_not_assigned) : DeviceUtil.getGetAssignedObjectTitle());
+        mAssignedObjectTxt.setText(TextUtils.isEmpty(DeviceUtil.getAssignedObjectId())
+                ? getString(R.string.drawer_not_assigned) : DeviceUtil.getAssignedObjectTitle());
         Glide.with(this).load(DeviceUtil.getPhoto()).error(R.drawable.avatar_placeholder)
                 .into(photoImg);
 
@@ -584,38 +651,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             // Watch is not supported
         }
     }
-
-    private void initFloorListener() {
-        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        Sensor sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
-        mSensorManager.registerListener(mBarometerListener, sensor,
-                SensorManager.SENSOR_DELAY_GAME);
-    }
-
-    private SensorEventListener mBarometerListener = new SensorEventListener() {
-        @Override
-        public void onSensorChanged(SensorEvent event) {
-            mCurrentPressure = event.values[0];
-            if (mWeatherPressure == null) return;
-            if (DeviceUtil.getOriginFloor() == -1) return;
-
-            /*float weatherCorrection = mWeatherPressure - DeviceUtil.getOriginWeatherPressure();
-
-            int floorHeight = 3;
-            float elevation = (mCurrentPressure - DeviceUtil.getOriginPressure()
-                    + weatherCorrection) * 9;
-
-            int currentFloor = (int) ((DeviceUtil.getOriginFloor() * floorHeight - elevation)
-                    / floorHeight);
-            mFloorTxt.setText(String.valueOf(currentFloor));*/
-
-        }
-
-        @Override
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-        }
-    };
 
     private void initGoogleClient() {
         //Connect the GoogleApiClient
@@ -769,17 +804,17 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onDestroy() {
         try {
-            mSensorManager.unregisterListener(mBarometerListener);
-        } catch (Exception e) {
-            // Receiver wasn't registered
-        }
-        try {
             unregisterReceiver(mActivityStatusReceiver);
         } catch (Exception e) {
             // Receiver wasn't registered
         }
         try {
             unregisterReceiver(mMessagesReceiver);
+        } catch (Exception e) {
+            // Received wasn't registered
+        }
+        try {
+            unregisterReceiver(mLocationReceiver);
         } catch (Exception e) {
             // Received wasn't registered
         }
@@ -851,7 +886,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     /* A fragment to display an error dialog */
     public static class ErrorDialogFragment extends DialogFragment {
-        public ErrorDialogFragment() { }
+        public ErrorDialogFragment() {
+        }
 
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {

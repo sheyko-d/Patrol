@@ -41,6 +41,8 @@ import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.library.util.api.ApiClient;
 import ca.itquality.patrol.library.util.api.ApiInterface;
+import ca.itquality.patrol.service.ActivityRecognizedService;
+import ca.itquality.patrol.service.BackgroundService;
 import ca.itquality.patrol.util.DeviceUtil;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -71,9 +73,15 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         ButterKnife.bind(this);
 
         logOut();
+        stopServices();
         initStatusBar();
         initFacebookBtn();
         initGoogleClient();
+    }
+
+    private void stopServices() {
+        stopService(new Intent(this, BackgroundService.class));
+        stopService(new Intent(this, ActivityRecognizedService.class));
     }
 
     private void logOut() {
@@ -180,8 +188,8 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
             public void onResponse(Call<User> call, Response<User> response) {
                 if (response.isSuccessful()) {
                     User user = response.body();
-                    DeviceUtil.updateProfile(user.getToken(), user.getUserId(), user.getAssignedObject(),
-                            user.getName(), user.getEmail(), user.getPhoto());
+                    Util.Log("assigned_shifts size: " + user.getAssignedShifts().size());
+                    DeviceUtil.updateProfile(user);
                     startActivity(new Intent(LoginActivity.this, MainActivity.class));
                     finish();
                 } else {
@@ -240,12 +248,7 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
                 public void onResponse(Call<User> call, Response<User> response) {
                     if (response.isSuccessful()) {
                         User user = response.body();
-                        Util.Log("logged in: "+user.getToken()+", "+user.getUserId()+", "+
-                                user.getAssignedObject()+", "+ user.getName()+", "+ user.getEmail()+", "+
-                                user.getPhoto());
-                        DeviceUtil.updateProfile(user.getToken(), user.getUserId(),
-                                user.getAssignedObject(), user.getName(), user.getEmail(),
-                                user.getPhoto());
+                        DeviceUtil.updateProfile(user);
                         startActivity(new Intent(LoginActivity.this, MainActivity.class));
                         finish();
                     } else {

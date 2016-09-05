@@ -1,14 +1,17 @@
 package ca.itquality.patrol.util;
 
-import android.annotation.SuppressLint;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.google.gson.Gson;
+
+import java.util.ArrayList;
 
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.app.MyApplication;
-import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
+import ca.itquality.patrol.library.util.auth.data.User;
 
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 
@@ -16,16 +19,8 @@ import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 public class DeviceUtil {
 
     public static final int MIN_PASSWORD_LENGTH = 6;
-    private static final String PREF_TOKEN = "Token";
-    private static final String PREF_USER_ID = "UserId";
-    private static final String PREF_ASSIGNED_OBJECT_ID = "AssignedObjectId";
-    private static final String PREF_ASSIGNED_OBJECT_TITLE = "AssignedObjectTitle";
-    private static final String PREF_ASSIGNED_OBJECT_LATITUDE = "AssignedObjectLatitude";
-    private static final String PREF_ASSIGNED_OBJECT_LONGITUDE = "AssignedObjectLongitude";
-    private static final String PREF_NAME = "Name";
-    private static final String PREF_EMAIL = "Email";
-    private static final String PREF_PHOTO = "Photo";
     private static final String PREF_ACTIVITY = "Activity";
+    private static final String PREF_USER = "User";
     private static final String PREF_HEART_RATE = "HeartRate";
     private static final String PREF_STEPS = "Steps";
     private static final String PREF_MY_LATITUDE = "Latitude";
@@ -33,9 +28,6 @@ public class DeviceUtil {
     private static final String PREF_CHAT_LAST_SEEN = "ChatLastSeen";
     private static final String PREF_LAST_MESSAGE_TITLE = "LastMessageTitle";
     private static final String PREF_LAST_MESSAGE_TEXT = "LastMessageText";
-    private static final String PREF_ORIGIN_FLOOR = "OriginFloor";
-    private static final String PREF_ORIGIN_PRESSURE = "OriginPressure";
-    private static final String PREF_ORIGIN_WEATHER_PRESSURE = "OriginWeatherPressure";
     private static final String PREF_QR = "QR";
     public static final int MAP_PADDING = Util.convertDpToPixel(MyApplication.getContext(), 64);
 
@@ -47,120 +39,91 @@ public class DeviceUtil {
     /**
      * Save user login data in preferences.
      */
-    @SuppressLint("CommitPrefEdits")
-    public static void updateProfile(String token, String userId, User.AssignedObject assignedObject,
-                                     String name, String email, String photo) {
-        getDefaultSharedPreferences(MyApplication.getContext()).edit()
-                .putString(PREF_TOKEN, token)
-                .putString(PREF_USER_ID, userId)
-                .putString(PREF_NAME, name)
-                .putString(PREF_EMAIL, email)
-                .putString(PREF_PHOTO, photo)
-                .commit();
-        if (assignedObject != null) {
-            getDefaultSharedPreferences(MyApplication.getContext()).edit()
-                    .putString(PREF_ASSIGNED_OBJECT_ID, assignedObject.getAssignedObjectId())
-                    .putString(PREF_ASSIGNED_OBJECT_TITLE, assignedObject.getTitle())
-                    .putString(PREF_ASSIGNED_OBJECT_LATITUDE, String.valueOf(assignedObject
-                            .getLatitude()))
-                    .putString(PREF_ASSIGNED_OBJECT_LONGITUDE, String.valueOf(assignedObject
-                            .getLongitude()))
-                    .commit();
-        } else {
-            getDefaultSharedPreferences(MyApplication.getContext()).edit()
-                    .remove(PREF_ASSIGNED_OBJECT_ID)
-                    .remove(PREF_ASSIGNED_OBJECT_TITLE)
-                    .remove(PREF_ASSIGNED_OBJECT_LATITUDE)
-                    .remove(PREF_ASSIGNED_OBJECT_LONGITUDE)
-                    .commit();
-        }
+    public static void updateProfile(User user) {
+        Util.Log("Will save user");
+        String json = new Gson().toJson(user);
+        Util.Log("Save user: " + json);
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putString(PREF_USER, json).apply();
     }
 
     /**
      * Checks if user is logged in.
      */
     public static boolean isLoggedIn() {
-        return !TextUtils.isEmpty(DeviceUtil.getToken());
+        return getUser() != null;
+    }
+
+    /**
+     * Retrieves current user from preferences.
+     */
+    public static User getUser() {
+        String user = getDefaultSharedPreferences(MyApplication.getContext())
+                .getString(PREF_USER, null);
+        return new Gson().fromJson(user, User.class);
     }
 
     /**
      * Retrieves token from preferences.
      */
     public static String getToken() {
-        return getDefaultSharedPreferences(MyApplication.getContext())
-                .getString(PREF_TOKEN, null);
+        return getUser() != null ? getUser().getToken() : null;
     }
 
     /**
      * Retrieves user id from preferences.
      */
     public static String getUserId() {
-        return getDefaultSharedPreferences(MyApplication.getContext())
-                .getString(PREF_USER_ID, null);
+        return getUser() != null ? getUser().getUserId() : null;
     }
 
     /**
      * Checks if user is already assigned to the specific object to guard.
      */
     public static Boolean isAssigned() {
-        return !TextUtils.isEmpty(getDefaultSharedPreferences
-                (MyApplication.getContext()).getString(PREF_ASSIGNED_OBJECT_ID, null));
+        return getUser() != null && getUser().getAssignedObject() != null;
     }
 
     /**
      * Retrieves user's assigned object id from preferences.
      */
-    public static String getGetAssignedObjectId() {
-        return getDefaultSharedPreferences(MyApplication.getContext())
-                .getString(PREF_ASSIGNED_OBJECT_ID, null);
+    public static String getAssignedObjectId() {
+        return getUser() != null ? getUser().getAssignedObject().getAssignedObjectId() : null;
     }
 
     /**
      * Retrieves user's assigned object title from preferences.
      */
-    public static String getGetAssignedObjectTitle() {
-        return getDefaultSharedPreferences(MyApplication.getContext())
-                .getString(PREF_ASSIGNED_OBJECT_TITLE, null);
+    public static String getAssignedObjectTitle() {
+        return getUser() != null ? getUser().getAssignedObject().getTitle() : null;
     }
 
     /**
      * Retrieves user's assigned object latitude from preferences.
      */
-    public static Double getGetAssignedLatitude() {
-        return Double.parseDouble(getDefaultSharedPreferences
-                (MyApplication.getContext()).getString(PREF_ASSIGNED_OBJECT_LATITUDE, "-1"));
+    public static Float getAssignedObjectLatitude() {
+        return getUser() != null ? getUser().getAssignedObject().getLatitude() : null;
     }
 
     /**
      * Retrieves user's assigned object longitude from preferences.
      */
-    public static Double getGetAssignedLongitude() {
-        return Double.parseDouble(getDefaultSharedPreferences
-                (MyApplication.getContext()).getString(PREF_ASSIGNED_OBJECT_LONGITUDE, "-1"));
+    public static Float getAssignedObjectLongitude() {
+        return getUser() != null ? getUser().getAssignedObject().getLongitude() : null;
     }
 
     /**
      * Retrieves user full name from preferences.
      */
     public static String getName() {
-        return getDefaultSharedPreferences(MyApplication.getContext())
-                .getString(PREF_NAME, null);
-    }
-
-    /**
-     * Retrieves user email from preferences.
-     */
-    public static String getEmail() {
-        return getDefaultSharedPreferences(MyApplication.getContext())
-                .getString(PREF_EMAIL, null);
+        return getUser() != null ? getUser().getName() : null;
     }
 
     /**
      * Retrieves user photo from preferences.
      */
     public static String getPhoto() {
-        return getDefaultSharedPreferences(MyApplication.getContext())
-                .getString(PREF_PHOTO, null);
+        return getUser() != null ? getUser().getPhoto() : null;
     }
 
     /**
@@ -212,14 +175,9 @@ public class DeviceUtil {
     }
 
     public static void updateAssignedObject(User.AssignedObject assignedObject) {
-        getDefaultSharedPreferences(MyApplication.getContext()).edit()
-                .putString(PREF_ASSIGNED_OBJECT_ID, assignedObject.getAssignedObjectId())
-                .putString(PREF_ASSIGNED_OBJECT_TITLE, assignedObject.getTitle())
-                .putString(PREF_ASSIGNED_OBJECT_LATITUDE, String.valueOf(assignedObject
-                        .getLatitude()))
-                .putString(PREF_ASSIGNED_OBJECT_LONGITUDE, String.valueOf(assignedObject
-                        .getLongitude()))
-                .apply();
+        if (getUser() != null) {
+            updateProfile(getUser().setAssignedObject(assignedObject));
+        }
     }
 
     /**
@@ -295,26 +253,39 @@ public class DeviceUtil {
                 .getString(PREF_QR, null);
     }
 
-    public static void setBarometerOrigin(int floor, float pressure, float weatherPressure) {
-        getDefaultSharedPreferences(MyApplication.getContext()).edit()
-                .putInt(PREF_ORIGIN_FLOOR, floor)
-                .putFloat(PREF_ORIGIN_PRESSURE, pressure)
-                .putFloat(PREF_ORIGIN_WEATHER_PRESSURE, weatherPressure)
-                .apply();
+    public static User.AssignedShift getCurrentShift(long timeSinceWeekStart) {
+        ArrayList<User.AssignedShift> assignedShifts = DeviceUtil.getUser().getAssignedShifts();
+        User.AssignedShift currentShift = null;
+        if (assignedShifts != null) {
+            for (User.AssignedShift assignedShift : assignedShifts) {
+                if (timeSinceWeekStart > assignedShift.getStartTime()
+                        && timeSinceWeekStart < assignedShift.getEndTime()) {
+                    currentShift = assignedShift;
+                }
+            }
+        }
+        return currentShift;
     }
 
-    public static int getOriginFloor() {
-        return getDefaultSharedPreferences(MyApplication.getContext())
-                .getInt(PREF_ORIGIN_FLOOR, -1);
+    public static User.AssignedShift getNextShift(long timeSinceWeekStart) {
+        ArrayList<User.AssignedShift> assignedShifts = DeviceUtil.getUser().getAssignedShifts();
+        User.AssignedShift nextShift = null;
+        if (assignedShifts != null) {
+            for (User.AssignedShift assignedShift : assignedShifts) {
+                if (timeSinceWeekStart < assignedShift.getStartTime()) {
+                    nextShift = assignedShift;
+                }
+            }
+        }
+        return nextShift;
     }
 
-    public static float getOriginPressure() {
-        return getDefaultSharedPreferences(MyApplication.getContext())
-                .getFloat(PREF_ORIGIN_PRESSURE, -1);
-    }
-
-    public static float getOriginWeatherPressure() {
-        return getDefaultSharedPreferences(MyApplication.getContext())
-                .getFloat(PREF_ORIGIN_WEATHER_PRESSURE, -1);
+    public static User.AssignedShift getNextWeekShift() {
+        ArrayList<User.AssignedShift> assignedShifts = DeviceUtil.getUser().getAssignedShifts();
+        User.AssignedShift nextShift = null;
+        if (assignedShifts != null) {
+            nextShift = assignedShifts.get(0);
+        }
+        return nextShift;
     }
 }
