@@ -303,6 +303,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
 
             String addressTxt = addressFragments.get(0);
             if (!TextUtils.isEmpty(addressTxt)) {
+                DeviceUtil.setAddress(addressTxt);
                 sendBroadcast(new Intent(MainActivity.LOCATION_CHANGED_INTENT)
                         .putExtra(MainActivity.LOCATION_ADDRESS_EXTRA, addressFragments.get(0)));
                 updateWearLocation(addressTxt);

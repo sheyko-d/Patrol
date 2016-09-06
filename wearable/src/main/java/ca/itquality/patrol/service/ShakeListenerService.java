@@ -6,11 +6,8 @@ import android.content.Intent;
 import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.widget.Toast;
 
 import com.squareup.seismic.ShakeDetector;
-
-import ca.itquality.patrol.library.util.Util;
 
 public class ShakeListenerService extends Service implements ShakeDetector.Listener {
 
@@ -32,9 +29,13 @@ public class ShakeListenerService extends Service implements ShakeDetector.Liste
     }
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
+    @Override
     public void hearShake() {
-        Util.Log("Shaked");
-        Toast.makeText(getApplicationContext(), "Shaked", Toast.LENGTH_SHORT).show();
+        sendBroadcast(new Intent(ListenerServiceFromPhone.INTENT_BACKUP));
     }
 
     @Override

@@ -1,7 +1,10 @@
 package ca.itquality.patrol.service;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
@@ -9,11 +12,15 @@ import android.support.annotation.Nullable;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMapItem;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
 import ca.itquality.patrol.MainActivity;
@@ -38,6 +45,8 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
     public static final String EXTRA_SHIFT = "Shift";
     public static final String INTENT_STEPS_UPDATE = "ca.itquality.patrol.STEPS_UPDATE";
     public static final String EXTRA_STEPS = "Steps";
+    public static final String INTENT_BACKUP = "ca.itquality.patrol.BACKUP";
+    private static final String BACKUP_WEAR_PATH = "/stigg-backup";
 
     private GoogleApiClient mGoogleApiClient;
 
@@ -48,14 +57,66 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
     }
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
+    @Override
     public void onCreate() {
         super.onCreate();
         initGoogleClient();
+        setBackupListener();
     }
+
+    private void setBackupListener() {
+        registerReceiver(mBackupReceiver, new IntentFilter(INTENT_BACKUP));
+    }
+
+    private BroadcastReceiver mBackupReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            showBackupNotificationOnPhone();
+        }
+
+        private Node mNode = null;
+        private void showBackupNotificationOnPhone() {
+            Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).setResultCallback
+                    (new ResultCallback<NodeApi.GetConnectedNodesResult>() {
+                        @Override
+                        public void onResult(@NonNull NodeApi.GetConnectedNodesResult nodes) {
+                            for (Node node : nodes.getNodes()) {
+                                mNode = node;
+                            }
+                            if (mNode != null && mGoogleApiClient != null
+                                    && mGoogleApiClient.isConnected()) {
+                                Wearable.MessageApi.sendMessage(
+                                        mGoogleApiClient, mNode.getId(), BACKUP_WEAR_PATH, null)
+                                        .setResultCallback(
+
+                                        new ResultCallback<MessageApi.SendMessageResult>() {
+                                            @Override
+                                            public void onResult(@NonNull MessageApi.SendMessageResult
+                                                                         sendMessageResult) {
+
+                                                if (!sendMessageResult.getStatus().isSuccess()) {
+                                                    Util.Log("Failed to send message with status code: "
+                                                            + sendMessageResult.getStatus().getStatusCode());
+                                                } else {
+                                                    Util.Log("sent message");
+                                                }
+                                            }
+                                        }
+                                );
+                            }
+                        }
+                    });
+        }
+    };
 
     @Override
     public void onDestroy() {
         mGoogleApiClient.disconnect();
+        unregisterReceiver(mBackupReceiver);
         super.onDestroy();
     }
 
@@ -80,7 +141,6 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
 
                     if (event.getType() == DataEvent.TYPE_CHANGED) {
                         DataItem item = event.getDataItem();
-                        Util.Log("Received data: "+item.getUri().getPath());
                         DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
                         if (item.getUri().getPath().equals(Util.PATH_LOGGED_IN)) {
                             Boolean isLoggedIn = dataItem.getDataMap().getBoolean
@@ -98,7 +158,6 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                                     .getString(Util.DATA_SHIFT_TITLE);
                             String shift = dataItem.getDataMap().getString(Util.DATA_SHIFT);
                             WearUtil.setShift(shiftTitle, shift);
-                            Util.Log("Received shift: "+shiftTitle+", "+shift);
                             sendBroadcast(new Intent(INTENT_SHIFT_UPDATE)
                                     .putExtra(EXTRA_SHIFT_TITLE, shiftTitle)
                                     .putExtra(EXTRA_SHIFT, shift));
@@ -151,13 +210,9 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
 
     @Override
     public void onConnectionSuspended(int i) {
-        Util.Log("connection suspended");
-        // TODO:
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Util.Log("connection failed: " + connectionResult.getErrorCode());
-        // TODO:
     }
 }

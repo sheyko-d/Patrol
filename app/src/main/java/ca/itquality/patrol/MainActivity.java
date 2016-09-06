@@ -3,7 +3,6 @@ package ca.itquality.patrol;
 import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
-import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -22,14 +21,11 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.MenuItem;
@@ -114,6 +110,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public static final String SHIFT_CHANGED_INTENT = "ca.itquality.patrol.SHIFT_CHANGED";
     public static final String SHIFT_TITLE_EXTRA = "ShiftTitle";
     public static final String SHIFT_EXTRA = "Shift";
+    public static final String BACKUP_EXTRA = "Backup";
+    public static final String BACKUP_DO_NOT_ASK_EXTRA = "BackupDoNotAsk";
 
     // Views
     @Bind(R.id.toolbar)
@@ -178,8 +176,16 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         startWearDataListenerService();
         registerListener();
         initShiftTxt();
+        initAddressTxt();
+        checkBackupRequest();
+    }
 
-        // TODO Remove showBackupNotification();
+    private void checkBackupRequest() {
+        if (getIntent().getBooleanExtra(BACKUP_EXTRA, false)){
+            onAlertButtonClicked(null);
+        } else if (getIntent().getBooleanExtra(BACKUP_DO_NOT_ASK_EXTRA, false)){
+            DeviceUtil.setAskBackup(false);
+        }
     }
 
     private void initShiftTxt() {
@@ -187,26 +193,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mShiftTxt.setText(DeviceUtil.getShift());
     }
 
-    private void startWearDataListenerService() {
-        startService(new Intent(this, WearDataListenerService.class));
+    private void initAddressTxt() {
+        mLocationTxt.setText(DeviceUtil.getAddress());
     }
 
-    private void showBackupNotification() {
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
-                (this);
-        notificationBuilder.setContentTitle("Do you need backup?");
-        notificationBuilder.setAutoCancel(true);
-        notificationBuilder.setSmallIcon(R.drawable.backup_notification);
-        notificationBuilder.setColor(ContextCompat.getColor(this,
-                R.color.colorPrimary));
-        notificationBuilder.setPriority(NotificationCompat.PRIORITY_HIGH);
-
-        Notification notification = notificationBuilder.build();
-        notification.defaults |= Notification.DEFAULT_VIBRATE;
-        notification.defaults |= Notification.DEFAULT_SOUND;
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from
-                (getApplicationContext());
-        notificationManager.notify(3, notification);
+    private void startWearDataListenerService() {
+        startService(new Intent(this, WearDataListenerService.class));
     }
 
     private void registerListener() {

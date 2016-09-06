@@ -5,6 +5,10 @@
         <Preference
             android:key="setting_assigned_object"
             android:title="Place to guard" />
+        <SwitchPreference
+            android:key="AskBackup"
+            android:defaultValue="true"
+            android:title="Shake watch to request a backup" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Account">

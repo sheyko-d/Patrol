@@ -31,6 +31,9 @@ public class DeviceUtil {
     private static final String PREF_QR = "QR";
     private static final String PREF_SHIFT_TITLE = "ShiftTitle";
     private static final String PREF_SHIFT_TEXT = "ShiftText";
+    private static final String PREF_ADDRESS = "Address";
+    private static final String PREF_ASK_BACKUP = "AskBackup";
+
     public static final int MAP_PADDING = Util.convertDpToPixel(MyApplication.getContext(), 64);
 
     public static boolean isValidEmail(String email) {
@@ -44,6 +47,7 @@ public class DeviceUtil {
     public static void updateProfile(User user) {
         Util.Log("Will save user");
         String json = new Gson().toJson(user);
+
         Util.Log("Save user: " + json);
         PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putString(PREF_USER, json).apply();
@@ -317,5 +321,40 @@ public class DeviceUtil {
         return getDefaultSharedPreferences(MyApplication.getContext())
                 .getString(PREF_SHIFT_TEXT, MyApplication.getContext()
                         .getString(R.string.main_shift_placeholder));
+    }
+
+    /**
+     * Saves the address in preferences.
+     */
+    public static void setAddress(String address) {
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putString(PREF_ADDRESS, address)
+                .apply();
+    }
+
+    /**
+     * Retrieves the address from preferences.
+     */
+    public static String getAddress() {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getString(PREF_ADDRESS, MyApplication.getContext()
+                        .getString(R.string.main_shift_placeholder));
+    }
+
+    /**
+     * Saves the backup notification enabled state in preferences.
+     */
+    public static void setAskBackup(boolean ask) {
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putBoolean(PREF_ASK_BACKUP, ask)
+                .apply();
+    }
+
+    /**
+     * Retrieves the backup notification enabled state from preferences.
+     */
+    public static boolean askBackup() {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getBoolean(PREF_ASK_BACKUP, true);
     }
 }
