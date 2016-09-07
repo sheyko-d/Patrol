@@ -1,6 +1,8 @@
 package ca.itquality.patrol.service;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -16,8 +18,12 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.NotificationCompat;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+import android.widget.Toast;
 
 import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -37,9 +43,11 @@ import com.google.android.gms.fitness.request.SensorRequest;
 import com.google.android.gms.fitness.result.DailyTotalResult;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -49,10 +57,16 @@ import java.util.concurrent.TimeUnit;
 
 import ca.itquality.patrol.MainActivity;
 import ca.itquality.patrol.R;
+import ca.itquality.patrol.app.MyApplication;
 import ca.itquality.patrol.library.util.Util;
+import ca.itquality.patrol.library.util.api.ApiClient;
+import ca.itquality.patrol.library.util.api.ApiInterface;
 import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.service.wear.WearMessageListenerService;
 import ca.itquality.patrol.util.DeviceUtil;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class BackgroundService extends Service implements GoogleApiClient.ConnectionCallbacks {
 
@@ -60,7 +74,8 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     private static final long STEPS_REFRESH_TIME = 1000 * 60 * 5;
     private static final long LOCATION_REFRESH_TIME = 1000 * 60 * 5;
     private static final float LOCATION_REFRESH_DISTANCE = 0;
-    private static final long SHIFT_UPDATE_INTERVAL = 60 * 1000;
+    private static final long SHIFT_UPDATE_INTERVAL = 15 * 1000;// TODO: Change to 5 minutes
+    private static final float AT_WORK_RADIUS = 100;
 
     // Usual variables
     private static GoogleApiClient mGoogleApiClient;
@@ -159,8 +174,32 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                updateShift();
+                updateProfile();
                 mHandler.postDelayed(this, SHIFT_UPDATE_INTERVAL);
+            }
+        });
+    }
+
+    private void updateProfile() {
+        String googleToken = FirebaseInstanceId.getInstance().getToken();
+
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<User> call = apiService.updateProfile(DeviceUtil.getUserId(), DeviceUtil.getToken(),
+                googleToken);
+        call.enqueue(new Callback<User>() {
+            @Override
+            public void onResponse(Call<User> call, Response<User> response) {
+                if (response.isSuccessful()) {
+                    User user = response.body();
+                    DeviceUtil.updateProfile(user);
+                    updateShift();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<User> call, Throwable t) {
+                Toast.makeText(MyApplication.getContext(), "Server error.",
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -198,6 +237,10 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                     DateUtils.getRelativeTimeSpanString(weekStartTime + currentShift.getEndTime(),
                             System.currentTimeMillis(), 0).toString()
                             .toLowerCase(Locale.getDefault()));
+
+            if (!userAtWork() && !DeviceUtil.clockInShown(weekStartTime, currentShift)) {
+                showClockInNotification(weekStartTime, currentShift);
+            }
         } else if (nextShift != null) {
             // Display the next shift in a week
             if (nextShift.getName().toLowerCase(Locale.getDefault()).contains("shift")) {
@@ -228,6 +271,68 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
 
             updateWearShift(shiftTitleTxt, shiftTxt);
         }
+    }
+
+    /**
+     * Checks if user has an active shift and is close enough to the assigned object.
+     */
+    private boolean userAtWork() {
+        LatLng myLatLng = DeviceUtil.getMyLocation();
+        Location myLocation = new Location("MyLocation");
+        myLocation.setLatitude(myLatLng.latitude);
+        myLocation.setLongitude(myLatLng.longitude);
+
+        Location workLocation = new Location("WorkLocation");
+        User.AssignedObject assignedObject = DeviceUtil.getUser().getAssignedObject();
+        if (assignedObject != null) {
+            workLocation.setLatitude(assignedObject.getLatitude());
+            workLocation.setLongitude(assignedObject.getLongitude());
+
+            return myLocation.distanceTo(workLocation) < AT_WORK_RADIUS;
+        } else {
+            return true;
+        }
+    }
+
+    public static void showClockInNotification(Long weekStartTime,
+                                               User.AssignedShift currentShift) {
+        final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
+                (MyApplication.getContext());
+        notificationBuilder.setContentTitle("Your shift started " + DateUtils
+                .getRelativeTimeSpanString(weekStartTime + currentShift.getStartTime(),
+                        System.currentTimeMillis(), 0).toString().toLowerCase(Locale.getDefault()));
+        notificationBuilder.setContentText("Please let us know why you're not at work...");
+        notificationBuilder.setAutoCancel(true);
+        notificationBuilder.setSmallIcon(R.drawable.backup_notification);
+        notificationBuilder.setColor(ContextCompat.getColor(MyApplication.getContext(),
+                R.color.colorPrimary));
+        notificationBuilder.setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        Intent notifyIntent = new Intent(MyApplication.getContext(), MainActivity.class);
+        notifyIntent.putExtra(MainActivity.CLOCK_IN_EXTRA, true);
+        notifyIntent.putExtra(MainActivity.CLOCK_IN_SHIFT_ID_EXTRA,
+                currentShift.getAssignedShiftId());
+        // Sets the Activity to start in a new, empty task
+        notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        // Creates the PendingIntent
+        PendingIntent pendingIntent =
+                PendingIntent.getActivity(
+                        MyApplication.getContext(),
+                        0,
+                        notifyIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        notificationBuilder.setContentIntent(pendingIntent);
+
+        Notification notification = notificationBuilder.build();
+        notification.defaults |= Notification.DEFAULT_VIBRATE;
+        notification.defaults |= Notification.DEFAULT_SOUND;
+        final NotificationManagerCompat notificationManager = NotificationManagerCompat.from
+                (MyApplication.getContext());
+        notificationManager.notify(Util.NOTIFICATION_ID_CLOCK_IN, notification);
+
+        DeviceUtil.setClockInShown(weekStartTime, currentShift);
     }
 
     private void updateWearLocation(String address) {

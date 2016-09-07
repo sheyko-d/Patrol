@@ -13,7 +13,6 @@ public class WearMessageListenerService extends WearableListenerService {
 
     private static final String LOGIN_WEAR_PATH = "/stigg-login";
     private static final String BACKUP_WEAR_PATH = "/stigg-backup";
-    private static final long MIN_RECEIVED_INTERVAL = 1000 * 10;
 
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {

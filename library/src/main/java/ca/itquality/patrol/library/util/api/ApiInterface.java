@@ -84,7 +84,12 @@ public interface ApiInterface {
     Call<ArrayList<MessageThread>> getThreads(@Field("token") String token);
 
     @FormUrlEncoded
-    @POST("heart_rate/upload_heart_rate.php")
+    @POST("heart_rate/post_heart_rate.php")
     Call<Void> uploadHeartRate(@Field("token") String token,
                                @Field("heart_rate_values") String heartRateValues);
+
+    @FormUrlEncoded
+    @POST("clock_in/post_clock_in_reason.php")
+    Call<Void> postClockInReason(@Field("token") String token, @Field("shift_id") String shiftId,
+                                 @Field("reason") String reason);
 }

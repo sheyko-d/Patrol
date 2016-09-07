@@ -357,4 +357,21 @@ public class DeviceUtil {
         return getDefaultSharedPreferences(MyApplication.getContext())
                 .getBoolean(PREF_ASK_BACKUP, true);
     }
+
+    /**
+     * Saves the clock in notification shown state in preferences.
+     */
+    public static void setClockInShown(long weekStartTime, User.AssignedShift currentShift) {
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putBoolean(String.valueOf(weekStartTime + currentShift.getStartTime()), true)
+                .apply();
+    }
+
+    /**
+     * Retrieves the clock in notification shown state from preferences.
+     */
+    public static boolean clockInShown(long weekStartTime, User.AssignedShift currentShift) {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getBoolean(String.valueOf(weekStartTime + currentShift.getStartTime()), false);
+    }
 }

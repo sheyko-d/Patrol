@@ -35,6 +35,7 @@ public class Util {
     public static final String DATA_TIME = "Time";
     public static final int NOTIFICATION_ID_BACKUP = 3;
     private static final int DAY_DURATION = 1000 * 60 * 60 * 24;
+    public static final int NOTIFICATION_ID_CLOCK_IN = 4;
 
     /**
      * Adds a message to LogCat.

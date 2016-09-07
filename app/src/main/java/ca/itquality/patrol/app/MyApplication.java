@@ -61,12 +61,6 @@ public class MyApplication extends Application {
                 R.color.colorPrimary));
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_MAX);
 
-        Intent notifyIntent = new Intent(getContext(), MainActivity.class);
-        notifyIntent.putExtra(MainActivity.BACKUP_EXTRA, true);
-        // Sets the Activity to start in a new, empty task
-        notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
         Intent yesIntent = new Intent(getContext(), MainActivity.class);
         yesIntent.putExtra(MainActivity.BACKUP_DO_NOT_ASK_EXTRA, true);
         // Sets the Activity to start in a new, empty task
