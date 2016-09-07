@@ -1,6 +1,5 @@
 package ca.itquality.patrol.service;
 
-import android.app.Notification;
 import android.app.Service;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -16,9 +15,6 @@ import android.os.IBinder;
 import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.NotificationCompat;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -33,7 +29,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-import ca.itquality.patrol.R;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.library.util.app.MyApplication;
 import ca.itquality.patrol.library.util.heartrate.HeartRate;
@@ -42,11 +37,8 @@ import ca.itquality.patrol.util.DatabaseManager;
 public class SensorsService extends Service implements GoogleApiClient.ConnectionCallbacks {
 
     // Constants
-    private static final int NOTIFICATION_ID_BACKUP = 0;
     private static final int HEART_RATE_MEASURE_INTERVAL = 1000*60;
     private static final int HEART_RATE_MIN_UPLOAD_COUNT = 5;
-    private static final int BACKUP_DISMISS_DURATION = 10;
-    private static final int SECOND_DURATION = 1000;
     private static final int HEART_RATE_MAX_BACKUP = 120;
     private static final int HEART_RATE_MIN_SLEEP = 60;
     public static final String INTENT_HEART_RATE = "ca.itquality.patrol.HEART_RATE";
@@ -91,7 +83,6 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
     private void setHeartRateListener() {
         final Sensor heartRateSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
         mSensorManager.registerListener(new SensorEventListener() {
-            int mDismissRemainingSec;
             private Handler mHandler = new Handler();
 
             @Override
@@ -177,43 +168,18 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
                     askForBackup();
                 } else {
                     mBackupAsked = false;
-                    dismissBackup();
                 }
 
                 mSleepStarted = !mSleepStarted && heartRate < HEART_RATE_MIN_SLEEP;
-            }
-
-            private void dismissBackup() {
-                // TODO: Hide notification
-
-                // Cancel the dismiss the timer
-                mHandler.removeCallbacks(mBackupDismissRunnable);
             }
 
             private void askForBackup() {
                 // Vibrate for 0.5 sec
                 ((Vibrator) getSystemService(VIBRATOR_SERVICE)).vibrate(1000);
 
-                mDismissRemainingSec = BACKUP_DISMISS_DURATION;
-                mBackupDismissRunnable.run();
-
-                showBackupNotification();
+                // Show backup notification on a phone
+                sendBroadcast(new Intent(ListenerServiceFromPhone.INTENT_BACKUP));
             }
-
-            Runnable mBackupDismissRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    if (mDismissRemainingSec > 0) {
-                        // TODO: Update notification content with counter
-                        // mBackupDismissTxt.setText(getString(R.string.main_backup_dismiss,
-                        //        mDismissRemainingSec));
-                        mDismissRemainingSec--;
-                        mHandler.postDelayed(this, SECOND_DURATION);
-                    } else {
-                        dismissBackup();
-                    }
-                }
-            };
 
             private void storeHeartRateInDb(long timestamp, int value) {
                 DatabaseManager.initializeInstance(new DatabaseManager.SitesDatabaseHelper
@@ -247,24 +213,6 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
             setHeartRateListener();
         }
     };
-
-    private void showBackupNotification() {
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
-                (this);
-        notificationBuilder.setContentTitle("Do you need backup?");
-        notificationBuilder.setAutoCancel(true);
-        notificationBuilder.setSmallIcon(R.drawable.backup_notification);
-        notificationBuilder.setColor(ContextCompat.getColor(this,
-                R.color.colorPrimary));
-        notificationBuilder.setPriority(NotificationCompat.PRIORITY_HIGH);
-
-        Notification notification = notificationBuilder.build();
-        notification.defaults |= Notification.DEFAULT_VIBRATE;
-        notification.defaults |= Notification.DEFAULT_SOUND;
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from
-                (getApplicationContext());
-        notificationManager.notify(NOTIFICATION_ID_BACKUP, notification);
-    }
 
     @Override
     public void onDestroy() {

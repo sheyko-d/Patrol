@@ -101,8 +101,6 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                                                 if (!sendMessageResult.getStatus().isSuccess()) {
                                                     Util.Log("Failed to send message with status code: "
                                                             + sendMessageResult.getStatus().getStatusCode());
-                                                } else {
-                                                    Util.Log("sent message");
                                                 }
                                             }
                                         }

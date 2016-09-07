@@ -181,9 +181,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private void checkBackupRequest() {
-        if (getIntent().getBooleanExtra(BACKUP_EXTRA, false)){
+        if (getIntent().getBooleanExtra(BACKUP_EXTRA, false)) {
             onAlertButtonClicked(null);
-        } else if (getIntent().getBooleanExtra(BACKUP_DO_NOT_ASK_EXTRA, false)){
+        } else if (getIntent().getBooleanExtra(BACKUP_DO_NOT_ASK_EXTRA, false)) {
             DeviceUtil.setAskBackup(false);
         }
     }
@@ -218,7 +218,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 loadUnreadMessages();
             } else if (intent.getAction().equals(LOCATION_CHANGED_INTENT)) {
                 String address = intent.getStringExtra(LOCATION_ADDRESS_EXTRA);
-                    mLocationTxt.setText(address);
+                mLocationTxt.setText(address);
             } else if (intent.getAction().equals(SHIFT_CHANGED_INTENT)) {
                 String shiftTitle = intent.getStringExtra(SHIFT_TITLE_EXTRA);
                 String shift = intent.getStringExtra(SHIFT_EXTRA);

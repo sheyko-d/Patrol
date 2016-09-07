@@ -5,6 +5,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.NotificationCompat;
@@ -23,6 +24,7 @@ import io.fabric.sdk.android.Fabric;
 
 public class MyApplication extends Application {
 
+    private static final int SECOND_DURATION = 1000;
     private static MyApplication sContext;
 
     @Override
@@ -42,11 +44,15 @@ public class MyApplication extends Application {
         return sContext;
     }
 
+    private static int sDismissSec;
     public static void showBackupNotification() {
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
+        Util.Log("Show backup notification");
+
+        sDismissSec = 10;
+        final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
                 (getContext());
-        notificationBuilder.setContentTitle("Need help?");
-        notificationBuilder.setContentText("Tap to request backup!");
+        notificationBuilder.setContentTitle("Need a backup?");
+        notificationBuilder.setContentText("Dismissing in "+ sDismissSec +" sec...");
         notificationBuilder.setAutoCancel(true);
         notificationBuilder.setSmallIcon(R.drawable.backup_notification);
         notificationBuilder.setColor(ContextCompat.getColor(MyApplication.getContext(),
@@ -88,8 +94,23 @@ public class MyApplication extends Application {
         Notification notification = notificationBuilder.build();
         notification.defaults |= Notification.DEFAULT_VIBRATE;
         notification.defaults |= Notification.DEFAULT_SOUND;
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from
+        final NotificationManagerCompat notificationManager = NotificationManagerCompat.from
                 (getContext());
         notificationManager.notify(Util.NOTIFICATION_ID_BACKUP, notification);
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                sDismissSec--;
+                notificationBuilder.setContentText("Dismissing in "+ sDismissSec +" sec...");
+                Notification notification = notificationBuilder.build();
+                notificationManager.notify(Util.NOTIFICATION_ID_BACKUP, notification);
+                if (sDismissSec>0) {
+                    new Handler().postDelayed(this, SECOND_DURATION);
+                } else {
+                    notificationManager.cancel(Util.NOTIFICATION_ID_BACKUP);
+                }
+            }
+        }, SECOND_DURATION);
     }
 }

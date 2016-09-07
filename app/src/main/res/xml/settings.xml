@@ -8,7 +8,8 @@
         <SwitchPreference
             android:key="AskBackup"
             android:defaultValue="true"
-            android:title="Shake watch to request a backup" />
+            android:title="Emergency alert"
+            android:summary="Shake watch to request a backup" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Account">

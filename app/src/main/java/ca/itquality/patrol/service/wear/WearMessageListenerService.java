@@ -28,6 +28,7 @@ public class WearMessageListenerService extends WearableListenerService {
                 startActivity(startIntent);
             }
         } else if (messageEvent.getPath().equals(BACKUP_WEAR_PATH)) {
+            Util.Log("received show command");
             if (DeviceUtil.askBackup()) MyApplication.showBackupNotification();
         }
     }
