@@ -11,6 +11,7 @@ import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 public class MyApplication extends Application {
 
     public static Context sContext;
+    public static long lastReceivedMessageTime = -1;
 
     @Override
     public void onCreate() {

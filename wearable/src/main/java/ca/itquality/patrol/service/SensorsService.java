@@ -12,7 +12,6 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -174,9 +173,6 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
             }
 
             private void askForBackup() {
-                // Vibrate for 0.5 sec
-                ((Vibrator) getSystemService(VIBRATOR_SERVICE)).vibrate(1000);
-
                 // Show backup notification on a phone
                 sendBroadcast(new Intent(ListenerServiceFromPhone.INTENT_BACKUP));
             }

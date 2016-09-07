@@ -6,17 +6,17 @@ import android.content.Intent;
 import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.os.Vibrator;
 import android.support.annotation.Nullable;
 
 import com.squareup.seismic.ShakeDetector;
+
+import ca.itquality.patrol.app.MyApplication;
 
 public class ShakeListenerService extends Service implements ShakeDetector.Listener {
 
     private static final long MIN_BACKUP_INTERVAL = 10 * 1000;
     private static final String WAKELOCK_TAG = "ShakeWakelock";
     private ShakeDetector mShakeDetector;
-    private long mShakeTime = -1;
     private PowerManager.WakeLock mWakeLock;
 
     @Nullable
@@ -52,11 +52,9 @@ public class ShakeListenerService extends Service implements ShakeDetector.Liste
 
     @Override
     public void hearShake() {
-        if (mShakeTime == -1 || System.currentTimeMillis() - mShakeTime > MIN_BACKUP_INTERVAL) {
-            mShakeTime = System.currentTimeMillis();
-            // Vibrate for 0.5 sec
-            ((Vibrator) getSystemService(VIBRATOR_SERVICE)).vibrate(1000);
-
+        if (System.currentTimeMillis() - MyApplication.lastReceivedMessageTime
+                > MIN_BACKUP_INTERVAL) {
+            MyApplication.lastReceivedMessageTime = System.currentTimeMillis();
             // Show backup notification on a phone
             sendBroadcast(new Intent(ListenerServiceFromPhone.INTENT_BACKUP));
         }

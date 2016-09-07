@@ -51,6 +51,7 @@ import ca.itquality.patrol.MainActivity;
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.library.util.auth.data.User;
+import ca.itquality.patrol.service.wear.WearMessageListenerService;
 import ca.itquality.patrol.util.DeviceUtil;
 
 public class BackgroundService extends Service implements GoogleApiClient.ConnectionCallbacks {
@@ -89,6 +90,17 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
 
         startShiftUpdateTask();
         listenForSteps();
+        setWatchMessagesListener(true);
+    }
+
+    private void setWatchMessagesListener(boolean enabled) {
+        if (enabled) {
+            Wearable.MessageApi.addListener(mGoogleApiClient,
+                    new WearMessageListenerService());
+        } else {
+            Wearable.MessageApi.removeListener(mGoogleApiClient,
+                    new WearMessageListenerService());
+        }
     }
 
     private void listenForSteps() {
@@ -312,7 +324,6 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     }
 
 
-
     private void updateWearShift(String shiftTitle, String shift) {
         try {
             PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_SHIFT);
@@ -321,7 +332,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
             putDataMapReq.getDataMap().putString(Util.DATA_SHIFT, shift);
             putDataMapReq.getDataMap().putLong(Util.DATA_TIME, System.currentTimeMillis());
             PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
-            Util.Log("update wear shift: "+shift);
+            Util.Log("update wear shift: " + shift);
             Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
         } catch (Exception e) {
             // Watch is not supported
@@ -336,7 +347,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
             putDataMapReq.getDataMap().putLong(Util.DATA_TIME, System.currentTimeMillis());
             PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
             Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
-            Util.Log("update wear steps: "+steps);
+            Util.Log("update wear steps: " + steps);
         } catch (Exception e) {
             // Watch is not supported
         }
@@ -374,6 +385,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                         }
                     }
                 });
+        setWatchMessagesListener(false);
         super.onDestroy();
     }
 }

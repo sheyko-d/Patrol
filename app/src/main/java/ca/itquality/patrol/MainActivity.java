@@ -84,7 +84,6 @@ import ca.itquality.patrol.qr.IntentResult;
 import ca.itquality.patrol.service.ActivityRecognizedService;
 import ca.itquality.patrol.service.BackgroundService;
 import ca.itquality.patrol.service.wear.WearDataListenerService;
-import ca.itquality.patrol.service.wear.WearMessageListenerService;
 import ca.itquality.patrol.settings.SettingsActivity;
 import ca.itquality.patrol.util.DeviceUtil;
 import retrofit2.Call;
@@ -638,9 +637,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                             for (Node node : nodes.getNodes()) {
                                 mNode = node;
                             }
-
-                            Wearable.MessageApi.addListener(mGoogleApiClient,
-                                    new WearMessageListenerService());
 
                             mProgressBar.setVisibility(View.GONE);
                             if (mNode != null) {

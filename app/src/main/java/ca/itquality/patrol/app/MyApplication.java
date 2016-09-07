@@ -45,6 +45,7 @@ public class MyApplication extends Application {
     }
 
     private static int sDismissSec;
+
     public static void showBackupNotification() {
         Util.Log("Show backup notification");
 
@@ -52,8 +53,9 @@ public class MyApplication extends Application {
         final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
                 (getContext());
         notificationBuilder.setContentTitle("Need a backup?");
-        notificationBuilder.setContentText("Dismissing in "+ sDismissSec +" sec...");
+        notificationBuilder.setContentText("Dismissing in " + sDismissSec + " sec...");
         notificationBuilder.setAutoCancel(true);
+        notificationBuilder.setOngoing(true);
         notificationBuilder.setSmallIcon(R.drawable.backup_notification);
         notificationBuilder.setColor(ContextCompat.getColor(MyApplication.getContext(),
                 R.color.colorPrimary));
@@ -64,15 +66,22 @@ public class MyApplication extends Application {
         // Sets the Activity to start in a new, empty task
         notifyIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
                 Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        Intent yesIntent = new Intent(getContext(), MainActivity.class);
+        yesIntent.putExtra(MainActivity.BACKUP_DO_NOT_ASK_EXTRA, true);
+        // Sets the Activity to start in a new, empty task
+        yesIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+                Intent.FLAG_ACTIVITY_CLEAR_TASK);
         // Creates the PendingIntent
-        PendingIntent pendingIntent =
+        PendingIntent yesPendingIntent =
                 PendingIntent.getActivity(
                         getContext(),
                         0,
-                        notifyIntent,
+                        yesIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );
-        notificationBuilder.setContentIntent(pendingIntent);
+        notificationBuilder.addAction(new android.support.v4.app.NotificationCompat.Action
+                (R.drawable.done, "Yes!", yesPendingIntent));
 
         Intent doNotAskIntent = new Intent(getContext(), MainActivity.class);
         doNotAskIntent.putExtra(MainActivity.BACKUP_DO_NOT_ASK_EXTRA, true);
@@ -87,12 +96,11 @@ public class MyApplication extends Application {
                         doNotAskIntent,
                         PendingIntent.FLAG_UPDATE_CURRENT
                 );
-
         notificationBuilder.addAction(new android.support.v4.app.NotificationCompat.Action
                 (R.drawable.cancel, "Don't ask again", doNotAskPendingIntent));
 
+        notificationBuilder.setVibrate(new long[]{1000});
         Notification notification = notificationBuilder.build();
-        notification.defaults |= Notification.DEFAULT_VIBRATE;
         notification.defaults |= Notification.DEFAULT_SOUND;
         final NotificationManagerCompat notificationManager = NotificationManagerCompat.from
                 (getContext());
@@ -102,10 +110,10 @@ public class MyApplication extends Application {
             @Override
             public void run() {
                 sDismissSec--;
-                notificationBuilder.setContentText("Dismissing in "+ sDismissSec +" sec...");
+                notificationBuilder.setContentText("Dismissing in " + sDismissSec + " sec...");
                 Notification notification = notificationBuilder.build();
                 notificationManager.notify(Util.NOTIFICATION_ID_BACKUP, notification);
-                if (sDismissSec>0) {
+                if (sDismissSec > 0) {
                     new Handler().postDelayed(this, SECOND_DURATION);
                 } else {
                     notificationManager.cancel(Util.NOTIFICATION_ID_BACKUP);
