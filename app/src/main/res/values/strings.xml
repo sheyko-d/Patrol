@@ -27,4 +27,6 @@
     <string name="main_messages_title">%1$d new message(s)!</string>
     <string name="contacts_group_new">New group</string>
     <string name="main_location">Location</string>
+    <string name="about_title">About Stigg Security</string>
+    <string name="about_desc">Stigg Security Inc. provides advanced solutions for all your security needs.\n\nOur priority is protecting our clients and their money, as we ensure that every detail is completed to its optimal potential, limiting your exposure to internal and external theft.\n\nSecurity and reliable service are more important than ever.</string>
 </resources>

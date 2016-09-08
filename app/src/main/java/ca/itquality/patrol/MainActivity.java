@@ -617,12 +617,29 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                     startActivity(new Intent(MainActivity.this,
                                             SettingsActivity.class));
                                     finish();
+                                } else if (menuItem.getItemId() == R.id.drawer_help) {
+                                    openHelpWebsite();
+                                } else if (menuItem.getItemId() == R.id.drawer_about) {
+                                    showAboutDialog();
                                 }
                             }
                         }, 300);
                         return false;
                     }
                 });
+    }
+
+    private void openHelpWebsite() {
+        startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse(DeviceUtil.HELP_URL)));
+    }
+
+    private void showAboutDialog() {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this,
+                R.style.MaterialDialogStyle);
+        dialogBuilder.setTitle(getString(R.string.about_title));
+        dialogBuilder.setMessage(getString(R.string.about_desc));
+        dialogBuilder.setPositiveButton("Close", null);
+        dialogBuilder.create().show();
     }
 
     private void initActionBar() {

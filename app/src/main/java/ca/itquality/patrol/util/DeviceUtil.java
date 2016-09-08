@@ -35,6 +35,7 @@ public class DeviceUtil {
     private static final String PREF_ASK_BACKUP = "AskBackup";
 
     public static final int MAP_PADDING = Util.convertDpToPixel(MyApplication.getContext(), 64);
+    public static final String HELP_URL = "http://www.stigg.ca/contactUs.html";
 
     public static boolean isValidEmail(String email) {
         return !TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email)
