@@ -53,11 +53,13 @@ import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlacePicker;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.wearable.DataApi;
@@ -118,6 +120,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public static final String BACKUP_DO_NOT_ASK_EXTRA = "BackupDoNotAsk";
     public static final String CLOCK_IN_EXTRA = "ClockIn";
     public static final String CLOCK_IN_SHIFT_ID_EXTRA = "ClockInShiftId";
+    private static final float CAMERA_PADDING = 32;
 
     // Views
     @Bind(R.id.toolbar)
@@ -295,6 +298,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             } else if (intent.getAction().equals(LOCATION_CHANGED_INTENT)) {
                 String address = intent.getStringExtra(LOCATION_ADDRESS_EXTRA);
                 mLocationTxt.setText(address);
+                zoomMap();
             } else if (intent.getAction().equals(SHIFT_CHANGED_INTENT)) {
                 String shiftTitle = intent.getStringExtra(SHIFT_TITLE_EXTRA);
                 String shift = intent.getStringExtra(SHIFT_EXTRA);
@@ -373,16 +377,45 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     private void updateMap() {
         if (mMap != null) {
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(DeviceUtil
-                    .getAssignedObjectLatitude(), DeviceUtil.getAssignedObjectLongitude()), 17));
+            zoomMap();
             if (mAssignedPlaceMarker != null) {
                 mAssignedPlaceMarker.remove();
             }
-            mAssignedPlaceMarker = mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(DeviceUtil.getAssignedObjectLatitude(),
-                            DeviceUtil.getAssignedObjectLongitude()))
-                    .title("My place to guard")
-                    .snippet(DeviceUtil.getAssignedObjectTitle()));
+            final User.AssignedObject assignedObject = DeviceUtil.getUser().getAssignedObject();
+            if (assignedObject != null) {
+                mAssignedPlaceMarker = mMap.addMarker(new MarkerOptions()
+                        .position(new LatLng(assignedObject.getLatitude(),
+                                assignedObject.getLongitude()))
+                        .title("My place to guard")
+                        .snippet(DeviceUtil.getAssignedObjectTitle()));
+            }
+        }
+    }
+
+    private void zoomMap() {
+        final User.AssignedObject assignedObject = DeviceUtil.getUser().getAssignedObject();
+        if (assignedObject != null) {
+            mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
+
+                @Override
+                public void onCameraIdle() {
+                    // Move camera.
+                    LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                    builder.include(DeviceUtil.getMyLocation());
+                    builder.include(new LatLng(assignedObject.getLatitude(),
+                            assignedObject.getLongitude()));
+                    LatLngBounds bounds = builder.build();
+                    int padding = Util.convertDpToPixel(MainActivity.this, CAMERA_PADDING);
+                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+                    mMap.moveCamera(cu);
+                    // Remove listener to prevent position reset on camera move.
+                    mMap.setOnCameraIdleListener(null);
+                }
+            });
+
+        } else {
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(DeviceUtil
+                    .getMyLocation().latitude, DeviceUtil.getMyLocation().longitude), 17));
         }
     }
 
@@ -619,7 +652,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onResume() {
         super.onResume();
-        if (!mGoogleApiClient.isConnected() && !mGoogleApiClient.isConnecting()){
+        if (!mGoogleApiClient.isConnected() && !mGoogleApiClient.isConnecting()) {
             mGoogleApiClient.connect();
         }
         updateProfile();
