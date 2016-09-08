@@ -159,6 +159,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private Marker mAssignedPlaceMarker;
     private boolean mSupportsWatch = true;
     private boolean mResolvingError = false;
+    private boolean mConnectedToWatch = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -177,7 +178,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         initDrawer();
         initGoogleClient();
         initSensorData();
-        connectToWatch();
         initMap();
         startWearDataListenerService();
         registerListener();
@@ -619,8 +619,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     protected void onResume() {
         super.onResume();
+        if (!mGoogleApiClient.isConnected() && !mGoogleApiClient.isConnecting()){
+            mGoogleApiClient.connect();
+        }
         updateProfile();
-        if (mSupportsWatch) {
+        if (!mConnectedToWatch && mSupportsWatch) {
             connectToWatch();
         }
         loadUnreadMessages();
@@ -717,7 +720,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
                             mProgressBar.setVisibility(View.GONE);
                             if (mNode != null) {
-
+                                mConnectedToWatch = true;
+                                Util.Log("connected to watch");
                                 mLayout.setVisibility(View.VISIBLE);
                                 mDisconnectedLayout.setVisibility(View.GONE);
                             } else {
@@ -733,7 +737,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Util.Log("Google API connected in MainActivity");
         if (mSupportsWatch) {
             logInOnTheWatch();
             updateWearName();
@@ -741,6 +744,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             mLayout.setVisibility(View.VISIBLE);
             mDisconnectedLayout.setVisibility(View.GONE);
         }
+        connectToWatch();
         listenForActivityStatus();
         listenForWearSensors();
         saveLastKnownLocation();
@@ -843,6 +847,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         Util.Log("connection failed: " + connectionResult.getErrorCode());
         mDisconnectedLayout.setVisibility(View.GONE);
         mLayout.setVisibility(View.GONE);
+
         mProgressBar.setVisibility(View.GONE);
         if (connectionResult.getErrorCode() == 16) {
             Toast.makeText(MainActivity.this, "This device doesn't support working with the watch",

@@ -74,8 +74,9 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     private static final long STEPS_REFRESH_TIME = 1000 * 60 * 5;
     private static final long LOCATION_REFRESH_TIME = 1000 * 60 * 5;
     private static final float LOCATION_REFRESH_DISTANCE = 0;
-    private static final long SHIFT_UPDATE_INTERVAL = 15 * 1000;// TODO: Change to 5 minutes
+    private static final long SHIFT_UPDATE_INTERVAL = 5 * 60 * 1000;
     private static final float AT_WORK_RADIUS = 100;
+    private static final int HOUR_DURATION = 1000 * 60 * 60;
 
     // Usual variables
     private static GoogleApiClient mGoogleApiClient;
@@ -238,7 +239,9 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                             System.currentTimeMillis(), 0).toString()
                             .toLowerCase(Locale.getDefault()));
 
-            if (!userAtWork() && !DeviceUtil.clockInShown(weekStartTime, currentShift)) {
+            if (!userAtWork() && !DeviceUtil.clockInShown(weekStartTime, currentShift)
+                    && System.currentTimeMillis() - weekStartTime + currentShift.getStartTime()
+                    < HOUR_DURATION) {
                 showClockInNotification(weekStartTime, currentShift);
             }
         } else if (nextShift != null) {
