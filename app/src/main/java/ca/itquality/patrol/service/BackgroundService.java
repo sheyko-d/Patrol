@@ -4,8 +4,11 @@ import android.Manifest;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -62,7 +65,9 @@ import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.library.util.api.ApiClient;
 import ca.itquality.patrol.library.util.api.ApiInterface;
 import ca.itquality.patrol.library.util.auth.data.User;
+import ca.itquality.patrol.library.util.heartrate.DataValue;
 import ca.itquality.patrol.service.wear.WearMessageListenerService;
+import ca.itquality.patrol.util.DatabaseManager;
 import ca.itquality.patrol.util.DeviceUtil;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -74,7 +79,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     private static final long STEPS_REFRESH_TIME = 1000 * 60 * 5;
     private static final long LOCATION_REFRESH_TIME = 1000 * 60 * 5;
     private static final float LOCATION_REFRESH_DISTANCE = 0;
-    private static final long SHIFT_UPDATE_INTERVAL = 5 * 60 * 1000;
+    private static final long DATA_UPDATE_INTERVAL = 5 * 60 * 1000;
     private static final float AT_WORK_RADIUS = 100;
     private static final int HOUR_DURATION = 1000 * 60 * 60;
 
@@ -104,9 +109,21 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         }
         mGoogleApiClient.connect();
 
-        startShiftUpdateTask();
+        startUpdateDataTask();
         listenForSteps();
         setWatchMessagesListener(true);
+    }
+
+    private void startUpdateDataTask() {
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                updateProfile();
+                uploadStepsHistory();
+                uploadActivityHistory();
+                mHandler.postDelayed(this, DATA_UPDATE_INTERVAL);
+            }
+        });
     }
 
     private void setWatchMessagesListener(boolean enabled) {
@@ -162,8 +179,15 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                 if (totalSet != null) {
                     int steps = totalSet.isEmpty() ? -1 : totalSet.getDataPoints().get(0)
                             .getValue(Field.FIELD_STEPS).asInt();
-                    sendBroadcast(new Intent(MainActivity.STEPS_CHANGED_INTENT)
-                            .putExtra(MainActivity.STEPS_EXTRA, steps));
+
+                    if (steps == -1) return;
+
+                    if (DeviceUtil.getSteps() == -1 || DeviceUtil.getSteps() != steps) {
+                        sendBroadcast(new Intent(MainActivity.STEPS_CHANGED_INTENT)
+                                .putExtra(MainActivity.STEPS_EXTRA, steps));
+
+                        storeStepsInDb(steps);
+                    }
 
                     updateWearSteps(steps);
                 }
@@ -171,12 +195,119 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         }
     };
 
-    private void startShiftUpdateTask() {
-        mHandler.post(new Runnable() {
+    private void storeStepsInDb(int steps) {
+        DatabaseManager.initializeInstance(new DatabaseManager.SitesDatabaseHelper
+                (MyApplication.getContext()));
+        DatabaseManager databaseManager = DatabaseManager.getInstance();
+        SQLiteDatabase database = databaseManager.openDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DatabaseManager.STEPS_VALUE_COLUMN, steps);
+        contentValues.put(DatabaseManager.STEPS_TIME_COLUMN, System.currentTimeMillis());
+        contentValues.put(DatabaseManager.STEPS_IS_SENT_COLUMN, false);
+        database.insert(DatabaseManager.STEPS_TABLE, null, contentValues);
+        databaseManager.closeDatabase();
+    }
+
+    private void uploadStepsHistory() {
+        DatabaseManager.initializeInstance(new DatabaseManager.SitesDatabaseHelper
+                (MyApplication.getContext()));
+        DatabaseManager databaseManager = DatabaseManager.getInstance();
+        SQLiteDatabase database = databaseManager.openDatabase();
+        Cursor cursor = database.query(DatabaseManager.STEPS_TABLE, new String[]{
+                        DatabaseManager.STEPS_TIME_COLUMN,
+                        DatabaseManager.STEPS_VALUE_COLUMN
+                }, DatabaseManager.STEPS_IS_SENT_COLUMN + "=?", new String[]{"0"}, null, null,
+                DatabaseManager.STEPS_TIME_COLUMN);
+        while (cursor.moveToNext()) {
+            ArrayList<DataValue> values = new ArrayList<>();
+            while (cursor.moveToNext()) {
+                values.add(new DataValue(cursor.getLong(0), cursor.getString(1)));
+            }
+
+            postStepsToServer(values);
+
+            // Mark values as sent
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(DatabaseManager.STEPS_IS_SENT_COLUMN, true);
+            database.update(DatabaseManager.STEPS_TABLE, contentValues, null, null);
+            DatabaseManager.getInstance().closeDatabase();
+        }
+        cursor.close();
+        databaseManager.closeDatabase();
+    }
+
+    private void postStepsToServer(ArrayList<DataValue> values) {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<Void> call = apiService.uploadSteps(DeviceUtil.getToken(),
+                Util.parseJsonArray(values).toString());
+        call.enqueue(new Callback<Void>() {
             @Override
-            public void run() {
-                updateProfile();
-                mHandler.postDelayed(this, SHIFT_UPDATE_INTERVAL);
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Util.Log("Uploaded steps data");
+                } else {
+                    if (response.code() == 400) {
+                        Toast.makeText(MyApplication.getContext(), "Some fields are empty.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(MyApplication.getContext(), "Server error.",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void uploadActivityHistory() {
+        DatabaseManager.initializeInstance(new DatabaseManager.SitesDatabaseHelper(this));
+        SQLiteDatabase database = DatabaseManager.getInstance().openDatabase();
+        Cursor cursor = database.query(DatabaseManager.ACTIVITY_TABLE, new String[]{
+                        DatabaseManager.ACTIVITY_TIME_COLUMN,
+                        DatabaseManager.ACTIVITY_VALUE_COLUMN
+                }, DatabaseManager.ACTIVITY_IS_SENT_COLUMN + "=?", new String[]{"0"}, null, null,
+                DatabaseManager.ACTIVITY_TIME_COLUMN);
+        while (cursor.moveToNext()) {
+            ArrayList<DataValue> values = new ArrayList<>();
+            while (cursor.moveToNext()) {
+                values.add(new DataValue(cursor.getLong(0), cursor.getString(1)));
+            }
+
+            postActivityToServer(values);
+
+            // Mark values as sent
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(DatabaseManager.ACTIVITY_IS_SENT_COLUMN, true);
+            database.update(DatabaseManager.ACTIVITY_TABLE, contentValues, null, null);
+            DatabaseManager.getInstance().closeDatabase();
+        }
+        cursor.close();
+        DatabaseManager.getInstance().closeDatabase();
+    }
+
+    private void postActivityToServer(ArrayList<DataValue> values) {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<Void> call = apiService.uploadActivity(DeviceUtil.getToken(),
+                Util.parseJsonArray(values).toString());
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Util.Log("Uploaded activity data");
+                } else {
+                    if (response.code() == 400) {
+                        Toast.makeText(MyApplication.getContext(), "Some fields are empty.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(MyApplication.getContext(), "Server error.",
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }

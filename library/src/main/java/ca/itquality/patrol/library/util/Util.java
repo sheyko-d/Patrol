@@ -6,6 +6,13 @@ import android.text.format.DateUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+
+import ca.itquality.patrol.library.util.heartrate.DataValue;
+
 /**
  * Helper class.
  */
@@ -15,7 +22,7 @@ public class Util {
     public static final String PATH_LOGGED_IN = "/logged_in";
     public static final String DATA_LOGGED_IN = "LoggedIn";
     public static final String PATH_HEART_RATE = "/heart_rate";
-    public static final String DATA_HEART_RATE = "HeartRate";
+    public static final String DATA_HEART_RATE = "DataValue";
     public static final String PATH_HEART_RATE_HISTORY = "/heart_rate_history";
     public static final String DATA_HEART_RATE_VALUES = "HeartRateValues";
     public static final String PATH_ACTIVITY = "/activity";
@@ -69,5 +76,23 @@ public class Util {
             return DateUtils.formatDateTime(context, time, DateUtils.FORMAT_ABBREV_ALL
                     | DateUtils.FORMAT_SHOW_TIME | DateUtils.FORMAT_SHOW_DATE);
         }
+    }
+
+    /**
+     * Parses a json array from an array list.
+     */
+    public static JSONArray parseJsonArray(ArrayList<DataValue> values) {
+        JSONArray valuesJson = new JSONArray();
+        for (DataValue heartRateValue : values) {
+            try {
+                valuesJson.put(new JSONObject()
+                        .put("time", heartRateValue.getTime())
+                        .put("value", heartRateValue.getValue())
+                );
+            } catch (Exception e) {
+                Util.Log("Can't retrieve value: " + e);
+            }
+        }
+        return valuesJson;
     }
 }

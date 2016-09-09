@@ -2,14 +2,14 @@ package ca.itquality.patrol.library.util.heartrate;
 
 import com.google.gson.annotations.SerializedName;
 
-public class HeartRate {
+public class DataValue {
 
     @SerializedName("time")
     private Long time;
     @SerializedName("value")
-    private Integer value;
+    private String value;
 
-    public HeartRate(Long time, Integer value) {
+    public DataValue(Long time, String value) {
         this.time = time;
         this.value = value;
     }
@@ -18,7 +18,7 @@ public class HeartRate {
         return time;
     }
 
-    public Integer getValue() {
+    public String getValue() {
         return value;
     }
 }

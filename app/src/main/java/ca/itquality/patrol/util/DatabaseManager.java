@@ -4,8 +4,6 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import ca.itquality.patrol.library.util.Util;
 
 public class DatabaseManager {
@@ -16,32 +14,40 @@ public class DatabaseManager {
     private static final String DATABASE_NAME = "Patrol";
     private static final int DATABASE_VERSION = 3;
 
-    /* Heart rate table. */
-    public static final String HEART_RATE_TABLE = "DataValue";
-    public static final String HEART_RATE_TIME_COLUMN = "Time";
-    public static final String HEART_RATE_VALUE_COLUMN = "Value";
-    public static final String HEART_RATE_IS_SENT_COLUMN = "IsSent";
+    /* Steps table. */
+    public static final String STEPS_TABLE = "Steps";
+    public static final String STEPS_TIME_COLUMN = "Time";
+    public static final String STEPS_VALUE_COLUMN = "Value";
+    public static final String STEPS_IS_SENT_COLUMN = "IsSent";
+
+    /* Activity table. */
+    public static final String ACTIVITY_TABLE = "Activity";
+    public static final String ACTIVITY_TIME_COLUMN = "Time";
+    public static final String ACTIVITY_VALUE_COLUMN = "Value";
+    public static final String ACTIVITY_IS_SENT_COLUMN = "IsSent";
 
     // Usual variables
-    private static final String CREATE_TABLE_HEART_RATE = "CREATE TABLE "
-            + HEART_RATE_TABLE + " ("
-            + HEART_RATE_TIME_COLUMN + " INTEGER PRIMARY KEY, "
-            + HEART_RATE_VALUE_COLUMN + " INTEGER,"
-            + HEART_RATE_IS_SENT_COLUMN + " INTEGER)";
+    private static final String CREATE_TABLE_STEPS = "CREATE TABLE "
+            + STEPS_TABLE + " ("
+            + STEPS_TIME_COLUMN + " INTEGER PRIMARY KEY, "
+            + STEPS_VALUE_COLUMN + " INTEGER,"
+            + STEPS_IS_SENT_COLUMN + " INTEGER)";
+    private static final String CREATE_TABLE_ACTIVITY = "CREATE TABLE "
+            + ACTIVITY_TABLE + " ("
+            + ACTIVITY_TIME_COLUMN + " INTEGER PRIMARY KEY, "
+            + ACTIVITY_VALUE_COLUMN + " TEXT,"
+            + ACTIVITY_IS_SENT_COLUMN + " INTEGER)";
 
-    private AtomicInteger mOpenCounter = new AtomicInteger();
+    private int mOpenCounter;
 
     private static DatabaseManager instance;
-    private SQLiteOpenHelper mDatabaseHelper;
+    private static SQLiteOpenHelper mDatabaseHelper;
     private SQLiteDatabase mDatabase;
-
-    private DatabaseManager(SQLiteOpenHelper helper) {
-        mDatabaseHelper = helper;
-    }
 
     public static synchronized void initializeInstance(SQLiteOpenHelper helper) {
         if (instance == null) {
-            instance = new DatabaseManager(helper);
+            instance = new DatabaseManager();
+            mDatabaseHelper = helper;
         }
     }
 
@@ -55,7 +61,8 @@ public class DatabaseManager {
     }
 
     public synchronized SQLiteDatabase openDatabase() {
-        if (mOpenCounter.incrementAndGet() == 1) {
+        mOpenCounter++;
+        if(mOpenCounter == 1) {
             // Opening new database
             mDatabase = mDatabaseHelper.getWritableDatabase();
         }
@@ -63,7 +70,8 @@ public class DatabaseManager {
     }
 
     public synchronized void closeDatabase() {
-        if (mOpenCounter.decrementAndGet() == 0) {
+        mOpenCounter--;
+        if(mOpenCounter == 0) {
             // Closing database
             mDatabase.close();
 
@@ -79,7 +87,8 @@ public class DatabaseManager {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
-            db.execSQL(CREATE_TABLE_HEART_RATE);
+            db.execSQL(CREATE_TABLE_STEPS);
+            db.execSQL(CREATE_TABLE_ACTIVITY);
         }
 
         @Override
@@ -90,7 +99,8 @@ public class DatabaseManager {
                     + ", which will destroy all old data");
 
             // Kills the tables and existing data
-            db.execSQL("DROP TABLE IF EXISTS " + HEART_RATE_TABLE);
+            db.execSQL("DROP TABLE IF EXISTS " + STEPS_TABLE);
+            db.execSQL("DROP TABLE IF EXISTS " + ACTIVITY_TABLE);
             // Recreates the database with a new version
             onCreate(db);
         }

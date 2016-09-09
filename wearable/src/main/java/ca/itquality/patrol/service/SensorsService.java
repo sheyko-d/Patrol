@@ -23,14 +23,11 @@ import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.library.util.app.MyApplication;
-import ca.itquality.patrol.library.util.heartrate.HeartRate;
+import ca.itquality.patrol.library.util.heartrate.DataValue;
 import ca.itquality.patrol.util.DatabaseManager;
 
 public class SensorsService extends Service implements GoogleApiClient.ConnectionCallbacks {
@@ -41,7 +38,7 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
     private static final int HEART_RATE_MAX_BACKUP = 120;
     private static final int HEART_RATE_MIN_SLEEP = 60;
     public static final String INTENT_HEART_RATE = "ca.itquality.patrol.HEART_RATE";
-    public static final String EXTRA_HEART_RATE = "HeartRate";
+    public static final String EXTRA_HEART_RATE = "DataValue";
 
     // Usual variables
     private GoogleApiClient mGoogleApiClient;
@@ -114,16 +111,16 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
                         DatabaseManager.HEART_RATE_IS_SENT_COLUMN + "=?", new String[]{"0"},
                         null, null, DatabaseManager.HEART_RATE_TIME_COLUMN + " ASC");
                 if (cursor.getCount() >= HEART_RATE_MIN_UPLOAD_COUNT) {
-                    ArrayList<HeartRate> heartRateValues = new ArrayList<>();
+                    ArrayList<DataValue> heartRateValues = new ArrayList<>();
                     while (cursor.moveToNext()) {
-                        heartRateValues.add(new HeartRate(cursor.getLong(0), cursor.getInt(1)));
+                        heartRateValues.add(new DataValue(cursor.getLong(0), cursor.getString(1)));
                     }
 
                     PutDataMapRequest putDataMapReq = PutDataMapRequest.create
                             (Util.PATH_HEART_RATE_HISTORY);
                     putDataMapReq.setUrgent();
                     putDataMapReq.getDataMap().putString(Util.DATA_HEART_RATE_VALUES,
-                            parseJsonArray(heartRateValues).toString());
+                            Util.parseJsonArray(heartRateValues).toString());
                     PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
                     PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
                             .putDataItem(mGoogleApiClient, putDataReq);
@@ -142,21 +139,6 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
                     });
                 }
                 cursor.close();
-            }
-
-            private JSONArray parseJsonArray(ArrayList<HeartRate> heartRateValues) {
-                JSONArray heartRateValuesJson = new JSONArray();
-                for (HeartRate heartRateValue : heartRateValues) {
-                    try {
-                        heartRateValuesJson.put(new JSONObject()
-                                .put("time", heartRateValue.getTime())
-                                .put("value", heartRateValue.getValue())
-                        );
-                    } catch (Exception e) {
-                        Util.Log("Can't retrieve heart rate value: " + e);
-                    }
-                }
-                return heartRateValuesJson;
             }
 
             // Checks if the guard's heart rate is within the normal range.

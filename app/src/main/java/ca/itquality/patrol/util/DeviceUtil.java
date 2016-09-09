@@ -21,7 +21,7 @@ public class DeviceUtil {
     public static final int MIN_PASSWORD_LENGTH = 6;
     private static final String PREF_ACTIVITY = "Activity";
     private static final String PREF_USER = "User";
-    private static final String PREF_HEART_RATE = "HeartRate";
+    private static final String PREF_HEART_RATE = "DataValue";
     private static final String PREF_STEPS = "Steps";
     private static final String PREF_MY_LATITUDE = "Latitude";
     private static final String PREF_MY_LONGITUDE = "Longitude";

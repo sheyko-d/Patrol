@@ -1,13 +1,19 @@
 package ca.itquality.patrol.service;
 
 import android.app.IntentService;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
 
 import java.util.List;
+
+import ca.itquality.patrol.app.MyApplication;
+import ca.itquality.patrol.util.DatabaseManager;
+import ca.itquality.patrol.util.DeviceUtil;
 
 
 public class ActivityRecognizedService extends IntentService {
@@ -29,6 +35,11 @@ public class ActivityRecognizedService extends IntentService {
             ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
             handleDetectedActivities(result.getProbableActivities());
         }
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
     }
 
     private void handleDetectedActivities(List<DetectedActivity> probableActivities) {
@@ -67,7 +78,25 @@ public class ActivityRecognizedService extends IntentService {
             sendBroadcast(new Intent(ACTIVITY_UPDATE_INTENT).putExtra(ACTIVITY_EXTRA,
                     activityName));
 
+            if (DeviceUtil.getActivity() == null
+                    || !DeviceUtil.getActivity().equals(activityName)) {
+                storeActivityInDb(activityName);
+            }
+
             BackgroundService.updateWearActivityStatus(activityName);
         }
+    }
+
+    private void storeActivityInDb(String activity) {
+        DatabaseManager.initializeInstance(new DatabaseManager.SitesDatabaseHelper
+                (MyApplication.getContext()));
+        DatabaseManager databaseManager = DatabaseManager.getInstance();
+        SQLiteDatabase database = databaseManager.openDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DatabaseManager.ACTIVITY_VALUE_COLUMN, activity);
+        contentValues.put(DatabaseManager.ACTIVITY_TIME_COLUMN, System.currentTimeMillis());
+        contentValues.put(DatabaseManager.ACTIVITY_IS_SENT_COLUMN, false);
+        database.insert(DatabaseManager.ACTIVITY_TABLE, null, contentValues);
+        databaseManager.closeDatabase();
     }
 }
