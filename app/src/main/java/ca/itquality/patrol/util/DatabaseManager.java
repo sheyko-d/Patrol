@@ -12,7 +12,7 @@ public class DatabaseManager {
 
     /* Database. */
     private static final String DATABASE_NAME = "Patrol";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     /* Steps table. */
     public static final String STEPS_TABLE = "Steps";
@@ -26,6 +26,12 @@ public class DatabaseManager {
     public static final String ACTIVITY_VALUE_COLUMN = "Value";
     public static final String ACTIVITY_IS_SENT_COLUMN = "IsSent";
 
+    /* QR codes table. */
+    public static final String QR_TABLE = "Qr";
+    public static final String QR_TIME_COLUMN = "Time";
+    public static final String QR_VALUE_COLUMN = "Value";
+    public static final String QR_IS_SENT_COLUMN = "IsSent";
+
     // Usual variables
     private static final String CREATE_TABLE_STEPS = "CREATE TABLE "
             + STEPS_TABLE + " ("
@@ -37,6 +43,11 @@ public class DatabaseManager {
             + ACTIVITY_TIME_COLUMN + " INTEGER PRIMARY KEY, "
             + ACTIVITY_VALUE_COLUMN + " TEXT,"
             + ACTIVITY_IS_SENT_COLUMN + " INTEGER)";
+    private static final String CREATE_TABLE_QR = "CREATE TABLE "
+            + QR_TABLE + " ("
+            + QR_TIME_COLUMN + " INTEGER PRIMARY KEY, "
+            + QR_VALUE_COLUMN + " TEXT,"
+            + QR_IS_SENT_COLUMN + " INTEGER)";
 
     private int mOpenCounter;
 
@@ -89,6 +100,7 @@ public class DatabaseManager {
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(CREATE_TABLE_STEPS);
             db.execSQL(CREATE_TABLE_ACTIVITY);
+            db.execSQL(CREATE_TABLE_QR);
         }
 
         @Override
@@ -101,6 +113,7 @@ public class DatabaseManager {
             // Kills the tables and existing data
             db.execSQL("DROP TABLE IF EXISTS " + STEPS_TABLE);
             db.execSQL("DROP TABLE IF EXISTS " + ACTIVITY_TABLE);
+            db.execSQL("DROP TABLE IF EXISTS " + QR_TABLE);
             // Recreates the database with a new version
             onCreate(db);
         }

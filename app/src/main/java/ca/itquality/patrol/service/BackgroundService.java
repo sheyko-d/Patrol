@@ -121,6 +121,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                 updateProfile();
                 uploadStepsHistory();
                 uploadActivityHistory();
+                uploadQr();
                 mHandler.postDelayed(this, DATA_UPDATE_INTERVAL);
             }
         });
@@ -220,20 +221,18 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                         DatabaseManager.STEPS_VALUE_COLUMN
                 }, DatabaseManager.STEPS_IS_SENT_COLUMN + "=?", new String[]{"0"}, null, null,
                 DatabaseManager.STEPS_TIME_COLUMN);
+        ArrayList<DataValue> values = new ArrayList<>();
         while (cursor.moveToNext()) {
-            ArrayList<DataValue> values = new ArrayList<>();
-            while (cursor.moveToNext()) {
-                values.add(new DataValue(cursor.getLong(0), cursor.getString(1)));
-            }
-
-            postStepsToServer(values);
-
-            // Mark values as sent
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(DatabaseManager.STEPS_IS_SENT_COLUMN, true);
-            database.update(DatabaseManager.STEPS_TABLE, contentValues, null, null);
-            DatabaseManager.getInstance().closeDatabase();
+            values.add(new DataValue(cursor.getLong(0), cursor.getString(1)));
         }
+
+        if (cursor.getCount() == 0) return;
+        postStepsToServer(values);
+
+        // Mark values as sent
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DatabaseManager.STEPS_IS_SENT_COLUMN, true);
+        database.update(DatabaseManager.STEPS_TABLE, contentValues, null, null);
         cursor.close();
         databaseManager.closeDatabase();
     }
@@ -272,20 +271,18 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                         DatabaseManager.ACTIVITY_VALUE_COLUMN
                 }, DatabaseManager.ACTIVITY_IS_SENT_COLUMN + "=?", new String[]{"0"}, null, null,
                 DatabaseManager.ACTIVITY_TIME_COLUMN);
+        ArrayList<DataValue> values = new ArrayList<>();
         while (cursor.moveToNext()) {
-            ArrayList<DataValue> values = new ArrayList<>();
-            while (cursor.moveToNext()) {
-                values.add(new DataValue(cursor.getLong(0), cursor.getString(1)));
-            }
-
-            postActivityToServer(values);
-
-            // Mark values as sent
-            ContentValues contentValues = new ContentValues();
-            contentValues.put(DatabaseManager.ACTIVITY_IS_SENT_COLUMN, true);
-            database.update(DatabaseManager.ACTIVITY_TABLE, contentValues, null, null);
-            DatabaseManager.getInstance().closeDatabase();
+            values.add(new DataValue(cursor.getLong(0), cursor.getString(1)));
         }
+
+        if (cursor.getCount() == 0) return;
+        postActivityToServer(values);
+
+        // Mark values as sent
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DatabaseManager.ACTIVITY_IS_SENT_COLUMN, true);
+        database.update(DatabaseManager.ACTIVITY_TABLE, contentValues, null, null);
         cursor.close();
         DatabaseManager.getInstance().closeDatabase();
     }
@@ -299,6 +296,56 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
                     Util.Log("Uploaded activity data");
+                } else {
+                    if (response.code() == 400) {
+                        Toast.makeText(MyApplication.getContext(), "Some fields are empty.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(MyApplication.getContext(), "Server error.",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void uploadQr() {
+        DatabaseManager.initializeInstance(new DatabaseManager.SitesDatabaseHelper(this));
+        SQLiteDatabase database = DatabaseManager.getInstance().openDatabase();
+        if (!database.isOpen()) return;
+        Cursor cursor = database.query(DatabaseManager.QR_TABLE, new String[]{
+                        DatabaseManager.QR_TIME_COLUMN,
+                        DatabaseManager.QR_VALUE_COLUMN
+                }, DatabaseManager.QR_IS_SENT_COLUMN + "=?", new String[]{"0"}, null, null,
+                DatabaseManager.QR_TIME_COLUMN);
+        ArrayList<DataValue> values = new ArrayList<>();
+        while (cursor.moveToNext()) {
+            values.add(new DataValue(cursor.getLong(0), cursor.getString(1)));
+        }
+
+        if (cursor.getCount() == 0) return;
+        postQrToServer(values);
+
+        // Mark values as sent
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DatabaseManager.QR_IS_SENT_COLUMN, true);
+        database.update(DatabaseManager.QR_TABLE, contentValues, null, null);
+        cursor.close();
+        DatabaseManager.getInstance().closeDatabase();
+    }
+
+    private void postQrToServer(ArrayList<DataValue> values) {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<Void> call = apiService.uploadQr(DeviceUtil.getToken(),
+                Util.parseJsonArray(values).toString());
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Util.Log("Uploaded qr");
                 } else {
                     if (response.code() == 400) {
                         Toast.makeText(MyApplication.getContext(), "Some fields are empty.",
@@ -517,13 +564,8 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         }
     }
 
-    private void getDailySteps() {
-        // TODO:
-    }
-
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        getDailySteps();
         setLocationListener();
     }
 

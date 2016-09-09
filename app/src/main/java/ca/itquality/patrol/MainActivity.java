@@ -6,12 +6,14 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -92,6 +94,7 @@ import ca.itquality.patrol.service.ActivityRecognizedService;
 import ca.itquality.patrol.service.BackgroundService;
 import ca.itquality.patrol.service.wear.WearDataListenerService;
 import ca.itquality.patrol.settings.SettingsActivity;
+import ca.itquality.patrol.util.DatabaseManager;
 import ca.itquality.patrol.util.DeviceUtil;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -580,10 +583,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode,
                 data);
         if (scanResult != null) {
-            String scannedTxt = scanResult.getContents();
-            if (!TextUtils.isEmpty(scannedTxt)) {
-                DeviceUtil.setQr(scannedTxt);
-                mQrTxt.setText(getString(R.string.main_qr, scannedTxt));
+            String qr = scanResult.getContents();
+            if (!TextUtils.isEmpty(qr)) {
+                DeviceUtil.setQr(qr);
+                storeQrInDb(qr);
+                mQrTxt.setText(getString(R.string.main_qr, qr));
             }
         }
         if (requestCode == PLACE_PICKER_REQUEST_CODE
@@ -596,6 +600,20 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
+    }
+
+    private void storeQrInDb(String qr) {
+        DatabaseManager.initializeInstance(new DatabaseManager.SitesDatabaseHelper
+                (MyApplication.getContext()));
+        DatabaseManager databaseManager = DatabaseManager.getInstance();
+        SQLiteDatabase database = databaseManager.openDatabase();
+        if (!database.isOpen()) return;
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DatabaseManager.QR_VALUE_COLUMN, qr);
+        contentValues.put(DatabaseManager.QR_TIME_COLUMN, System.currentTimeMillis());
+        contentValues.put(DatabaseManager.QR_IS_SENT_COLUMN, false);
+        database.insert(DatabaseManager.QR_TABLE, null, contentValues);
+        databaseManager.closeDatabase();
     }
 
     private void createPlace(String title, double latitude, double longitude) {
