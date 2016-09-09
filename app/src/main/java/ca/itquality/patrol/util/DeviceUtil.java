@@ -288,12 +288,27 @@ public class DeviceUtil {
     }
 
     public static User.AssignedShift getNextWeekShift() {
+        // TODO: Sort shifts by time on server side
         ArrayList<User.AssignedShift> assignedShifts = DeviceUtil.getUser().getAssignedShifts();
         User.AssignedShift nextShift = null;
         if (assignedShifts != null) {
             nextShift = assignedShifts.get(0);
         }
         return nextShift;
+    }
+
+    public static User.AssignedShift getPreviousShift(long timeSinceWeekStart) {
+        ArrayList<User.AssignedShift> assignedShifts = DeviceUtil.getUser().getAssignedShifts();
+        User.AssignedShift previousShift = null;
+        if (assignedShifts != null) {
+            for (User.AssignedShift assignedShift : assignedShifts) {
+                if (timeSinceWeekStart > assignedShift.getEndTime()) {
+                    previousShift = assignedShift;
+                    break;
+                }
+            }
+        }
+        return previousShift;
     }
 
     /**
@@ -364,7 +379,7 @@ public class DeviceUtil {
      */
     public static void setClockInShown(long weekStartTime, User.AssignedShift currentShift) {
         getDefaultSharedPreferences(MyApplication.getContext()).edit()
-                .putBoolean(String.valueOf(weekStartTime + currentShift.getStartTime()), true)
+                .putBoolean("ClockIn" + weekStartTime + currentShift.getAssignedShiftId(), true)
                 .apply();
     }
 
@@ -373,6 +388,44 @@ public class DeviceUtil {
      */
     public static boolean clockInShown(long weekStartTime, User.AssignedShift currentShift) {
         return getDefaultSharedPreferences(MyApplication.getContext())
-                .getBoolean(String.valueOf(weekStartTime + currentShift.getStartTime()), false);
+                .getBoolean("ClockIn" + weekStartTime + currentShift.getAssignedShiftId(), false);
+    }
+
+    /**
+     * Saves the shift start confirmation state in preferences.
+     */
+    public static void setStartConfirmed(long weekStartTime, User.AssignedShift currentShift) {
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putBoolean("StartConfirmed" + weekStartTime + currentShift.getAssignedShiftId(),
+                        true)
+                .apply();
+    }
+
+    /**
+     * Retrieves the shift start confirmation state from preferences.
+     */
+    public static boolean startConfirmed(long weekStartTime, User.AssignedShift currentShift) {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getBoolean("StartConfirmed" + weekStartTime + currentShift.getAssignedShiftId(),
+                        false);
+    }
+
+    /**
+     * Saves the shift end confirmation state in preferences.
+     */
+    public static void setEndConfirmed(long weekStartTime, User.AssignedShift currentShift) {
+        getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putBoolean("EndConfirmed" + weekStartTime + currentShift.getAssignedShiftId(),
+                        true)
+                .apply();
+    }
+
+    /**
+     * Retrieves the shift end confirmation state from preferences.
+     */
+    public static boolean endConfirmed(long weekStartTime, User.AssignedShift currentShift) {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getBoolean("EndConfirmed" + weekStartTime + currentShift.getAssignedShiftId(),
+                        false);
     }
 }

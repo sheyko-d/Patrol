@@ -200,6 +200,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                 (MyApplication.getContext()));
         DatabaseManager databaseManager = DatabaseManager.getInstance();
         SQLiteDatabase database = databaseManager.openDatabase();
+        if (!database.isOpen()) return;
         ContentValues contentValues = new ContentValues();
         contentValues.put(DatabaseManager.STEPS_VALUE_COLUMN, steps);
         contentValues.put(DatabaseManager.STEPS_TIME_COLUMN, System.currentTimeMillis());
@@ -213,6 +214,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                 (MyApplication.getContext()));
         DatabaseManager databaseManager = DatabaseManager.getInstance();
         SQLiteDatabase database = databaseManager.openDatabase();
+        if (!database.isOpen()) return;
         Cursor cursor = database.query(DatabaseManager.STEPS_TABLE, new String[]{
                         DatabaseManager.STEPS_TIME_COLUMN,
                         DatabaseManager.STEPS_VALUE_COLUMN
@@ -264,6 +266,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     private void uploadActivityHistory() {
         DatabaseManager.initializeInstance(new DatabaseManager.SitesDatabaseHelper(this));
         SQLiteDatabase database = DatabaseManager.getInstance().openDatabase();
+        if (!database.isOpen()) return;
         Cursor cursor = database.query(DatabaseManager.ACTIVITY_TABLE, new String[]{
                         DatabaseManager.ACTIVITY_TIME_COLUMN,
                         DatabaseManager.ACTIVITY_VALUE_COLUMN
@@ -370,10 +373,21 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                             System.currentTimeMillis(), 0).toString()
                             .toLowerCase(Locale.getDefault()));
 
+            // Show a clock in alert notification if user is not at work in time
             if (!userAtWork() && !DeviceUtil.clockInShown(weekStartTime, currentShift)
                     && System.currentTimeMillis() - weekStartTime + currentShift.getStartTime()
                     < HOUR_DURATION) {
                 showClockInNotification(weekStartTime, currentShift);
+            } else if (!DeviceUtil.startConfirmed(weekStartTime, currentShift)) {
+                String shiftStarted = DateUtils.getRelativeDateTimeString
+                        (MyApplication.getContext(), weekStartTime + currentShift.getStartTime(),
+                                System.currentTimeMillis(), 0, 0).toString()
+                        .toLowerCase(Locale.getDefault());
+                sendBroadcast(new Intent(MainActivity.CONFIRM_SHIFT_START_INTENT)
+                        .putExtra(MainActivity.SHIFT_STARTED_EXTRA, shiftStarted)
+                        .putExtra(MainActivity.CLOCK_IN_SHIFT_ID_EXTRA,
+                                currentShift.getAssignedShiftId()));
+                DeviceUtil.setStartConfirmed(weekStartTime, currentShift);
             }
         } else if (nextShift != null) {
             // Display the next shift in a week
@@ -398,6 +412,26 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                             + nextWeekShift.getStartTime(), System.currentTimeMillis(), 0)
                             .toString().toLowerCase(Locale.getDefault()));
         }
+
+        // Check if some shift is added and user didn't clock out
+        if (currentShift == null) {
+            User.AssignedShift previousShift = DeviceUtil.getPreviousShift(timeSinceWeekStart);
+            if (!DeviceUtil.endConfirmed(weekStartTime, previousShift)) {
+                if (previousShift != null) {
+                    String shiftEnded = DateUtils.getRelativeDateTimeString
+                            (MyApplication.getContext(), weekStartTime + previousShift.getEndTime(),
+                                    System.currentTimeMillis(), 0, 0).toString()
+                            .toLowerCase(Locale.getDefault());
+                    sendBroadcast(new Intent(MainActivity.CONFIRM_SHIFT_END_INTENT)
+                            .putExtra(MainActivity.SHIFT_ENDED_EXTRA, shiftEnded)
+                            .putExtra(MainActivity.CLOCK_IN_SHIFT_ID_EXTRA,
+                                    previousShift.getAssignedShiftId()));
+
+                    DeviceUtil.setEndConfirmed(weekStartTime, previousShift);
+                }
+            }
+        }
+
         if (!TextUtils.isEmpty(shiftTitleTxt) && !TextUtils.isEmpty(shiftTxt)) {
             sendBroadcast(new Intent(MainActivity.SHIFT_CHANGED_INTENT)
                     .putExtra(MainActivity.SHIFT_TITLE_EXTRA, shiftTitleTxt)

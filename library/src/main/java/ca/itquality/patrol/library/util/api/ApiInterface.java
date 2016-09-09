@@ -85,8 +85,15 @@ public interface ApiInterface {
 
     @FormUrlEncoded
     @POST("clock_in/post_clock_in_reason.php")
-    Call<Void> postClockInReason(@Field("token") String token, @Field("shift_id") String shiftId,
+    Call<Void> postClockInReason(@Field("token") String token,
+                                 @Field("shift_id") String shiftId,
                                  @Field("reason") String reason);
+
+    @FormUrlEncoded
+    @POST("clock_in/clock_in.php")
+    Call<Void> clockIn(@Field("token") String token,
+                       @Field("shift_id") String shiftId,
+                       @Field("started") boolean started);
 
     @FormUrlEncoded
     @POST("data/post_heart_rate.php")
@@ -95,7 +102,8 @@ public interface ApiInterface {
 
     @FormUrlEncoded
     @POST("data/post_steps.php")
-    Call<Void> uploadSteps(@Field("token") String token, @Field("step_values") String values);
+    Call<Void> uploadSteps(@Field("token") String token,
+                           @Field("step_values") String values);
 
     @FormUrlEncoded
     @POST("data/post_activity.php")

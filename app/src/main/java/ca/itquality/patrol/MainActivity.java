@@ -121,6 +121,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public static final String CLOCK_IN_EXTRA = "ClockIn";
     public static final String CLOCK_IN_SHIFT_ID_EXTRA = "ClockInShiftId";
     private static final float CAMERA_PADDING = 32;
+    public static final String CONFIRM_SHIFT_START_INTENT
+            = "ca.itquality.patrol.CONFIRM_SHIFT_START";
+    public static final String SHIFT_STARTED_EXTRA = "ShiftStarted";
+    public static final String SHIFT_ENDED_EXTRA = "ShiftEnded";
+    public static final String CONFIRM_SHIFT_END_INTENT
+            = "ca.itquality.patrol.CONFIRM_SHIFT_END";
 
     // Views
     @Bind(R.id.toolbar)
@@ -286,6 +292,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         intentFilter.addAction(LOCATION_CHANGED_INTENT);
         intentFilter.addAction(SHIFT_CHANGED_INTENT);
         intentFilter.addAction(STEPS_CHANGED_INTENT);
+        intentFilter.addAction(CONFIRM_SHIFT_START_INTENT);
+        intentFilter.addAction(CONFIRM_SHIFT_END_INTENT);
         intentFilter.addAction(ActivityRecognizedService.ACTIVITY_UPDATE_INTENT);
         registerReceiver(mReceiver, intentFilter);
     }
@@ -314,9 +322,85 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 int steps = intent.getIntExtra(STEPS_EXTRA, 0);
                 DeviceUtil.setSteps(steps);
                 mStepsTxt.setText(String.valueOf(steps));
+            } else if (intent.getAction().equals(CONFIRM_SHIFT_START_INTENT)) {
+                String shiftId = intent.getStringExtra(CLOCK_IN_SHIFT_ID_EXTRA);
+                String shiftStarted = intent.getStringExtra(SHIFT_STARTED_EXTRA);
+                showConfirmStartDialog(shiftId, shiftStarted);
+            } else if (intent.getAction().equals(CONFIRM_SHIFT_END_INTENT)){
+                String shiftId = intent.getStringExtra(CLOCK_IN_SHIFT_ID_EXTRA);
+                String shiftEnded = intent.getStringExtra(SHIFT_ENDED_EXTRA);
+                showConfirmEndDialog(shiftId, shiftEnded);
             }
         }
     };
+
+    private void showConfirmStartDialog(final String shiftId, String shiftStarted) {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this,
+                R.style.MaterialDialogStyle);
+        dialogBuilder.setTitle("Hey, please clock in");
+        dialogBuilder.setMessage("Your shift started " + shiftStarted);
+        dialogBuilder.setCancelable(false);
+        dialogBuilder.setPositiveButton("Clock in", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                clockIn(shiftId, true);
+            }
+        });
+        dialogBuilder.setNegativeButton("Day off", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                openClockInDialog(shiftId);
+            }
+        });
+        dialogBuilder.create().show();
+    }
+
+    private void showConfirmEndDialog(final String shiftId, String shiftEnded) {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this,
+                R.style.MaterialDialogStyle);
+        dialogBuilder.setTitle("Time to go home!");
+        dialogBuilder.setMessage("Your shift ended " + shiftEnded);
+        dialogBuilder.setPositiveButton("Clock out", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                clockIn(shiftId, false);
+            }
+        });
+        dialogBuilder.setNegativeButton("Cancel", null);
+        dialogBuilder.create().show();
+    }
+
+    private void clockIn(String shiftId, final boolean started) {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<Void> call = apiService.clockIn(DeviceUtil.getToken(), shiftId, started);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Util.Log("Clocked In");
+                    if (started) {
+                        Toast.makeText(MyApplication.getContext(),
+                                "Thanks, have a good day!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(MyApplication.getContext(),
+                                "Thanks, see you tomorrow!", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    if (response.code() == 400) {
+                        Toast.makeText(MyApplication.getContext(),
+                                "Some fields are empty.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(MyApplication.getContext(), "Server error.",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
     private void startBackgroundService() {
         Util.Log("Will start background service");
