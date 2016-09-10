@@ -12,7 +12,7 @@ public class DatabaseManager {
 
     /* Database. */
     private static final String DATABASE_NAME = "Patrol";
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5;
 
     /* Steps table. */
     public static final String STEPS_TABLE = "Steps";
@@ -32,6 +32,12 @@ public class DatabaseManager {
     public static final String QR_VALUE_COLUMN = "Value";
     public static final String QR_IS_SENT_COLUMN = "IsSent";
 
+    /* Location table. */
+    public static final String LOCATION_TABLE = "Location";
+    public static final String LOCATION_TIME_COLUMN = "Time";
+    public static final String LOCATION_VALUE_COLUMN = "Value";
+    public static final String LOCATION_IS_SENT_COLUMN = "IsSent";
+
     // Usual variables
     private static final String CREATE_TABLE_STEPS = "CREATE TABLE "
             + STEPS_TABLE + " ("
@@ -48,6 +54,11 @@ public class DatabaseManager {
             + QR_TIME_COLUMN + " INTEGER PRIMARY KEY, "
             + QR_VALUE_COLUMN + " TEXT,"
             + QR_IS_SENT_COLUMN + " INTEGER)";
+    private static final String CREATE_TABLE_LOCATION = "CREATE TABLE "
+            + LOCATION_TABLE + " ("
+            + LOCATION_TIME_COLUMN + " INTEGER PRIMARY KEY, "
+            + LOCATION_VALUE_COLUMN + " TEXT,"
+            + LOCATION_IS_SENT_COLUMN + " INTEGER)";
 
     private int mOpenCounter;
 
@@ -101,6 +112,7 @@ public class DatabaseManager {
             db.execSQL(CREATE_TABLE_STEPS);
             db.execSQL(CREATE_TABLE_ACTIVITY);
             db.execSQL(CREATE_TABLE_QR);
+            db.execSQL(CREATE_TABLE_LOCATION);
         }
 
         @Override
@@ -114,6 +126,7 @@ public class DatabaseManager {
             db.execSQL("DROP TABLE IF EXISTS " + STEPS_TABLE);
             db.execSQL("DROP TABLE IF EXISTS " + ACTIVITY_TABLE);
             db.execSQL("DROP TABLE IF EXISTS " + QR_TABLE);
+            db.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
             // Recreates the database with a new version
             onCreate(db);
         }

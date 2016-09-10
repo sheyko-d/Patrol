@@ -113,5 +113,10 @@ public interface ApiInterface {
     @FormUrlEncoded
     @POST("data/post_qr.php")
     Call<Void> uploadQr(@Field("token") String token,
-                              @Field("qr_values") String values);
+                        @Field("qr_values") String values);
+
+    @FormUrlEncoded
+    @POST("data/post_location.php")
+    Call<Void> uploadLocation(@Field("token") String token,
+                              @Field("location_values") String values);
 }

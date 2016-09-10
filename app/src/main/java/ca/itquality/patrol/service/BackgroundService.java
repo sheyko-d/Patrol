@@ -52,6 +52,8 @@ import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.google.firebase.iid.FirebaseInstanceId;
 
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -122,6 +124,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                 uploadStepsHistory();
                 uploadActivityHistory();
                 uploadQr();
+                uploadLocation();
                 mHandler.postDelayed(this, DATA_UPDATE_INTERVAL);
             }
         });
@@ -362,6 +365,56 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         });
     }
 
+    private void uploadLocation() {
+        DatabaseManager.initializeInstance(new DatabaseManager.SitesDatabaseHelper(this));
+        SQLiteDatabase database = DatabaseManager.getInstance().openDatabase();
+        if (!database.isOpen()) return;
+        Cursor cursor = database.query(DatabaseManager.LOCATION_TABLE, new String[]{
+                        DatabaseManager.LOCATION_TIME_COLUMN,
+                        DatabaseManager.LOCATION_VALUE_COLUMN
+                }, DatabaseManager.LOCATION_IS_SENT_COLUMN + "=?", new String[]{"0"}, null, null,
+                DatabaseManager.LOCATION_TIME_COLUMN);
+        ArrayList<DataValue> values = new ArrayList<>();
+        while (cursor.moveToNext()) {
+            values.add(new DataValue(cursor.getLong(0), cursor.getString(1)));
+        }
+
+        if (cursor.getCount() == 0) return;
+        postLocationToServer(values);
+
+        // Mark values as sent
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(DatabaseManager.LOCATION_IS_SENT_COLUMN, true);
+        database.update(DatabaseManager.LOCATION_TABLE, contentValues, null, null);
+        cursor.close();
+        DatabaseManager.getInstance().closeDatabase();
+    }
+
+    private void postLocationToServer(ArrayList<DataValue> values) {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<Void> call = apiService.uploadLocation(DeviceUtil.getToken(),
+                Util.parseJsonArray(values).toString());
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Util.Log("Uploaded location");
+                } else {
+                    if (response.code() == 400) {
+                        Toast.makeText(MyApplication.getContext(), "Some fields are empty.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(MyApplication.getContext(), "Server error.",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
     private void updateProfile() {
         String googleToken = FirebaseInstanceId.getInstance().getToken();
 
@@ -585,6 +638,8 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                         DeviceUtil.setMyLocation((float) location.getLatitude(),
                                 (float) location.getLongitude());
 
+                        storeLocationInDb(location);
+
                         getAddress(location);
                     }
 
@@ -600,6 +655,26 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                     public void onProviderDisabled(String s) {
                     }
                 });
+    }
+
+    private void storeLocationInDb(Location location) {
+        try {
+            DatabaseManager.initializeInstance(new DatabaseManager.SitesDatabaseHelper
+                    (MyApplication.getContext()));
+            DatabaseManager databaseManager = DatabaseManager.getInstance();
+            SQLiteDatabase database = databaseManager.openDatabase();
+            if (!database.isOpen()) return;
+            ContentValues contentValues = new ContentValues();
+            contentValues.put(DatabaseManager.LOCATION_VALUE_COLUMN, new JSONObject()
+                    .put("latitude", location.getLatitude())
+                    .put("longitude", location.getLongitude()).toString());
+            contentValues.put(DatabaseManager.LOCATION_TIME_COLUMN, System.currentTimeMillis());
+            contentValues.put(DatabaseManager.LOCATION_IS_SENT_COLUMN, false);
+            database.insert(DatabaseManager.LOCATION_TABLE, null, contentValues);
+            databaseManager.closeDatabase();
+        } catch (Exception e) {
+            Util.Log("Can't save my location: " + e);
+        }
     }
 
     private void getAddress(Location location) {
