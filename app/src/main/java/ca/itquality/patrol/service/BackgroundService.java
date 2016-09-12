@@ -80,7 +80,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     // Constants
     private static final long STEPS_REFRESH_TIME = 1000 * 60 * 5;
     private static final long LOCATION_REFRESH_TIME = 1000 * 60 * 5;
-    private static final float LOCATION_REFRESH_DISTANCE = 0;
+    private static final float LOCATION_REFRESH_DISTANCE = 10;
     private static final long DATA_UPDATE_INTERVAL = 5 * 60 * 1000;
     private static final float AT_WORK_RADIUS = 100;
     private static final int HOUR_DURATION = 1000 * 60 * 60;

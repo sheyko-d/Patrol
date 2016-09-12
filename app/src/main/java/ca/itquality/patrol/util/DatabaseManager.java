@@ -11,8 +11,8 @@ public class DatabaseManager {
     // Constants
 
     /* Database. */
-    private static final String DATABASE_NAME = "Patrol";
-    private static final int DATABASE_VERSION = 5;
+    private static final String DATABASE_NAME = "Patrol.db";
+    private static final int DATABASE_VERSION = 6;
 
     /* Steps table. */
     public static final String STEPS_TABLE = "Steps";

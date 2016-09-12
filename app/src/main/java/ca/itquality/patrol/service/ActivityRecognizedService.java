@@ -12,6 +12,7 @@ import com.google.android.gms.location.DetectedActivity;
 import java.util.List;
 
 import ca.itquality.patrol.app.MyApplication;
+import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.util.DatabaseManager;
 import ca.itquality.patrol.util.DeviceUtil;
 
@@ -74,14 +75,18 @@ public class ActivityRecognizedService extends IntentService {
             }
         }
 
+        Util.Log("activity changed: "+activityName+" "+System.currentTimeMillis());
         if (!TextUtils.isEmpty(activityName)) {
             sendBroadcast(new Intent(ACTIVITY_UPDATE_INTENT).putExtra(ACTIVITY_EXTRA,
                     activityName));
 
+            Util.Log("store activity: "+DeviceUtil.getActivity()+" equals "+activityName);
             if (DeviceUtil.getActivity() == null
                     || !DeviceUtil.getActivity().equals(activityName)) {
+                Util.Log("store activity: "+activityName);
                 storeActivityInDb(activityName);
             }
+            DeviceUtil.setActivity(activityName);
 
             BackgroundService.updateWearActivityStatus(activityName);
         }

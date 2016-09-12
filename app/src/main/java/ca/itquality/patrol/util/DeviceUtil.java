@@ -46,10 +46,8 @@ public class DeviceUtil {
      * Save user login data in preferences.
      */
     public static void updateProfile(User user) {
-        Util.Log("Will save user");
         String json = new Gson().toJson(user);
 
-        Util.Log("Save user: " + json);
         PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putString(PREF_USER, json).apply();
     }
@@ -103,20 +101,6 @@ public class DeviceUtil {
      */
     public static String getAssignedObjectTitle() {
         return getUser() != null ? getUser().getAssignedObject().getTitle() : null;
-    }
-
-    /**
-     * Retrieves user's assigned object latitude from preferences.
-     */
-    public static Float getAssignedObjectLatitude() {
-        return getUser() != null ? getUser().getAssignedObject().getLatitude() : null;
-    }
-
-    /**
-     * Retrieves user's assigned object longitude from preferences.
-     */
-    public static Float getAssignedObjectLongitude() {
-        return getUser() != null ? getUser().getAssignedObject().getLongitude() : null;
     }
 
     /**

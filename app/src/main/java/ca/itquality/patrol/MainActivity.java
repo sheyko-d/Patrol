@@ -319,7 +319,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             } else if (intent.getAction().equals
                     (ActivityRecognizedService.ACTIVITY_UPDATE_INTENT)) {
                 String activity = intent.getStringExtra(ActivityRecognizedService.ACTIVITY_EXTRA);
-                DeviceUtil.setActivity(activity);
                 mActivityTxt.setText(activity);
             } else if (intent.getAction().equals(STEPS_CHANGED_INTENT)) {
                 int steps = intent.getIntExtra(STEPS_EXTRA, 0);
@@ -329,7 +328,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 String shiftId = intent.getStringExtra(CLOCK_IN_SHIFT_ID_EXTRA);
                 String shiftStarted = intent.getStringExtra(SHIFT_STARTED_EXTRA);
                 showConfirmStartDialog(shiftId, shiftStarted);
-            } else if (intent.getAction().equals(CONFIRM_SHIFT_END_INTENT)){
+            } else if (intent.getAction().equals(CONFIRM_SHIFT_END_INTENT)) {
                 String shiftId = intent.getStringExtra(CLOCK_IN_SHIFT_ID_EXTRA);
                 String shiftEnded = intent.getStringExtra(SHIFT_ENDED_EXTRA);
                 showConfirmEndDialog(shiftId, shiftEnded);
