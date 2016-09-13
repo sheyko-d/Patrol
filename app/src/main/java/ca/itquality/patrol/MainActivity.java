@@ -19,6 +19,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
+import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
@@ -172,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private boolean mSupportsWatch = true;
     private boolean mResolvingError = false;
     private boolean mConnectedToWatch = false;
+    private AlertDialog mFitDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -196,6 +198,52 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         initShiftTxt();
         initAddressTxt();
         checkBackupRequest();
+    }
+
+    private void checkFitInstalled() {
+        boolean dialogShown = mFitDialog != null && mFitDialog.isShowing();
+        if (!dialogShown && !fitInstalled()) {
+            openFitAlertDialog();
+        } else if (dialogShown) {
+            mFitDialog.cancel();
+        }
+    }
+
+    private void openFitAlertDialog() {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this,
+                R.style.MaterialDialogStyle);
+        dialogBuilder.setTitle("Please install Google Fit");
+        dialogBuilder.setMessage("It's required to count your steps and measure activity");
+        dialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                downloadFit();
+            }
+        });
+        dialogBuilder.setCancelable(false);
+        mFitDialog = dialogBuilder.create();
+        mFitDialog.show();
+    }
+
+    private final String PACKAGE_NAME = "com.google.android.apps.fitness";
+    private void downloadFit() {
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id="
+                    + PACKAGE_NAME)));
+        } catch (android.content.ActivityNotFoundException e) {
+            startActivity(new Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://play.google.com/store/apps/details?id=" + PACKAGE_NAME)));
+        }
+    }
+
+    @CheckResult
+    public boolean fitInstalled() {
+        try {
+            getPackageManager().getPackageInfo(PACKAGE_NAME, PackageManager.GET_ACTIVITIES);
+            return true;
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
     }
 
     private void checkBackupRequest() {
@@ -778,6 +826,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             connectToWatch();
         }
         loadUnreadMessages();
+        checkFitInstalled();
     }
 
     private void loadUnreadMessages() {
@@ -848,8 +897,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 .addApi(Wearable.API)
                 .addApi(LocationServices.API)
                 .addApi(Fitness.SENSORS_API)
+                .addApi(Fitness.HISTORY_API)
                 .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
-                .useDefaultAccount()
+                .addScope(Fitness.SCOPE_ACTIVITY_READ_WRITE)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();

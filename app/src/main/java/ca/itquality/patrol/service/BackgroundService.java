@@ -10,7 +10,6 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
-import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
@@ -107,12 +106,12 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                     .addApi(Fitness.SENSORS_API)
                     .addApi(Fitness.HISTORY_API)
                     .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
+                    .addScope(Fitness.SCOPE_ACTIVITY_READ_WRITE)
                     .build();
         }
         mGoogleApiClient.connect();
 
         startUpdateDataTask();
-        listenForSteps();
         setWatchMessagesListener(true);
     }
 
@@ -166,7 +165,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         SensorRequest request = new SensorRequest.Builder()
                 .setDataSource(dataSource)
                 .setDataType(dataType)
-                .setSamplingRate(STEPS_REFRESH_TIME, TimeUnit.MICROSECONDS)
+                .setSamplingRate(3, TimeUnit.SECONDS)
                 .build();
 
         Fitness.SensorsApi.add(mGoogleApiClient, request, mStepsListener);
@@ -619,6 +618,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        listenForSteps();
         setLocationListener();
     }
 
@@ -629,9 +629,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                 Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
-        Criteria criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_FINE);
-        locationManager.requestLocationUpdates(locationManager.getBestProvider(criteria, true),
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
                 LOCATION_REFRESH_TIME, LOCATION_REFRESH_DISTANCE, new LocationListener() {
                     @Override
                     public void onLocationChanged(final Location location) {
