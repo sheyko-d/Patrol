@@ -15,6 +15,7 @@ import com.google.android.gms.wearable.DataItem;
 import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Wearable;
 
+import ca.itquality.patrol.MainActivity;
 import ca.itquality.patrol.app.MyApplication;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.library.util.api.ApiClient;
@@ -54,6 +55,7 @@ public class WearDataListenerService extends Service implements DataApi.DataList
 
     @Override
     public void onDataChanged(DataEventBuffer dataEventBuffer) {
+        Util.Log("receive some data");
         for (DataEvent event : dataEventBuffer) {
             if (event.getType() == DataEvent.TYPE_CHANGED) {
                 DataItem item = event.getDataItem();
@@ -63,6 +65,13 @@ public class WearDataListenerService extends Service implements DataApi.DataList
                     String heartRateValues = dataItem.getDataMap()
                             .getString(Util.DATA_HEART_RATE_VALUES);
                     uploadHeartRateValuesToServer(heartRateValues);
+                } else if ((item.getUri().getPath()).equals(Util.PATH_HEART_RATE)) {
+                    Util.Log("receive heart rate");
+                    DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
+                    int heartRate = dataItem.getDataMap().getInt(Util.DATA_HEART_RATE);
+                    DeviceUtil.setHeartRate(heartRate);
+                    sendBroadcast(new Intent(MainActivity.HEART_RATE_CHANGED_INTENT)
+                            .putExtra(MainActivity.HEART_RATE_EXTRA, heartRate));
                 }
             }
         }

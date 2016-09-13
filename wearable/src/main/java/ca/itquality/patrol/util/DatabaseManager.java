@@ -14,7 +14,7 @@ public class DatabaseManager {
 
     /* Database. */
     private static final String DATABASE_NAME = "Patrol";
-    private static final int DATABASE_VERSION = 3;
+    private static final int DATABASE_VERSION = 4;
 
     /* Heart rate table. */
     public static final String HEART_RATE_TABLE = "DataValue";

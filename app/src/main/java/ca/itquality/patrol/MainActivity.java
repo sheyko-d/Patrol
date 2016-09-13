@@ -65,11 +65,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataEvent;
-import com.google.android.gms.wearable.DataEventBuffer;
-import com.google.android.gms.wearable.DataItem;
-import com.google.android.gms.wearable.DataMapItem;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
@@ -106,7 +101,7 @@ import static ca.itquality.patrol.messages.ChatActivity.INCOMING_MESSAGE_INTENT;
 import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, DataApi.DataListener {
+        GoogleApiClient.OnConnectionFailedListener {
 
     // Constants
     private static final int PLACE_PICKER_REQUEST_CODE = 1;
@@ -131,6 +126,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public static final String SHIFT_ENDED_EXTRA = "ShiftEnded";
     public static final String CONFIRM_SHIFT_END_INTENT
             = "ca.itquality.patrol.CONFIRM_SHIFT_END";
+    public static final String HEART_RATE_CHANGED_INTENT = "ca.itquality.patrol.HEART_RATE_CHANGED";
+    public static final String HEART_RATE_EXTRA = "HeartRate";
 
     // Views
     @Bind(R.id.toolbar)
@@ -191,12 +188,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         initActionBar();
         initDrawer();
         initGoogleClient();
-        initSensorData();
         initMap();
         startWearDataListenerService();
         registerListener();
-        initShiftTxt();
-        initAddressTxt();
         checkBackupRequest();
     }
 
@@ -226,6 +220,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     }
 
     private final String PACKAGE_NAME = "com.google.android.apps.fitness";
+
     private void downloadFit() {
         try {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id="
@@ -346,6 +341,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         intentFilter.addAction(CONFIRM_SHIFT_START_INTENT);
         intentFilter.addAction(CONFIRM_SHIFT_END_INTENT);
         intentFilter.addAction(ActivityRecognizedService.ACTIVITY_UPDATE_INTENT);
+        intentFilter.addAction(HEART_RATE_CHANGED_INTENT);
         registerReceiver(mReceiver, intentFilter);
     }
 
@@ -380,6 +376,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 String shiftId = intent.getStringExtra(CLOCK_IN_SHIFT_ID_EXTRA);
                 String shiftEnded = intent.getStringExtra(SHIFT_ENDED_EXTRA);
                 showConfirmEndDialog(shiftId, shiftEnded);
+            } else if (intent.getAction().equals(HEART_RATE_CHANGED_INTENT)) {
+                int heartRate = intent.getIntExtra(HEART_RATE_EXTRA, 0);
+                mHeartRateTxt.setText(getString(R.string.main_heart_rate, heartRate));
             }
         }
     };
@@ -813,6 +812,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 : getString(R.string.main_heart_rate, DeviceUtil.getHeartRate()));
         mQrTxt.setText(getString(R.string.main_qr, TextUtils.isEmpty(DeviceUtil.getQr()) ? "Never"
                 : DeviceUtil.getQr()));
+        initShiftTxt();
+        initAddressTxt();
     }
 
     @Override
@@ -827,6 +828,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
         loadUnreadMessages();
         checkFitInstalled();
+        initSensorData();
     }
 
     private void loadUnreadMessages() {
@@ -947,7 +949,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
         connectToWatch();
         listenForActivityStatus();
-        listenForWearSensors();
         saveLastKnownLocation();
         startBackgroundService();
     }
@@ -963,14 +964,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             DeviceUtil.setMyLocation((float) location.getLatitude(), (float) location.getLongitude());
         } catch (Exception e) {
             // Location is not available
-        }
-    }
-
-    private void listenForWearSensors() {
-        try {
-            Wearable.DataApi.addListener(mGoogleApiClient, this);
-        } catch (Exception e) {
-            // Watch is not supported
         }
     }
 
@@ -1002,11 +995,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     protected void onStop() {
-        try {
-            Wearable.DataApi.removeListener(mGoogleApiClient, this);
-        } catch (Exception e) {
-            // Watch is not supported
-        }
         mGoogleApiClient.disconnect();
         super.onStop();
     }
@@ -1120,22 +1108,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         } catch (android.content.ActivityNotFoundException e) {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/" +
                     "store/apps/details?id=" + appPackageName)));
-        }
-    }
-
-    @Override
-    public void onDataChanged(DataEventBuffer dataEventBuffer) {
-        for (DataEvent event : dataEventBuffer) {
-            if (event.getType() == DataEvent.TYPE_CHANGED) {
-                DataItem item = event.getDataItem();
-                if ((item.getUri().getPath()).
-                        equals(Util.PATH_HEART_RATE)) {
-                    DataMapItem dataItem = DataMapItem.fromDataItem(event.getDataItem());
-                    int heartRate = dataItem.getDataMap().getInt(Util.DATA_HEART_RATE);
-                    DeviceUtil.setHeartRate(heartRate);
-                    mHeartRateTxt.setText(getString(R.string.main_heart_rate, heartRate));
-                }
-            }
         }
     }
 
