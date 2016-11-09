@@ -29,4 +29,6 @@
     <string name="main_location">Location</string>
     <string name="about_title">About Stigg Security</string>
     <string name="about_desc">Stigg Security Inc. provides advanced solutions for all your security needs.\n\nOur priority is protecting our clients and their money, as we ensure that every detail is completed to its optimal potential, limiting your exposure to internal and external theft.\n\nSecurity and reliable service are more important than ever.</string>
+    <string name="action_swap_wearable">Connect to a watch</string>
+    <string name="watch_hint">Guard\'s name…</string>
 </resources>

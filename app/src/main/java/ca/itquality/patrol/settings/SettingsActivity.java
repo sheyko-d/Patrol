@@ -13,7 +13,7 @@ import com.google.android.gms.location.places.ui.PlacePicker;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import ca.itquality.patrol.MainActivity;
+import ca.itquality.patrol.main.MainActivity;
 import ca.itquality.patrol.R;
 
 import static ca.itquality.patrol.settings.SettingsFragment.PLACE_PICKER_REQUEST_CODE;

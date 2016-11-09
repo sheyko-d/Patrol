@@ -20,7 +20,7 @@
         android:theme="@style/AppTheme"
         tools:replace="android:name">
         <activity
-            android:name=".MainActivity"
+            android:name=".main.MainActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.Translucent">
             <intent-filter>

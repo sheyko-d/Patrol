@@ -7,6 +7,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.app.MyApplication;
@@ -33,9 +34,11 @@ public class DeviceUtil {
     private static final String PREF_SHIFT_TEXT = "ShiftText";
     private static final String PREF_ADDRESS = "Address";
     private static final String PREF_ASK_BACKUP = "AskBackup";
+    private static final String PREF_CONNECTED_WATCH_ID = "ConnectedWatchId";
 
     public static final int MAP_PADDING = Util.convertDpToPixel(MyApplication.getContext(), 64);
     public static final String HELP_URL = "http://www.stigg.ca/contactUs.html";
+    private static final String PREF_WATCH_NAMES = "WatchNames";
 
     public static boolean isValidEmail(String email) {
         return !TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email)
@@ -93,14 +96,14 @@ public class DeviceUtil {
      * Retrieves user's assigned object id from preferences.
      */
     public static String getAssignedObjectId() {
-        return getUser() != null ? getUser().getAssignedObject().getAssignedObjectId() : null;
+        return getUser() != null && getUser().getAssignedObject() != null ? getUser().getAssignedObject().getAssignedObjectId() : null;
     }
 
     /**
      * Retrieves user's assigned object title from preferences.
      */
     public static String getAssignedObjectTitle() {
-        return getUser() != null ? getUser().getAssignedObject().getTitle() : null;
+        return getUser() != null && getUser().getAssignedObject() != null ? getUser().getAssignedObject().getTitle() : null;
     }
 
     /**
@@ -275,7 +278,7 @@ public class DeviceUtil {
         // TODO: Sort shifts by time on server side
         ArrayList<User.AssignedShift> assignedShifts = DeviceUtil.getUser().getAssignedShifts();
         User.AssignedShift nextShift = null;
-        if (assignedShifts != null) {
+        if (assignedShifts != null && assignedShifts.size() > 0) {
             nextShift = assignedShifts.get(0);
         }
         return nextShift;
@@ -408,8 +411,38 @@ public class DeviceUtil {
      * Retrieves the shift end confirmation state from preferences.
      */
     public static boolean endConfirmed(long weekStartTime, User.AssignedShift currentShift) {
+        if (currentShift != null) {
+            return getDefaultSharedPreferences(MyApplication.getContext())
+                    .getBoolean("EndConfirmed" + weekStartTime + currentShift.getAssignedShiftId(),
+                            false);
+        } else {
+            return true;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static HashMap<String, String> getWatchNames() {
+        HashMap<String, String> watchNames = new Gson().fromJson(PreferenceManager
+                .getDefaultSharedPreferences(MyApplication.getContext()).getString(PREF_WATCH_NAMES,
+                        null), HashMap.class);
+        if (watchNames == null) {
+            watchNames = new HashMap<>();
+        }
+        return watchNames;
+    }
+
+    public static void setWatchNames(HashMap<String, String> watchNames) {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putString(PREF_WATCH_NAMES, new Gson().toJson(watchNames)).apply();
+    }
+
+    public static String getConnectedWatchId() {
         return getDefaultSharedPreferences(MyApplication.getContext())
-                .getBoolean("EndConfirmed" + weekStartTime + currentShift.getAssignedShiftId(),
-                        false);
+                .getString(PREF_CONNECTED_WATCH_ID, null);
+    }
+
+    public static void setConnectedWatchId(String connectedWatchId) {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putString(PREF_CONNECTED_WATCH_ID, connectedWatchId).apply();
     }
 }

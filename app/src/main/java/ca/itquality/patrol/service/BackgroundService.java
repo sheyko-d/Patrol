@@ -9,6 +9,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Paint;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -46,6 +51,7 @@ import com.google.android.gms.fitness.result.DailyTotalResult;
 import com.google.android.gms.fitness.result.DataSourcesResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
@@ -53,13 +59,14 @@ import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-import ca.itquality.patrol.MainActivity;
+import ca.itquality.patrol.main.MainActivity;
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.app.MyApplication;
 import ca.itquality.patrol.library.util.Util;
@@ -70,14 +77,16 @@ import ca.itquality.patrol.library.util.heartrate.DataValue;
 import ca.itquality.patrol.service.wear.WearMessageListenerService;
 import ca.itquality.patrol.util.DatabaseManager;
 import ca.itquality.patrol.util.DeviceUtil;
+import ca.itquality.patrol.util.weather.WeatherInfo;
+import ca.itquality.patrol.util.weather.YahooWeather;
+import ca.itquality.patrol.util.weather.YahooWeatherInfoListener;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class BackgroundService extends Service implements GoogleApiClient.ConnectionCallbacks {
+public class BackgroundService extends Service implements GoogleApiClient.ConnectionCallbacks, YahooWeatherInfoListener {
 
     // Constants
-    private static final long STEPS_REFRESH_TIME = 1000 * 60 * 5;
     private static final long LOCATION_REFRESH_TIME = 1000 * 60 * 5;
     private static final float LOCATION_REFRESH_DISTANCE = 10;
     private static final long DATA_UPDATE_INTERVAL = 5 * 60 * 1000;
@@ -87,6 +96,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     // Usual variables
     private static GoogleApiClient mGoogleApiClient;
     private Handler mHandler = new Handler();
+    private YahooWeather mYahooWeather = YahooWeather.getInstance(5000, 5000, true);
 
     @Nullable
     @Override
@@ -124,9 +134,17 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                 uploadActivityHistory();
                 uploadQr();
                 uploadLocation();
+                getWeather();
                 mHandler.postDelayed(this, DATA_UPDATE_INTERVAL);
             }
         });
+    }
+
+    private void getWeather() {
+        mYahooWeather.setNeedDownloadIcons(true);
+        mYahooWeather.setUnit(YahooWeather.UNIT.CELSIUS);
+        mYahooWeather.setSearchMode(YahooWeather.SEARCH_MODE.GPS);
+        mYahooWeather.queryYahooWeatherByGPS(getApplicationContext(), this);
     }
 
     private void setWatchMessagesListener(boolean enabled) {
@@ -754,6 +772,27 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         }
     }
 
+    public static void updateWearWeather(Bitmap icon, int temperature) {
+        try {
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create(Util.PATH_WEATHER);
+            putDataMapReq.setUrgent();
+
+            putDataMapReq.getDataMap().putAsset(Util.DATA_ICON, createAssetFromBitmap(icon));
+            putDataMapReq.getDataMap().putInt(Util.DATA_TEMPERATURE, temperature);
+            putDataMapReq.getDataMap().putLong(Util.DATA_TIME, System.currentTimeMillis());
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        } catch (Exception e) {
+            // Watch is not supported
+        }
+    }
+
+    private static Asset createAssetFromBitmap(Bitmap bitmap) {
+        final ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteStream);
+        return Asset.createFromBytes(byteStream.toByteArray());
+    }
+
     @Override
     public void onConnectionSuspended(int i) {
     }
@@ -775,5 +814,29 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                 });
         setWatchMessagesListener(false);
         super.onDestroy();
+    }
+
+    @Override
+    public void gotWeatherInfo(WeatherInfo weatherInfo) {
+        if (weatherInfo != null) {
+            updateWearWeather(getWhiteBitmap(weatherInfo.getCurrentConditionIcon()),
+                    weatherInfo.getCurrentTemp());
+        }
+    }
+
+    private Bitmap getWhiteBitmap(Bitmap bitmap) {
+        int width, height;
+        height = bitmap.getHeight();
+        width = bitmap.getWidth();
+
+        Bitmap bmpGrayscale = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(bmpGrayscale);
+        Paint paint = new Paint();
+        ColorMatrix cm = new ColorMatrix();
+        cm.setSaturation(0);
+        ColorMatrixColorFilter f = new ColorMatrixColorFilter(cm);
+        paint.setColorFilter(f);
+        c.drawBitmap(bitmap, 0, 0, paint);
+        return bmpGrayscale;
     }
 }

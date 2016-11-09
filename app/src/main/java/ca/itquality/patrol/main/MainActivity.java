@@ -1,4 +1,4 @@
-package ca.itquality.patrol;
+package ca.itquality.patrol.main;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -31,11 +31,15 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -76,6 +80,7 @@ import java.util.ArrayList;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import ca.itquality.patrol.R;
 import ca.itquality.patrol.app.MyApplication;
 import ca.itquality.patrol.auth.LoginActivity;
 import ca.itquality.patrol.library.util.Util;
@@ -83,6 +88,8 @@ import ca.itquality.patrol.library.util.api.ApiClient;
 import ca.itquality.patrol.library.util.api.ApiInterface;
 import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.library.util.messages.data.Message;
+import ca.itquality.patrol.main.adapter.WatchesAdapter;
+import ca.itquality.patrol.main.data.Watch;
 import ca.itquality.patrol.messages.ThreadsActivity;
 import ca.itquality.patrol.qr.IntentIntegrator;
 import ca.itquality.patrol.qr.IntentResult;
@@ -171,6 +178,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private boolean mResolvingError = false;
     private boolean mConnectedToWatch = false;
     private AlertDialog mFitDialog;
+    private ArrayList<Watch> mWatches = new ArrayList<>();
+    private String mConnectedNodeId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -824,7 +833,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         }
         updateProfile();
         if (!mConnectedToWatch && mSupportsWatch) {
-            connectToWatch();
+            connectToWatch(DeviceUtil.getConnectedWatchId());
         }
         loadUnreadMessages();
         checkFitInstalled();
@@ -910,15 +919,29 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     /*
      * Resolve the node = the connected device to send the message to
      */
-    private void connectToWatch() {
+    public void connectToWatch(final String nodeId) {
         mProgressBar.setVisibility(View.VISIBLE);
         try {
             Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).setResultCallback
                     (new ResultCallback<NodeApi.GetConnectedNodesResult>() {
                         @Override
                         public void onResult(@NonNull NodeApi.GetConnectedNodesResult nodes) {
+                            mWatches.clear();
+                            mNode = null;
+                            mConnectedNodeId = null;
                             for (Node node : nodes.getNodes()) {
-                                mNode = node;
+                                if (TextUtils.isEmpty(nodeId)
+                                        || node.getId().equals(nodeId)) {
+                                    mConnectedNodeId = node.getId();
+                                    DeviceUtil.setConnectedWatchId(mConnectedNodeId);
+                                    mNode = node;
+                                }
+
+                                mWatches.add(new Watch(node.getId(), node.getDisplayName()));
+                                mWatches.add(new Watch(node.getId() + "2",
+                                        node.getDisplayName() + "1"));
+                                mWatches.add(new Watch(node.getId() + "3",
+                                        node.getDisplayName() + "2"));
                             }
 
                             mProgressBar.setVisibility(View.GONE);
@@ -947,7 +970,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             mLayout.setVisibility(View.VISIBLE);
             mDisconnectedLayout.setVisibility(View.GONE);
         }
-        connectToWatch();
+        connectToWatch(DeviceUtil.getConnectedWatchId());
         listenForActivityStatus();
         saveLastKnownLocation();
         startBackgroundService();
@@ -1144,5 +1167,47 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public void onQrButtonClicked(View view) {
         IntentIntegrator integrator = new IntentIntegrator(this);
         integrator.initiateScan();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_swap_wearable) {
+            showSwapWearableDialog();
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void showSwapWearableDialog() {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this,
+                R.style.MaterialDialogStyle);
+        dialogBuilder.setTitle(getString(R.string.action_swap_wearable));
+
+        @SuppressLint("InflateParams") View dialogView = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_swap_watches, null);
+        RecyclerView recyclerView = (RecyclerView) dialogView.findViewById(R.id.watches_recycler);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setAdapter(new WatchesAdapter(this, mWatches, mConnectedNodeId));
+        dialogBuilder.setView(dialogView);
+
+        dialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+
+            }
+        });
+        dialogBuilder.setNegativeButton("Cancel", null);
+        AlertDialog dialog = dialogBuilder.create();
+        dialog.show();
+        //noinspection ConstantConditions
+        dialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
     }
 }

@@ -13,7 +13,7 @@ import android.widget.Toast;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import ca.itquality.patrol.MainActivity;
+import ca.itquality.patrol.main.MainActivity;
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.library.util.api.ApiClient;
 import ca.itquality.patrol.library.util.api.ApiInterface;

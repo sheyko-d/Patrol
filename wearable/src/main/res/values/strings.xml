@@ -5,4 +5,5 @@
     <string name="launch_disconnected_desc">Go to Android Wear app on the phone and pair it.</string>
     <string name="cancel">Cancel</string>
     <string name="main_backup_dismiss">Dismissing in %1$d…</string>
+    <string name="weather_temperature">%1$d°C</string>
 </resources>

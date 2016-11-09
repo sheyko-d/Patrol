@@ -75,15 +75,15 @@ public class ActivityRecognizedService extends IntentService {
             }
         }
 
-        Util.Log("activity changed: "+activityName+" "+System.currentTimeMillis());
+        Util.Log("activity changed: " + activityName + " " + System.currentTimeMillis());
         if (!TextUtils.isEmpty(activityName)) {
             sendBroadcast(new Intent(ACTIVITY_UPDATE_INTENT).putExtra(ACTIVITY_EXTRA,
                     activityName));
 
-            Util.Log("store activity: "+DeviceUtil.getActivity()+" equals "+activityName);
+            Util.Log("store activity: " + DeviceUtil.getActivity() + " equals " + activityName);
             if (DeviceUtil.getActivity() == null
                     || !DeviceUtil.getActivity().equals(activityName)) {
-                Util.Log("store activity: "+activityName);
+                Util.Log("store activity: " + activityName);
                 storeActivityInDb(activityName);
             }
             DeviceUtil.setActivity(activityName);

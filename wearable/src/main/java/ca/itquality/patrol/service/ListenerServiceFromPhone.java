@@ -5,6 +5,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
@@ -13,6 +15,7 @@ import android.support.annotation.Nullable;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
@@ -22,6 +25,9 @@ import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
+
+import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 
 import ca.itquality.patrol.MainActivity;
 import ca.itquality.patrol.library.util.Util;
@@ -47,8 +53,13 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
     public static final String EXTRA_STEPS = "Steps";
     public static final String INTENT_BACKUP = "ca.itquality.patrol.BACKUP";
     private static final String BACKUP_WEAR_PATH = "/stigg-backup";
+    public static final String INTENT_WEATHER_UPDATE = "ca.itquality.patrol.WEATHER_UPDATE";
+    public static final String EXTRA_WEATHER_TEMPERATURE = "WeatherTemperature";
+    private static final long TIMEOUT_MS = 10000;
 
     private GoogleApiClient mGoogleApiClient;
+    public static Bitmap sIcon;
+    public static long sLastStillTime = -1;
 
     @Nullable
     @Override
@@ -79,6 +90,7 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
         }
 
         private Node mNode = null;
+
         private void showBackupNotificationOnPhone() {
             Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).setResultCallback
                     (new ResultCallback<NodeApi.GetConnectedNodesResult>() {
@@ -93,18 +105,18 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                                         mGoogleApiClient, mNode.getId(), BACKUP_WEAR_PATH, null)
                                         .setResultCallback(
 
-                                        new ResultCallback<MessageApi.SendMessageResult>() {
-                                            @Override
-                                            public void onResult(@NonNull MessageApi.SendMessageResult
-                                                                         sendMessageResult) {
+                                                new ResultCallback<MessageApi.SendMessageResult>() {
+                                                    @Override
+                                                    public void onResult(@NonNull MessageApi.SendMessageResult
+                                                                                 sendMessageResult) {
 
-                                                if (!sendMessageResult.getStatus().isSuccess()) {
-                                                    Util.Log("Failed to send message with status code: "
-                                                            + sendMessageResult.getStatus().getStatusCode());
+                                                        if (!sendMessageResult.getStatus().isSuccess()) {
+                                                            Util.Log("Failed to send message with status code: "
+                                                                    + sendMessageResult.getStatus().getStatusCode());
+                                                        }
+                                                    }
                                                 }
-                                            }
-                                        }
-                                );
+                                        );
                             }
                         }
                     });
@@ -149,6 +161,12 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                         } else if (item.getUri().getPath().equals(Util.PATH_ACTIVITY)) {
                             String activity = dataItem.getDataMap().getString(Util.DATA_ACTIVITY);
                             WearUtil.setActivityStatus(activity);
+
+                            if (activity.equals("Still")) {
+                                sLastStillTime = System.currentTimeMillis();
+                            } else {
+                                sLastStillTime = -1;
+                            }
                             sendBroadcast(new Intent(INTENT_ACTIVITY_UPDATE)
                                     .putExtra(EXTRA_ACTIVITY, activity));
                         } else if (item.getUri().getPath().equals(Util.PATH_SHIFT)) {
@@ -170,11 +188,49 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                             parseLocation(dataItem);
                         } else if (item.getUri().getPath().equals(Util.PATH_STEPS)) {
                             parseSteps(dataItem);
+                        } else if (item.getUri().getPath().equals(Util.PATH_WEATHER)) {
+                            parseWeather(dataItem);
                         }
                     }
                 }
             }
         });
+    }
+
+    private void parseWeather(DataMapItem dataItem) {
+        Util.Log("receiver weather");
+        int temperature = (dataItem.getDataMap().getInt(Util.DATA_TEMPERATURE));
+        loadBitmapFromAsset(dataItem.getDataMap().getAsset(Util.DATA_ICON), temperature);
+    }
+
+    public void loadBitmapFromAsset(final Asset asset, final int temperature) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (asset == null) {
+                    throw new IllegalArgumentException("Asset must be non-null");
+                }
+                ConnectionResult result =
+                        mGoogleApiClient.blockingConnect(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                if (!result.isSuccess()) {
+                    sIcon = null;
+                }
+                // convert asset into a file descriptor and block until it's ready
+                InputStream assetInputStream = Wearable.DataApi.getFdForAsset(
+                        mGoogleApiClient, asset).await().getInputStream();
+                mGoogleApiClient.disconnect();
+
+                if (assetInputStream == null) {
+                    Util.Log("Requested an unknown Asset.");
+                    sIcon = null;
+                }
+                // decode the stream into a bitmap
+                sIcon = BitmapFactory.decodeStream(assetInputStream);
+
+                sendBroadcast(new Intent(INTENT_WEATHER_UPDATE)
+                        .putExtra(EXTRA_WEATHER_TEMPERATURE, temperature));
+            }
+        }).start();
     }
 
     private void parseLastMessage(DataMapItem dataItem) {
@@ -198,7 +254,6 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
         WearUtil.setSteps(steps);
         sendBroadcast(new Intent(INTENT_STEPS_UPDATE)
                 .putExtra(EXTRA_STEPS, steps));
-        Util.Log("Received steps: " + steps);
     }
 
     @Override
