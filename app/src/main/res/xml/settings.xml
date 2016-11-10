@@ -15,7 +15,7 @@
     <PreferenceCategory android:title="Account">
         <Preference
             android:key="setting_log_out"
-            android:title="Log out" />
+            android:title="Add new guard" />
     </PreferenceCategory>
 
 </PreferenceScreen>

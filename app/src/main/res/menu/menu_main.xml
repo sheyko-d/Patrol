@@ -2,6 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/action_change_account"
+        android:icon="@drawable/menu_account"
+        android:title="@string/action_change_account"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_swap_wearable"
         android:icon="@drawable/menu_watch"
         android:title="@string/action_swap_wearable"

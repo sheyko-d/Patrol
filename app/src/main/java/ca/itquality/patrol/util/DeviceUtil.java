@@ -1,10 +1,12 @@
 package ca.itquality.patrol.util;
 
+import android.content.Intent;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,6 +15,7 @@ import ca.itquality.patrol.R;
 import ca.itquality.patrol.app.MyApplication;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.library.util.auth.data.User;
+import ca.itquality.patrol.main.MainActivity;
 
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 
@@ -39,6 +42,8 @@ public class DeviceUtil {
     public static final int MAP_PADDING = Util.convertDpToPixel(MyApplication.getContext(), 64);
     public static final String HELP_URL = "http://www.stigg.ca/contactUs.html";
     private static final String PREF_WATCH_NAMES = "WatchNames";
+    private static final String PREF_ACCOUNTS = "Accounts";
+    private static final String PREF_WELCOME_NEW_PLACE = "WelcomeNewPlace";
 
     public static boolean isValidEmail(String email) {
         return !TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email)
@@ -53,6 +58,23 @@ public class DeviceUtil {
 
         PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putString(PREF_USER, json).apply();
+
+        if (user == null) return;
+
+        ArrayList<User> accounts = getAccounts();
+        for (User account : accounts) {
+            if (account.getUserId().equals(user.getUserId())) {
+                accounts.remove(account);
+                break;
+            }
+        }
+        accounts.add(user);
+        setAccounts(accounts);
+
+        if (!isWelcomeNewPlaceShown()){
+            MyApplication.getContext().sendBroadcast(new Intent
+                    (MainActivity.NEW_PLACE_WELCOME_INTENT));
+        }
     }
 
     /**
@@ -444,5 +466,40 @@ public class DeviceUtil {
     public static void setConnectedWatchId(String connectedWatchId) {
         PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putString(PREF_CONNECTED_WATCH_ID, connectedWatchId).apply();
+    }
+
+    @SuppressWarnings("unchecked")
+    public static ArrayList<User> getAccounts() {
+        String accountsTxt = PreferenceManager.getDefaultSharedPreferences(MyApplication
+                .getContext()).getString(PREF_ACCOUNTS, null);
+        ArrayList<User> accounts = null;
+        if (!TextUtils.isEmpty(accountsTxt)) {
+            accounts = new Gson().fromJson(accountsTxt,
+                    new TypeToken<ArrayList<User>>() {
+                    }.getType());
+        }
+        if (accounts == null) {
+            accounts = new ArrayList<>();
+            accounts.add(getUser());
+            setAccounts(accounts);
+        }
+        return accounts;
+    }
+
+    private static void setAccounts(ArrayList<User> accounts) {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putString(PREF_ACCOUNTS, new Gson().toJson(accounts)).apply();
+    }
+
+    public static boolean isWelcomeNewPlaceShown() {
+        return getDefaultSharedPreferences(MyApplication.getContext())
+                .getBoolean(PREF_WELCOME_NEW_PLACE + getUser().getAssignedObject()
+                        .getAssignedObjectId(), false);
+    }
+
+    public static void setWelcomeNewPlaceShown() {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putBoolean(PREF_WELCOME_NEW_PLACE + getUser().getAssignedObject()
+                        .getAssignedObjectId(), true).apply();
     }
 }

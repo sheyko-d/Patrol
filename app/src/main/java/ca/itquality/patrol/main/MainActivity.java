@@ -88,6 +88,7 @@ import ca.itquality.patrol.library.util.api.ApiClient;
 import ca.itquality.patrol.library.util.api.ApiInterface;
 import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.library.util.messages.data.Message;
+import ca.itquality.patrol.main.adapter.AccountsAdapter;
 import ca.itquality.patrol.main.adapter.WatchesAdapter;
 import ca.itquality.patrol.main.data.Watch;
 import ca.itquality.patrol.messages.ThreadsActivity;
@@ -126,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public static final String BACKUP_DO_NOT_ASK_EXTRA = "BackupDoNotAsk";
     public static final String CLOCK_IN_EXTRA = "ClockIn";
     public static final String CLOCK_IN_SHIFT_ID_EXTRA = "ClockInShiftId";
-    private static final float CAMERA_PADDING = 32;
+    private static final float CAMERA_PADDING = 64;
     public static final String CONFIRM_SHIFT_START_INTENT
             = "ca.itquality.patrol.CONFIRM_SHIFT_START";
     public static final String SHIFT_STARTED_EXTRA = "ShiftStarted";
@@ -135,6 +136,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             = "ca.itquality.patrol.CONFIRM_SHIFT_END";
     public static final String HEART_RATE_CHANGED_INTENT = "ca.itquality.patrol.HEART_RATE_CHANGED";
     public static final String HEART_RATE_EXTRA = "HeartRate";
+    public static final String NEW_PLACE_WELCOME_INTENT = "ca.itquality.patrol.NEW_PLACE_WELCOME";
 
     // Views
     @Bind(R.id.toolbar)
@@ -180,6 +182,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private AlertDialog mFitDialog;
     private ArrayList<Watch> mWatches = new ArrayList<>();
     private String mConnectedNodeId;
+    private BroadcastReceiver mNewPlaceWelcomeReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -193,6 +196,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             return;
         }
 
+        setNewPlaceWelcomeListener();
         askPermissions();
         initActionBar();
         initDrawer();
@@ -201,6 +205,48 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         startWearDataListenerService();
         registerListener();
         checkBackupRequest();
+    }
+
+    private void setNewPlaceWelcomeListener() {
+        mNewPlaceWelcomeReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this,
+                        R.style.MaterialDialogStyle);
+                @SuppressLint("InflateParams") View dialogView = LayoutInflater.from
+                        (MainActivity.this).inflate(R.layout.dialog_new_place_welcome, null);
+
+                TextView contactsTxt = (TextView) dialogView.findViewById
+                        (R.id.welcome_contacts_txt);
+                String contacts = DeviceUtil.getUser().getAssignedObject().getContacts();
+                contactsTxt.setText(!TextUtils.isEmpty(contacts) ? contacts : "No contacts");
+
+                TextView safetyTxt = (TextView) dialogView.findViewById
+                        (R.id.welcome_safety_txt);
+                String safety = DeviceUtil.getUser().getAssignedObject().getSafety();
+                safetyTxt.setText(!TextUtils.isEmpty(safety) ? safety : "No safety information");
+
+                dialogBuilder.setView(dialogView);
+                dialogBuilder.setTitle("Welcome to "
+                        + DeviceUtil.getUser().getAssignedObject().getTitle());
+                dialogBuilder.setCancelable(false);
+                dialogBuilder.setNegativeButton("Close", null);
+                if (!TextUtils.isEmpty(DeviceUtil.getUser().getAssignedObject().getVideo())) {
+                    dialogBuilder.setNeutralButton("Watch orientation video",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse
+                                            (DeviceUtil.getUser().getAssignedObject().getVideo())));
+                                }
+                            });
+                }
+                dialogBuilder.create().show();
+
+                DeviceUtil.setWelcomeNewPlaceShown();
+            }
+        };
+        registerReceiver(mNewPlaceWelcomeReceiver, new IntentFilter(NEW_PLACE_WELCOME_INTENT));
     }
 
     private void checkFitInstalled() {
@@ -848,6 +894,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             @Override
             public void onResponse(Call<ArrayList<Message>> call,
                                    Response<ArrayList<Message>> response) {
+                Util.Log("unread messages: " + response.body().size());
                 if (response.isSuccessful()) {
                     ArrayList<Message> messages = response.body();
                     if (messages.size() > 0) {
@@ -938,10 +985,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                                 }
 
                                 mWatches.add(new Watch(node.getId(), node.getDisplayName()));
-                                mWatches.add(new Watch(node.getId() + "2",
-                                        node.getDisplayName() + "1"));
-                                mWatches.add(new Watch(node.getId() + "3",
-                                        node.getDisplayName() + "2"));
                             }
 
                             mProgressBar.setVisibility(View.GONE);
@@ -1026,6 +1069,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     protected void onDestroy() {
         try {
             unregisterReceiver(mReceiver);
+            unregisterReceiver(mNewPlaceWelcomeReceiver);
         } catch (Exception e) {
             // Receiver wasn't registered
         }
@@ -1179,6 +1223,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_swap_wearable) {
             showSwapWearableDialog();
+        } else if (item.getItemId() == R.id.action_change_account) {
+            showChangeAccountDialog();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -1195,13 +1241,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(new WatchesAdapter(this, mWatches, mConnectedNodeId));
         dialogBuilder.setView(dialogView);
-
-        dialogBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-
-            }
-        });
+        dialogBuilder.setPositiveButton("OK", null);
         dialogBuilder.setNegativeButton("Cancel", null);
         AlertDialog dialog = dialogBuilder.create();
         dialog.show();
@@ -1209,5 +1249,77 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         dialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                 | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
         dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+    }
+
+    private void showChangeAccountDialog() {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this,
+                R.style.MaterialDialogStyle);
+        dialogBuilder.setTitle(getString(R.string.action_change_account));
+
+        @SuppressLint("InflateParams") View dialogView = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_swap_watches, null);
+        RecyclerView recyclerView = (RecyclerView) dialogView.findViewById(R.id.watches_recycler);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setAdapter(new AccountsAdapter(this, DeviceUtil.getAccounts()));
+        dialogBuilder.setView(dialogView);
+        dialogBuilder.setNeutralButton("Add new", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                finish();
+            }
+        });
+        dialogBuilder.setPositiveButton("OK", null);
+        dialogBuilder.setNegativeButton("Cancel", null);
+        AlertDialog dialog = dialogBuilder.create();
+        dialog.show();
+        //noinspection ConstantConditions
+        dialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+    }
+
+    public void changeAccount(User user) {
+        DeviceUtil.updateProfile(user);
+
+        initDrawer();
+        DeviceUtil.setLastMessage(null, null);
+        updateWearLastMessage(null, null);
+        DeviceUtil.setShift(null, null);
+        sendBroadcast(new Intent(BackgroundService.ACCOUNT_CHANGED_INTENT));
+        DeviceUtil.setSteps(-1);
+        updateObjectMap();
+
+        initSensorData();
+
+        loadUnreadMessages();
+    }
+
+    private void updateObjectMap() {
+        User.AssignedObject assignedObject = DeviceUtil.getUser().getAssignedObject();
+
+        if (mAssignedPlaceMarker != null) {
+            mAssignedPlaceMarker.remove();
+        }
+        if (assignedObject != null) {
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            builder.include(DeviceUtil.getMyLocation());
+            builder.include(new LatLng(assignedObject.getLatitude(),
+                    assignedObject.getLongitude()));
+            LatLngBounds bounds = builder.build();
+            int padding = Util.convertDpToPixel(MainActivity.this, CAMERA_PADDING);
+            CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+            mMap.moveCamera(cu);
+
+            mAssignedPlaceMarker = mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(assignedObject.getLatitude(),
+                            assignedObject.getLongitude()))
+                    .title("My place to guard")
+                    .snippet(DeviceUtil.getAssignedObjectTitle()));
+        } else {
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(DeviceUtil
+                    .getMyLocation().latitude, DeviceUtil.getMyLocation().longitude), 17));
+        }
     }
 }

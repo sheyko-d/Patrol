@@ -21,11 +21,13 @@ public class User {
     @SerializedName("photo")
     private String photo;
 
-    public User(String token, String userId, AssignedObject assignedObject, String name,
+    public User(String token, String userId, ArrayList<AssignedShift> assignedShifts,
+                AssignedObject assignedObject, String name,
                 String email, String photo) {
         this.token = token;
         this.assignedObject = assignedObject;
         this.userId = userId;
+        this.assignedShifts = assignedShifts;
         this.name = name;
         this.email = email;
         this.photo = photo;
@@ -74,13 +76,22 @@ public class User {
         private Float latitude;
         @SerializedName("longitude")
         private Float longitude;
+        @SerializedName("contacts")
+        private String contacts;
+        @SerializedName("safety")
+        private String safety;
+        @SerializedName("video")
+        private String video;
 
         public AssignedObject(String assignedObjectId, String title, Float latitude,
-                              Float longitude) {
+                              Float longitude, String contacts, String safety, String video) {
             this.assignedObjectId = assignedObjectId;
             this.title = title;
             this.latitude = latitude;
             this.longitude = longitude;
+            this.contacts = contacts;
+            this.safety = safety;
+            this.video = video;
         }
 
         public String getAssignedObjectId() {
@@ -97,6 +108,18 @@ public class User {
 
         public Float getLongitude() {
             return longitude;
+        }
+
+        public String getContacts() {
+            return contacts;
+        }
+
+        public String getSafety() {
+            return safety;
+        }
+
+        public String getVideo() {
+            return video;
         }
     }
 

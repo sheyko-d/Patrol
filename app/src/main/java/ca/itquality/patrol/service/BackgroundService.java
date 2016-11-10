@@ -4,8 +4,11 @@ import android.Manifest;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -92,6 +95,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     private static final long DATA_UPDATE_INTERVAL = 5 * 60 * 1000;
     private static final float AT_WORK_RADIUS = 100;
     private static final int HOUR_DURATION = 1000 * 60 * 60;
+    public static final String ACCOUNT_CHANGED_INTENT = "ca.itquality.patrol.ACCOUNT_CHANGED";
 
     // Usual variables
     private static GoogleApiClient mGoogleApiClient;
@@ -123,6 +127,11 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
 
         startUpdateDataTask();
         setWatchMessagesListener(true);
+        setAccountsChangedReceiver();
+    }
+
+    private void setAccountsChangedReceiver() {
+        registerReceiver(mAccountChangedReceiver, new IntentFilter(ACCOUNT_CHANGED_INTENT));
     }
 
     private void startUpdateDataTask() {
@@ -456,6 +465,13 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         });
     }
 
+    BroadcastReceiver mAccountChangedReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateShift();
+        }
+    };
+
     private void updateShift() {
         Calendar calendar = Calendar.getInstance();
         long currentTime = calendar.getTimeInMillis();
@@ -533,8 +549,14 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         // Check if some shift is added and user didn't clock out
         if (currentShift == null) {
             User.AssignedShift previousShift = DeviceUtil.getPreviousShift(timeSinceWeekStart);
-            if (!DeviceUtil.endConfirmed(weekStartTime, previousShift)) {
-                if (previousShift != null) {
+            if (previousShift != null) {
+                if (!DeviceUtil.endConfirmed(weekStartTime, previousShift)) {
+                    if (System.currentTimeMillis() - weekStartTime + previousShift.getEndTime()
+                            > 1000 * 60 * 60) {
+                        DeviceUtil.setEndConfirmed(weekStartTime, previousShift);
+                        return;
+                    }
+
                     String shiftEnded = DateUtils.getRelativeDateTimeString
                             (MyApplication.getContext(), weekStartTime + previousShift.getEndTime(),
                                     System.currentTimeMillis(), 0, 0).toString()
@@ -812,6 +834,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                         }
                     }
                 });
+        unregisterReceiver(mAccountChangedReceiver);
         setWatchMessagesListener(false);
         super.onDestroy();
     }

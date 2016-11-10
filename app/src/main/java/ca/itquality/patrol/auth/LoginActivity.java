@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -34,13 +33,12 @@ import java.util.Arrays;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import ca.itquality.patrol.main.MainActivity;
 import ca.itquality.patrol.R;
-import ca.itquality.patrol.app.MyApplication;
-import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.library.util.Util;
 import ca.itquality.patrol.library.util.api.ApiClient;
 import ca.itquality.patrol.library.util.api.ApiInterface;
+import ca.itquality.patrol.library.util.auth.data.User;
+import ca.itquality.patrol.main.MainActivity;
 import ca.itquality.patrol.service.ActivityRecognizedService;
 import ca.itquality.patrol.service.BackgroundService;
 import ca.itquality.patrol.util.DeviceUtil;
@@ -89,8 +87,14 @@ public class LoginActivity extends AppCompatActivity implements GoogleApiClient.
         LoginManager.getInstance().logOut();
 
         // Clear all saved shared preferences
-        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit().clear()
-                .apply();
+        DeviceUtil.updateProfile(null);
+        DeviceUtil.setActivity(null);
+        DeviceUtil.setAddress(null);
+        DeviceUtil.setHeartRate(-1);
+        DeviceUtil.setLastMessage(null, null);
+        DeviceUtil.setSteps(-1);
+        DeviceUtil.setQr(null);
+        DeviceUtil.setShift(null, null);
     }
 
     private void initGoogleClient() {
