@@ -69,7 +69,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-import ca.itquality.patrol.main.MainActivity;
 import ca.itquality.patrol.R;
 import ca.itquality.patrol.app.MyApplication;
 import ca.itquality.patrol.library.util.Util;
@@ -77,6 +76,7 @@ import ca.itquality.patrol.library.util.api.ApiClient;
 import ca.itquality.patrol.library.util.api.ApiInterface;
 import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.library.util.heartrate.DataValue;
+import ca.itquality.patrol.main.MainActivity;
 import ca.itquality.patrol.service.wear.WearMessageListenerService;
 import ca.itquality.patrol.util.DatabaseManager;
 import ca.itquality.patrol.util.DeviceUtil;
@@ -96,6 +96,8 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     private static final float AT_WORK_RADIUS = 100;
     private static final int HOUR_DURATION = 1000 * 60 * 60;
     public static final String ACCOUNT_CHANGED_INTENT = "ca.itquality.patrol.ACCOUNT_CHANGED";
+    private static final long SITTING_MAX_DURATION = 1000 * 60 * 30;
+    private static final int NOTIFICATION_ID_SITTING_30 = 3;
 
     // Usual variables
     private static GoogleApiClient mGoogleApiClient;
@@ -144,7 +146,55 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                 uploadQr();
                 uploadLocation();
                 getWeather();
+                checkSitting30Min();
                 mHandler.postDelayed(this, DATA_UPDATE_INTERVAL);
+            }
+        });
+    }
+
+    private void checkSitting30Min() {
+        if (System.currentTimeMillis() - ActivityRecognizedService.getLastStillTime()
+                > SITTING_MAX_DURATION) {
+            showSitting30MinNotification();
+            ActivityRecognizedService.resetLastActivityTime();
+        }
+    }
+
+    private void showSitting30MinNotification() {
+        sendEmailToAdministrator();
+
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
+                (MyApplication.getContext());
+        notificationBuilder.setContentTitle("You're sitting for 30 min");
+        notificationBuilder.setContentText("Please move around");
+        notificationBuilder.setAutoCancel(true);
+        notificationBuilder.setSmallIcon(R.drawable.alert_notification);
+        notificationBuilder.setColor(ContextCompat.getColor(MyApplication.getContext(),
+                R.color.colorPrimary));
+        notificationBuilder.setPriority(NotificationCompat.PRIORITY_MAX);
+
+        Notification notification = notificationBuilder.build();
+        notification.defaults |= Notification.DEFAULT_VIBRATE;
+        notification.defaults |= Notification.DEFAULT_SOUND;
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from
+                (getApplicationContext());
+        notificationManager.notify(NOTIFICATION_ID_SITTING_30, notification);
+    }
+
+    private void sendEmailToAdministrator() {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<Void> call = apiService.sendSitting30Alert(DeviceUtil.getToken());
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (!response.isSuccessful()) {
+                    Util.Log("Can't send sitting alert: " + response.body());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Util.Log("Server error: " + t.getMessage());
             }
         });
     }

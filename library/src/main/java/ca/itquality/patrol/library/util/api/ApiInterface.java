@@ -52,6 +52,10 @@ public interface ApiInterface {
     Call<Void> sendAlert(@Field("token") String token, @Field("latitude") double latitude,
                          @Field("longitude") double longitude);
 
+    @FormUrlEncoded
+    @POST("alert/send_sitting_30_alert.php")
+    Call<Void> sendSitting30Alert(@Field("token") String token);
+
     /**
      * Message APIs.
      */

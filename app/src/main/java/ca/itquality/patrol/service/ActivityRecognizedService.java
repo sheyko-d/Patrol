@@ -21,6 +21,7 @@ public class ActivityRecognizedService extends IntentService {
 
     public static final String ACTIVITY_UPDATE_INTENT = "ca.itquality.patrol.ACTIVITY_UPDATE";
     public static final String ACTIVITY_EXTRA = "Activity";
+    private static long sLastActivityTime = System.currentTimeMillis();
 
     public ActivityRecognizedService() {
         super("ActivityRecognizedService");
@@ -73,6 +74,10 @@ public class ActivityRecognizedService extends IntentService {
                     break;
                 }
             }
+
+            if (activity.getType() != DetectedActivity.STILL) {
+                sLastActivityTime = System.currentTimeMillis();
+            }
         }
 
         Util.Log("activity changed: " + activityName + " " + System.currentTimeMillis());
@@ -80,10 +85,8 @@ public class ActivityRecognizedService extends IntentService {
             sendBroadcast(new Intent(ACTIVITY_UPDATE_INTENT).putExtra(ACTIVITY_EXTRA,
                     activityName));
 
-            Util.Log("store activity: " + DeviceUtil.getActivity() + " equals " + activityName);
             if (DeviceUtil.getActivity() == null
                     || !DeviceUtil.getActivity().equals(activityName)) {
-                Util.Log("store activity: " + activityName);
                 storeActivityInDb(activityName);
             }
             DeviceUtil.setActivity(activityName);
@@ -103,5 +106,13 @@ public class ActivityRecognizedService extends IntentService {
         contentValues.put(DatabaseManager.ACTIVITY_IS_SENT_COLUMN, false);
         database.insert(DatabaseManager.ACTIVITY_TABLE, null, contentValues);
         databaseManager.closeDatabase();
+    }
+
+    public static long getLastStillTime(){
+        return sLastActivityTime;
+    }
+
+    public static void resetLastActivityTime() {
+        sLastActivityTime = System.currentTimeMillis();
     }
 }
