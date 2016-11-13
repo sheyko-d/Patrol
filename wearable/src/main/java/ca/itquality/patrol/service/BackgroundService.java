@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -88,8 +89,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         notificationBuilder.setContentText("Please carry it with you or pair it.");
         notificationBuilder.setAutoCancel(true);
         notificationBuilder.setSmallIcon(R.mipmap.ic_launcher);
-        notificationBuilder.setColor(ContextCompat.getColor(getApplicationContext(),
-                R.color.colorPrimary));
+        notificationBuilder.setColor(Color.parseColor("#f80000"));
 
 
         Bitmap bitmap = Bitmap.createBitmap(320, 320, Bitmap.Config.ARGB_8888);
