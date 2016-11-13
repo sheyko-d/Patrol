@@ -12,6 +12,19 @@
             android:summary="Shake watch to request a backup" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="Alerts">
+        <SwitchPreference
+            android:key="setting_sitting_alert"
+            android:defaultValue="true"
+            android:title="Inactivity alert"
+            android:summary="Notify when I'm sitting for more than 30 min" />
+        <SwitchPreference
+            android:key="setting_stretching_alert"
+            android:defaultValue="true"
+            android:title="Low heart rate alert"
+            android:summary="Remind to stretch when heart rate is too low" />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="Account">
         <Preference
             android:key="setting_log_out"

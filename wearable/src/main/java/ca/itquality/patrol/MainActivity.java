@@ -27,6 +27,7 @@ import butterknife.ButterKnife;
 import ca.itquality.patrol.adapter.MainAdapter;
 import ca.itquality.patrol.adapter.data.ListItem;
 import ca.itquality.patrol.library.util.Util;
+import ca.itquality.patrol.service.BackgroundService;
 import ca.itquality.patrol.service.ListenerServiceFromPhone;
 import ca.itquality.patrol.service.SensorsService;
 import ca.itquality.patrol.service.ShakeListenerService;
@@ -84,6 +85,11 @@ public class MainActivity extends WearableActivity {
         initSteps();
         registerWearListener();
         registerShakeListener();
+        startOutOfRangeService();
+    }
+
+    private void startOutOfRangeService() {
+        startService(new Intent(this, BackgroundService.class));
     }
 
     private void initSteps() {

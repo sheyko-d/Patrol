@@ -25,6 +25,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -96,7 +97,6 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     private static final float AT_WORK_RADIUS = 100;
     private static final int HOUR_DURATION = 1000 * 60 * 60;
     public static final String ACCOUNT_CHANGED_INTENT = "ca.itquality.patrol.ACCOUNT_CHANGED";
-    private static final long SITTING_MAX_DURATION = 1000 * 60 * 30;
     private static final int NOTIFICATION_ID_SITTING_30 = 3;
 
     // Usual variables
@@ -154,7 +154,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
 
     private void checkSitting30Min() {
         if (System.currentTimeMillis() - ActivityRecognizedService.getLastStillTime()
-                > SITTING_MAX_DURATION) {
+                > DeviceUtil.getUser().getAssignedObject().getSittingDuration() * 60 * 1000) {
             showSitting30MinNotification();
             ActivityRecognizedService.resetLastActivityTime();
         }
@@ -163,9 +163,15 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     private void showSitting30MinNotification() {
         sendEmailToAdministrator();
 
+        if (!PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+                .getBoolean("setting_sitting_alert", true)) {
+            return;
+        }
+
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
                 (MyApplication.getContext());
-        notificationBuilder.setContentTitle("You're sitting for 30 min");
+        notificationBuilder.setContentTitle("You're sitting for " + DeviceUtil.getUser()
+                .getAssignedObject().getSittingDuration() + " min");
         notificationBuilder.setContentText("Please move around");
         notificationBuilder.setAutoCancel(true);
         notificationBuilder.setSmallIcon(R.drawable.alert_notification);
@@ -183,7 +189,8 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
 
     private void sendEmailToAdministrator() {
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<Void> call = apiService.sendSitting30Alert(DeviceUtil.getToken());
+        Call<Void> call = apiService.sendSitting30Alert(DeviceUtil.getToken(),
+                DeviceUtil.getUser().getAssignedObject().getSittingDuration());
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
@@ -604,19 +611,18 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                     if (System.currentTimeMillis() - weekStartTime + previousShift.getEndTime()
                             > 1000 * 60 * 60) {
                         DeviceUtil.setEndConfirmed(weekStartTime, previousShift);
-                        return;
+                    } else {
+                        String shiftEnded = DateUtils.getRelativeDateTimeString
+                                (MyApplication.getContext(), weekStartTime + previousShift.getEndTime(),
+                                        System.currentTimeMillis(), 0, 0).toString()
+                                .toLowerCase(Locale.getDefault());
+                        sendBroadcast(new Intent(MainActivity.CONFIRM_SHIFT_END_INTENT)
+                                .putExtra(MainActivity.SHIFT_ENDED_EXTRA, shiftEnded)
+                                .putExtra(MainActivity.CLOCK_IN_SHIFT_ID_EXTRA,
+                                        previousShift.getAssignedShiftId()));
+
+                        DeviceUtil.setEndConfirmed(weekStartTime, previousShift);
                     }
-
-                    String shiftEnded = DateUtils.getRelativeDateTimeString
-                            (MyApplication.getContext(), weekStartTime + previousShift.getEndTime(),
-                                    System.currentTimeMillis(), 0, 0).toString()
-                            .toLowerCase(Locale.getDefault());
-                    sendBroadcast(new Intent(MainActivity.CONFIRM_SHIFT_END_INTENT)
-                            .putExtra(MainActivity.SHIFT_ENDED_EXTRA, shiftEnded)
-                            .putExtra(MainActivity.CLOCK_IN_SHIFT_ID_EXTRA,
-                                    previousShift.getAssignedShiftId()));
-
-                    DeviceUtil.setEndConfirmed(weekStartTime, previousShift);
                 }
             }
         }

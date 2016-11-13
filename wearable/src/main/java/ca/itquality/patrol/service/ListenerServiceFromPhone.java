@@ -52,7 +52,9 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
     public static final String INTENT_STEPS_UPDATE = "ca.itquality.patrol.STEPS_UPDATE";
     public static final String EXTRA_STEPS = "Steps";
     public static final String INTENT_BACKUP = "ca.itquality.patrol.BACKUP";
+    public static final String INTENT_STRETCH = "ca.itquality.patrol.STRETCH";
     private static final String BACKUP_WEAR_PATH = "/stigg-backup";
+    private static final String STRETCH_WEAR_PATH = "/stigg-stretch";
     public static final String INTENT_WEATHER_UPDATE = "ca.itquality.patrol.WEATHER_UPDATE";
     public static final String EXTRA_WEATHER_TEMPERATURE = "WeatherTemperature";
     private static final long TIMEOUT_MS = 10000;
@@ -76,22 +78,26 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
     public void onCreate() {
         super.onCreate();
         initGoogleClient();
-        setBackupListener();
+        setMessageListener();
     }
 
-    private void setBackupListener() {
-        registerReceiver(mBackupReceiver, new IntentFilter(INTENT_BACKUP));
+    private void setMessageListener() {
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(INTENT_BACKUP);
+        filter.addAction(INTENT_STRETCH);
+        registerReceiver(mMessageReceiver, filter);
     }
 
-    private BroadcastReceiver mBackupReceiver = new BroadcastReceiver() {
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            showBackupNotificationOnPhone();
+            showBackupNotificationOnPhone(intent.getAction().equals(INTENT_BACKUP)
+                    ? BACKUP_WEAR_PATH : STRETCH_WEAR_PATH);
         }
 
         private Node mNode = null;
 
-        private void showBackupNotificationOnPhone() {
+        private void showBackupNotificationOnPhone(final String action) {
             Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).setResultCallback
                     (new ResultCallback<NodeApi.GetConnectedNodesResult>() {
                         @Override
@@ -102,7 +108,7 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                             if (mNode != null && mGoogleApiClient != null
                                     && mGoogleApiClient.isConnected()) {
                                 Wearable.MessageApi.sendMessage(
-                                        mGoogleApiClient, mNode.getId(), BACKUP_WEAR_PATH, null)
+                                        mGoogleApiClient, mNode.getId(), action, null)
                                         .setResultCallback(
 
                                                 new ResultCallback<MessageApi.SendMessageResult>() {
@@ -126,7 +132,7 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
     @Override
     public void onDestroy() {
         mGoogleApiClient.disconnect();
-        unregisterReceiver(mBackupReceiver);
+        unregisterReceiver(mMessageReceiver);
         super.onDestroy();
     }
 

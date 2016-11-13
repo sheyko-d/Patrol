@@ -66,7 +66,6 @@ public class LaunchActivity extends WearableActivity implements GoogleApiClient.
         startPhoneListenerService();
         registerLoginStateListener();
 
-
         // TODO: Improve login listener
         startActivity(new Intent(this, MainActivity.class));
         finish();

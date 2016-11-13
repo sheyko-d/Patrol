@@ -33,10 +33,10 @@ import ca.itquality.patrol.util.DatabaseManager;
 public class SensorsService extends Service implements GoogleApiClient.ConnectionCallbacks {
 
     // Constants
-    private static final int HEART_RATE_MEASURE_INTERVAL = 1000*60;
+    private static final int HEART_RATE_MEASURE_INTERVAL = 1000 * 60;
     private static final int HEART_RATE_MIN_UPLOAD_COUNT = 5;
     private static final int HEART_RATE_MAX_BACKUP = 120;
-    private static final int HEART_RATE_MIN_SLEEP = 60;
+    private static final int HEART_RATE_MIN_STRETCH = 60;
     public static final String INTENT_HEART_RATE = "ca.itquality.patrol.HEART_RATE";
     public static final String EXTRA_HEART_RATE = "DataValue";
 
@@ -45,7 +45,7 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
     private SensorManager mSensorManager;
     private boolean mBackupAsked = false;
     private Handler mHandler = new Handler();
-    private boolean mSleepStarted = false;
+    private boolean mStretchingNotified = false;
 
     @Nullable
     @Override
@@ -143,6 +143,7 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
 
             // Checks if the guard's heart rate is within the normal range.
             // If it's too high, then call the backup.
+            // If it's too low, remind him to stretch.
             private void checkHeartRate(int heartRate) {
                 if (!mBackupAsked && heartRate > HEART_RATE_MAX_BACKUP) {
                     mBackupAsked = true;
@@ -151,7 +152,13 @@ public class SensorsService extends Service implements GoogleApiClient.Connectio
                     mBackupAsked = false;
                 }
 
-                mSleepStarted = !mSleepStarted && heartRate < HEART_RATE_MIN_SLEEP;
+                if (!mStretchingNotified && heartRate < HEART_RATE_MIN_STRETCH) {
+                    mStretchingNotified = true;
+
+                    sendBroadcast(new Intent(ListenerServiceFromPhone.INTENT_STRETCH));
+                } else {
+                    mStretchingNotified = false;
+                }
             }
 
             private void askForBackup() {

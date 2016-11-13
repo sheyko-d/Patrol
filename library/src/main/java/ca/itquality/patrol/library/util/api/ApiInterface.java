@@ -54,7 +54,8 @@ public interface ApiInterface {
 
     @FormUrlEncoded
     @POST("alert/send_sitting_30_alert.php")
-    Call<Void> sendSitting30Alert(@Field("token") String token);
+    Call<Void> sendSitting30Alert(@Field("token") String token,
+                                  @Field("sitting_duration") int sitting_duration);
 
     /**
      * Message APIs.
