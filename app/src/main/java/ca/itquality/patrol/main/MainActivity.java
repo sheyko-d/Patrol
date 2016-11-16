@@ -189,6 +189,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        Util.Log("Main screen opened");
 
         if (!DeviceUtil.isLoggedIn()) {
             startActivity(new Intent(this, LoginActivity.class));
@@ -618,6 +619,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             public void onResponse(Call<User> call, Response<User> response) {
                 if (response.isSuccessful()) {
                     User user = response.body();
+                    Util.Log("Shifts: "+user.getAssignedShifts().size());
                     DeviceUtil.updateProfile(user);
 
                     if (!DeviceUtil.isAssigned()) {

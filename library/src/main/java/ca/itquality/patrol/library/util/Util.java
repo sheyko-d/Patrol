@@ -47,6 +47,7 @@ public class Util {
     private static final int DAY_DURATION = 1000 * 60 * 60 * 24;
     public static final int NOTIFICATION_ID_CLOCK_IN = 4;
     public static final int NOTIFICATION_ID_STRETCH = 5;
+    public static final int NOTIFICATION_ID_NOT_AT_WORK = 6;
 
     /**
      * Adds a message to LogCat.

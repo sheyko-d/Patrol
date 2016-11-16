@@ -11,7 +11,6 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.ContextCompat;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.Node;
@@ -91,10 +90,8 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         notificationBuilder.setSmallIcon(R.mipmap.ic_launcher);
         notificationBuilder.setColor(Color.parseColor("#f80000"));
 
-
         Bitmap bitmap = Bitmap.createBitmap(320, 320, Bitmap.Config.ARGB_8888);
-        bitmap.eraseColor(ContextCompat.getColor(getApplicationContext(),
-                R.color.colorPrimary));
+        bitmap.eraseColor(Color.parseColor("#f80000"));
         notificationBuilder.extend(new NotificationCompat.WearableExtender().setBackground(bitmap));
 
         Notification notification = notificationBuilder.build();

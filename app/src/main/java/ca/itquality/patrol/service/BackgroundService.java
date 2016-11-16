@@ -98,11 +98,15 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     private static final int HOUR_DURATION = 1000 * 60 * 60;
     public static final String ACCOUNT_CHANGED_INTENT = "ca.itquality.patrol.ACCOUNT_CHANGED";
     private static final int NOTIFICATION_ID_SITTING_30 = 3;
+    public static final String STOP_SHIFT_INTENT = "ca.itquality.patrol.STOP_SHIFT";
+    public static final String CONTINUE_SHIFT_INTENT = "ca.itquality.patrol.CONTINUE_SHIFT";
 
     // Usual variables
     private static GoogleApiClient mGoogleApiClient;
     private Handler mHandler = new Handler();
     private YahooWeather mYahooWeather = YahooWeather.getInstance(5000, 5000, true);
+    private User.AssignedShift mCurrentShift = null;
+    private boolean mAtWorkActiveShift = true;
 
     @Nullable
     @Override
@@ -130,6 +134,50 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         startUpdateDataTask();
         setWatchMessagesListener(true);
         setAccountsChangedReceiver();
+        setNotAtWorkResponseListener();
+    }
+
+    private void setNotAtWorkResponseListener() {
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(STOP_SHIFT_INTENT);
+        intentFilter.addAction(CONTINUE_SHIFT_INTENT);
+        registerReceiver(mNotAtWorkResponseReceiver, intentFilter);
+    }
+
+    private BroadcastReceiver mNotAtWorkResponseReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(STOP_SHIFT_INTENT)){
+                NotificationManagerCompat notificationManager = NotificationManagerCompat.from
+                        (MyApplication.getContext());
+                notificationManager.cancel(Util.NOTIFICATION_ID_NOT_AT_WORK);
+
+                showLeaveWatchNotification();
+            } else {
+                NotificationManagerCompat notificationManager = NotificationManagerCompat.from
+                        (MyApplication.getContext());
+                notificationManager.cancel(Util.NOTIFICATION_ID_NOT_AT_WORK);
+            }
+        }
+    };
+
+    private void showLeaveWatchNotification() {
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
+                (MyApplication.getContext());
+        notificationBuilder.setContentTitle("OK, your administrator will be notified");
+        notificationBuilder.setContentText("Please leave watch on site!");
+        notificationBuilder.setAutoCancel(true);
+        notificationBuilder.setSmallIcon(R.drawable.backup_notification);
+        notificationBuilder.setColor(ContextCompat.getColor(MyApplication.getContext(),
+                R.color.colorPrimary));
+        notificationBuilder.setPriority(NotificationCompat.PRIORITY_MAX);
+
+        Notification notification = notificationBuilder.build();
+        notification.defaults |= Notification.DEFAULT_VIBRATE;
+        notification.defaults |= Notification.DEFAULT_SOUND;
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from
+                (getApplicationContext());
+        notificationManager.notify(NOTIFICATION_ID_SITTING_30, notification);
     }
 
     private void setAccountsChangedReceiver() {
@@ -499,6 +547,8 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     }
 
     private void updateProfile() {
+        Util.Log("Update profile");
+
         String googleToken = FirebaseInstanceId.getInstance().getToken();
 
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
@@ -511,6 +561,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                     User user = response.body();
                     DeviceUtil.updateProfile(user);
                     updateShift();
+                    checkAtWork();
                 }
             }
 
@@ -520,6 +571,64 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                         Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void checkAtWork() {
+        Util.Log("Check at work");
+        if (!userAtWork() && mCurrentShift != null) {
+            Util.Log("NOT AT WORK, AND SHIFT IS ACTIVE");
+            if (mAtWorkActiveShift) {
+                askWhyLeftWork();
+                mAtWorkActiveShift = false;
+            }
+        } else if (userAtWork() && mCurrentShift != null) {
+            mAtWorkActiveShift = true;
+            Util.Log("Currently working");
+        } else {
+            mAtWorkActiveShift = false;
+            Util.Log("No active shift yet");
+        }
+    }
+
+    private void askWhyLeftWork() {
+        final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
+                (MyApplication.getContext());
+        notificationBuilder.setContentTitle("You're not in the active site area");
+        notificationBuilder.setContentText("Do you want to stop the shift?");
+        notificationBuilder.setAutoCancel(true);
+        notificationBuilder.setSmallIcon(R.drawable.alert_notification);
+        notificationBuilder.setColor(ContextCompat.getColor(MyApplication.getContext(),
+                R.color.colorPrimary));
+        notificationBuilder.setPriority(NotificationCompat.PRIORITY_HIGH);
+
+        Intent yesStopShiftIntent = new Intent(STOP_SHIFT_INTENT);
+        PendingIntent yesStopShiftPendingIntent =
+                PendingIntent.getBroadcast(
+                        MyApplication.getContext(),
+                        1,
+                        yesStopShiftIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        notificationBuilder.addAction(new android.support.v4.app.NotificationCompat.Action
+                (R.drawable.notif_shift_stop, "Yes", yesStopShiftPendingIntent));
+
+        Intent noContinueShiftIntent = new Intent(CONTINUE_SHIFT_INTENT);
+        PendingIntent noContinueShiftPendingIntent =
+                PendingIntent.getBroadcast(
+                        MyApplication.getContext(),
+                        2,
+                        noContinueShiftIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        notificationBuilder.addAction(new android.support.v4.app.NotificationCompat.Action
+                (R.drawable.notif_shift_continue, "No", noContinueShiftPendingIntent));
+
+        Notification notification = notificationBuilder.build();
+        //notification.defaults |= Notification.DEFAULT_VIBRATE;
+        //notification.defaults |= Notification.DEFAULT_SOUND;
+        final NotificationManagerCompat notificationManager = NotificationManagerCompat.from
+                (MyApplication.getContext());
+        notificationManager.notify(Util.NOTIFICATION_ID_NOT_AT_WORK, notification);
     }
 
     BroadcastReceiver mAccountChangedReceiver = new BroadcastReceiver() {
@@ -626,6 +735,8 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                 }
             }
         }
+
+        mCurrentShift = currentShift;
 
         if (!TextUtils.isEmpty(shiftTitleTxt) && !TextUtils.isEmpty(shiftTxt)) {
             sendBroadcast(new Intent(MainActivity.SHIFT_CHANGED_INTENT)
@@ -891,6 +1002,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                     }
                 });
         unregisterReceiver(mAccountChangedReceiver);
+        unregisterReceiver(mNotAtWorkResponseReceiver);
         setWatchMessagesListener(false);
         super.onDestroy();
     }
