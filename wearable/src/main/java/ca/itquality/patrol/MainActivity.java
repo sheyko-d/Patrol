@@ -31,6 +31,7 @@ import ca.itquality.patrol.service.BackgroundService;
 import ca.itquality.patrol.service.ListenerServiceFromPhone;
 import ca.itquality.patrol.service.SensorsService;
 import ca.itquality.patrol.service.ShakeListenerService;
+import ca.itquality.patrol.service.WearingListenerService;
 import ca.itquality.patrol.util.WearUtil;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
@@ -85,6 +86,7 @@ public class MainActivity extends WearableActivity {
         initSteps();
         registerWearListener();
         registerShakeListener();
+        registerWearingListener();
         startOutOfRangeService();
     }
 
@@ -98,6 +100,10 @@ public class MainActivity extends WearableActivity {
 
     private void registerShakeListener() {
         startService(new Intent(this, ShakeListenerService.class));
+    }
+
+    private void registerWearingListener() {
+        startService(new Intent(this, WearingListenerService.class));
     }
 
     private void initLastMessage() {

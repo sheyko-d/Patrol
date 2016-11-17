@@ -313,9 +313,11 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
                 (MyApplication.getContext());
         notificationBuilder.setContentTitle("OK, your administrator will be notified");
-        if (TextUtils.isEmpty(DeviceUtil.getUser().getAssignedObject().getLeaveWatchMessage())) {
+        if (!TextUtils.isEmpty(DeviceUtil.getUser().getAssignedObject().getLeaveWatchMessage())) {
             notificationBuilder.setContentText(DeviceUtil.getUser().getAssignedObject()
                     .getLeaveWatchMessage());
+        } else {
+            notificationBuilder.setContentText("Swipe to dismiss");
         }
         notificationBuilder.setAutoCancel(true);
         notificationBuilder.setSmallIcon(R.drawable.backup_notification);
@@ -725,19 +727,15 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     }
 
     private void checkAtWork() {
-        Util.Log("Check at work");
         if (!userAtWork() && mCurrentShift != null) {
-            Util.Log("NOT AT WORK, AND SHIFT IS ACTIVE");
             if (mAtWorkActiveShift) {
                 askWhyLeftWork();
                 mAtWorkActiveShift = false;
             }
         } else if (userAtWork() && mCurrentShift != null) {
             mAtWorkActiveShift = true;
-            Util.Log("Currently working");
         } else {
             mAtWorkActiveShift = false;
-            Util.Log("No active shift yet");
         }
     }
 

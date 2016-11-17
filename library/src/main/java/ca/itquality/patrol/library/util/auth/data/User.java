@@ -86,10 +86,13 @@ public class User {
         private int sitting_duration;
         @SerializedName("leave_watch_message")
         private String leave_watch_message;
+        @SerializedName("watch_removed_max_min")
+        private int watch_removed_max_min;
 
         public AssignedObject(String assignedObjectId, String title, Float latitude,
                               Float longitude, String contacts, String safety, String video,
-                              int sitting_duration, String leave_watch_message) {
+                              int sitting_duration, String leave_watch_message,
+                              int watch_removed_max_min) {
             this.assignedObjectId = assignedObjectId;
             this.title = title;
             this.latitude = latitude;
@@ -99,6 +102,7 @@ public class User {
             this.video = video;
             this.sitting_duration = sitting_duration;
             this.leave_watch_message = leave_watch_message;
+            this.watch_removed_max_min = watch_removed_max_min;
         }
 
         public String getAssignedObjectId() {
@@ -135,6 +139,10 @@ public class User {
 
         public String getLeaveWatchMessage() {
             return leave_watch_message;
+        }
+
+        public int getWatchRemovedMaxMin(){
+            return watch_removed_max_min;
         }
     }
 

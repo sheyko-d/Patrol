@@ -57,6 +57,8 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
     private static final String STRETCH_WEAR_PATH = "/stigg-stretch";
     public static final String INTENT_WEATHER_UPDATE = "ca.itquality.patrol.WEATHER_UPDATE";
     public static final String EXTRA_WEATHER_TEMPERATURE = "WeatherTemperature";
+    public static final String INTENT_WEAR_WATCH = "ca.itquality.patrol.WEAR_WATCH";
+    private static final String WEAR_WATCH_WEAR_PATH = "/stigg-wear-watch";
     private static final long TIMEOUT_MS = 10000;
 
     private GoogleApiClient mGoogleApiClient;
@@ -85,14 +87,19 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
         IntentFilter filter = new IntentFilter();
         filter.addAction(INTENT_BACKUP);
         filter.addAction(INTENT_STRETCH);
+        filter.addAction(INTENT_WEAR_WATCH);
         registerReceiver(mMessageReceiver, filter);
     }
 
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            showBackupNotificationOnPhone(intent.getAction().equals(INTENT_BACKUP)
-                    ? BACKUP_WEAR_PATH : STRETCH_WEAR_PATH);
+            if (intent.getAction().equals(INTENT_WEAR_WATCH)) {
+                showWearWatchNotificatinOnPhone();
+            } else {
+                showBackupNotificationOnPhone(intent.getAction().equals(INTENT_BACKUP)
+                        ? BACKUP_WEAR_PATH : STRETCH_WEAR_PATH);
+            }
         }
 
         private Node mNode = null;
@@ -123,6 +130,36 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                                                     }
                                                 }
                                         );
+                            }
+                        }
+                    });
+        }
+
+        private void showWearWatchNotificatinOnPhone() {
+
+            Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).setResultCallback
+                    (new ResultCallback<NodeApi.GetConnectedNodesResult>() {
+                        @Override
+                        public void onResult(@NonNull NodeApi.GetConnectedNodesResult nodes) {
+                            for (Node node : nodes.getNodes()) {
+                                mNode = node;
+                            }
+                            if (mNode != null && mGoogleApiClient != null
+                                    && mGoogleApiClient.isConnected()) {
+                                Wearable.MessageApi.sendMessage(
+                                        mGoogleApiClient, mNode.getId(), WEAR_WATCH_WEAR_PATH,
+                                        null).setResultCallback(
+                                        new ResultCallback<MessageApi.SendMessageResult>() {
+                                            @Override
+                                            public void onResult(@NonNull MessageApi.SendMessageResult
+                                                                         sendMessageResult) {
+                                                if (!sendMessageResult.getStatus().isSuccess()) {
+                                                    Util.Log("Failed to send message with status code: "
+                                                            + sendMessageResult.getStatus().getStatusCode());
+                                                }
+                                            }
+                                        }
+                                );
                             }
                         }
                     });
