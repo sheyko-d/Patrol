@@ -56,6 +56,8 @@ public class DeviceUtil {
     public static void updateProfile(User user) {
         String json = new Gson().toJson(user);
 
+        Util.Log("getAssignedShifts = " + user.getAssignedShifts().size());
+
         PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
                 .putString(PREF_USER, json).apply();
 
@@ -71,7 +73,7 @@ public class DeviceUtil {
         accounts.add(user);
         setAccounts(accounts);
 
-        if (!isWelcomeNewPlaceShown()){
+        if (!isWelcomeNewPlaceShown()) {
             MyApplication.getContext().sendBroadcast(new Intent
                     (MainActivity.NEW_PLACE_WELCOME_INTENT));
         }

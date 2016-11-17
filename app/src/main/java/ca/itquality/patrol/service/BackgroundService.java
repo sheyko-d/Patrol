@@ -1,6 +1,7 @@
 package ca.itquality.patrol.service;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -77,6 +78,7 @@ import ca.itquality.patrol.library.util.api.ApiClient;
 import ca.itquality.patrol.library.util.api.ApiInterface;
 import ca.itquality.patrol.library.util.auth.data.User;
 import ca.itquality.patrol.library.util.heartrate.DataValue;
+import ca.itquality.patrol.main.ClockInDayOffActivity;
 import ca.itquality.patrol.main.MainActivity;
 import ca.itquality.patrol.service.wear.WearMessageListenerService;
 import ca.itquality.patrol.util.DatabaseManager;
@@ -87,6 +89,8 @@ import ca.itquality.patrol.util.weather.YahooWeatherInfoListener;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+
+import static ca.itquality.patrol.library.util.Util.NOTIFICATION_ID_CLOCK_IN;
 
 public class BackgroundService extends Service implements GoogleApiClient.ConnectionCallbacks, YahooWeatherInfoListener {
 
@@ -100,6 +104,11 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     private static final int NOTIFICATION_ID_SITTING_30 = 3;
     public static final String STOP_SHIFT_INTENT = "ca.itquality.patrol.STOP_SHIFT";
     public static final String CONTINUE_SHIFT_INTENT = "ca.itquality.patrol.CONTINUE_SHIFT";
+    private static final int NOTIFICATION_ID_SHIFT = 11;
+    private static final String CLOCK_IN_INTENT = "ca.itquality.patrol.CLOCK_IN";
+    private static final String EXTRA_SHIFT_ID = "ShiftId";
+    private static final String EXTRA_SHIFT_STARTED = "ShiftStarted";
+    private static final String DAY_OFF_INTENT = "ca.itquality.patrol.DAY_OFF";
 
     // Usual variables
     private static GoogleApiClient mGoogleApiClient;
@@ -134,38 +143,180 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         startUpdateDataTask();
         setWatchMessagesListener(true);
         setAccountsChangedReceiver();
-        setNotAtWorkResponseListener();
+        setNotificationActionsListener();
     }
 
-    private void setNotAtWorkResponseListener() {
+    private void setNotificationActionsListener() {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(STOP_SHIFT_INTENT);
         intentFilter.addAction(CONTINUE_SHIFT_INTENT);
+        intentFilter.addAction(CLOCK_IN_INTENT);
+        intentFilter.addAction(DAY_OFF_INTENT);
         registerReceiver(mNotAtWorkResponseReceiver, intentFilter);
     }
 
     private BroadcastReceiver mNotAtWorkResponseReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(STOP_SHIFT_INTENT)){
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from
-                        (MyApplication.getContext());
-                notificationManager.cancel(Util.NOTIFICATION_ID_NOT_AT_WORK);
-
+            NotificationManagerCompat notificationManager = NotificationManagerCompat.from
+                    (MyApplication.getContext());
+            notificationManager.cancel(NOTIFICATION_ID_SHIFT);
+            notificationManager.cancel(Util.NOTIFICATION_ID_NOT_AT_WORK);
+            if (intent.getAction().equals(STOP_SHIFT_INTENT)) {
+                showClockOutDialog();
+                //showLeaveWatchNotification();
+            }
+            if (intent.getAction().equals(CLOCK_IN_INTENT)) {
+                clockIn(intent.getStringExtra(EXTRA_SHIFT_ID),
+                        intent.getBooleanExtra(EXTRA_SHIFT_STARTED, false));
                 showLeaveWatchNotification();
-            } else {
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from
-                        (MyApplication.getContext());
-                notificationManager.cancel(Util.NOTIFICATION_ID_NOT_AT_WORK);
+            } else if (intent.getAction().equals(DAY_OFF_INTENT)) {
+                openClockInDialog(intent.getStringExtra(EXTRA_SHIFT_ID));
             }
         }
+
+        private void showClockOutDialog() {
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.MILLISECOND, 0);
+            calendar.set(Calendar.SECOND, 0);
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.HOUR_OF_DAY, 24);
+            calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
+            long weekStartTime = calendar.getTimeInMillis();
+            String shiftEnded = DateUtils.getRelativeDateTimeString
+                    (MyApplication.getContext(), System.currentTimeMillis(),
+                            System.currentTimeMillis(), 0, 0).toString()
+                    .toLowerCase(Locale.getDefault());
+            showConfirmEndDialog(mCurrentShift.getAssignedShiftId(), shiftEnded);
+
+            DeviceUtil.setEndConfirmed(weekStartTime, mCurrentShift);
+        }
     };
+
+    @SuppressLint("InflateParams")
+    private void openClockInDialog(final String shiftId) {
+        Intent intent = new Intent(this, ClockInDayOffActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent.putExtra(ClockInDayOffActivity.EXTRA_SHIFT_ID, shiftId));
+    }
+
+    private void clockIn(String shiftId, final boolean started) {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<Void> call = apiService.clockIn(DeviceUtil.getToken(), shiftId, started);
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Util.Log("Clocked In");
+                    if (started) {
+                        Toast.makeText(MyApplication.getContext(),
+                                "Thanks, have a good day!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(MyApplication.getContext(),
+                                "Thanks, see you tomorrow!", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    if (response.code() == 400) {
+                        Toast.makeText(MyApplication.getContext(),
+                                "Some fields are empty.",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(MyApplication.getContext(), "Server error.",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void showConfirmEndDialog(final String shiftId, String shiftEnded) {
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
+                (MyApplication.getContext());
+        notificationBuilder.setContentTitle("Confirm clock out");
+        notificationBuilder.setContentText("Your shift ended " + shiftEnded);
+        notificationBuilder.setAutoCancel(true);
+        notificationBuilder.setSmallIcon(R.drawable.backup_notification);
+        notificationBuilder.setColor(ContextCompat.getColor(MyApplication.getContext(),
+                R.color.colorPrimary));
+        notificationBuilder.setPriority(NotificationCompat.PRIORITY_MAX);
+
+        Intent clockOutIntent = new Intent(CLOCK_IN_INTENT);
+        clockOutIntent.putExtra(EXTRA_SHIFT_ID, shiftId);
+        clockOutIntent.putExtra(EXTRA_SHIFT_STARTED, false);
+        PendingIntent clockOutPendingIntent =
+                PendingIntent.getBroadcast(
+                        MyApplication.getContext(),
+                        1,
+                        clockOutIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        notificationBuilder.addAction(new android.support.v4.app.NotificationCompat.Action
+                (R.drawable.notif_shift_stop, "Clock out", clockOutPendingIntent));
+
+        Notification notification = notificationBuilder.build();
+        notification.defaults |= Notification.DEFAULT_VIBRATE;
+        notification.defaults |= Notification.DEFAULT_SOUND;
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from
+                (getApplicationContext());
+        notificationManager.notify(NOTIFICATION_ID_SHIFT, notification);
+    }
+
+    private void showConfirmStartDialog(final String shiftId, String shiftStarted) {
+
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
+                (MyApplication.getContext());
+        notificationBuilder.setContentTitle("Hey, please clock in");
+        notificationBuilder.setContentText("Your shift started " + shiftStarted);
+        notificationBuilder.setAutoCancel(true);
+        notificationBuilder.setSmallIcon(R.drawable.backup_notification);
+        notificationBuilder.setColor(ContextCompat.getColor(MyApplication.getContext(),
+                R.color.colorPrimary));
+        notificationBuilder.setPriority(NotificationCompat.PRIORITY_MAX);
+
+        Intent clockInIntent = new Intent(CLOCK_IN_INTENT);
+        clockInIntent.putExtra(EXTRA_SHIFT_ID, shiftId);
+        clockInIntent.putExtra(EXTRA_SHIFT_STARTED, true);
+        PendingIntent clockInPendingIntent =
+                PendingIntent.getBroadcast(
+                        MyApplication.getContext(),
+                        0,
+                        clockInIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        notificationBuilder.addAction(new android.support.v4.app.NotificationCompat.Action
+                (R.drawable.notif_shift_stop, "Clock in", clockInPendingIntent));
+
+        Intent dayOffIntent = new Intent(DAY_OFF_INTENT);
+        dayOffIntent.putExtra(EXTRA_SHIFT_ID, shiftId);
+        PendingIntent dayOffPendingIntent =
+                PendingIntent.getBroadcast(
+                        MyApplication.getContext(),
+                        1,
+                        dayOffIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        notificationBuilder.addAction(new android.support.v4.app.NotificationCompat.Action
+                (R.drawable.notif_shift_stop, "Day off", dayOffPendingIntent));
+
+        Notification notification = notificationBuilder.build();
+        notification.defaults |= Notification.DEFAULT_VIBRATE;
+        notification.defaults |= Notification.DEFAULT_SOUND;
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from
+                (getApplicationContext());
+        notificationManager.notify(NOTIFICATION_ID_SHIFT, notification);
+    }
 
     private void showLeaveWatchNotification() {
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
                 (MyApplication.getContext());
         notificationBuilder.setContentTitle("OK, your administrator will be notified");
-        notificationBuilder.setContentText("Please leave watch on site!");
+        if (TextUtils.isEmpty(DeviceUtil.getUser().getAssignedObject().getLeaveWatchMessage())) {
+            notificationBuilder.setContentText(DeviceUtil.getUser().getAssignedObject()
+                    .getLeaveWatchMessage());
+        }
         notificationBuilder.setAutoCancel(true);
         notificationBuilder.setSmallIcon(R.drawable.backup_notification);
         notificationBuilder.setColor(ContextCompat.getColor(MyApplication.getContext(),
@@ -591,6 +742,16 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     }
 
     private void askWhyLeftWork() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.HOUR_OF_DAY, 24);
+        calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
+        long weekStartTime = calendar.getTimeInMillis();
+        if (DeviceUtil.endConfirmed(weekStartTime, mCurrentShift)) return;
+        DeviceUtil.setEndConfirmed(weekStartTime, mCurrentShift);
+
         final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
                 (MyApplication.getContext());
         notificationBuilder.setContentTitle("You're not in the active site area");
@@ -624,8 +785,8 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                 (R.drawable.notif_shift_continue, "No", noContinueShiftPendingIntent));
 
         Notification notification = notificationBuilder.build();
-        //notification.defaults |= Notification.DEFAULT_VIBRATE;
-        //notification.defaults |= Notification.DEFAULT_SOUND;
+        notification.defaults |= Notification.DEFAULT_VIBRATE;
+        notification.defaults |= Notification.DEFAULT_SOUND;
         final NotificationManagerCompat notificationManager = NotificationManagerCompat.from
                 (MyApplication.getContext());
         notificationManager.notify(Util.NOTIFICATION_ID_NOT_AT_WORK, notification);
@@ -682,10 +843,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                         (MyApplication.getContext(), weekStartTime + currentShift.getStartTime(),
                                 System.currentTimeMillis(), 0, 0).toString()
                         .toLowerCase(Locale.getDefault());
-                sendBroadcast(new Intent(MainActivity.CONFIRM_SHIFT_START_INTENT)
-                        .putExtra(MainActivity.SHIFT_STARTED_EXTRA, shiftStarted)
-                        .putExtra(MainActivity.CLOCK_IN_SHIFT_ID_EXTRA,
-                                currentShift.getAssignedShiftId()));
+                showConfirmStartDialog(currentShift.getAssignedShiftId(), shiftStarted);
                 DeviceUtil.setStartConfirmed(weekStartTime, currentShift);
             }
         } else if (nextShift != null) {
@@ -725,10 +883,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                                 (MyApplication.getContext(), weekStartTime + previousShift.getEndTime(),
                                         System.currentTimeMillis(), 0, 0).toString()
                                 .toLowerCase(Locale.getDefault());
-                        sendBroadcast(new Intent(MainActivity.CONFIRM_SHIFT_END_INTENT)
-                                .putExtra(MainActivity.SHIFT_ENDED_EXTRA, shiftEnded)
-                                .putExtra(MainActivity.CLOCK_IN_SHIFT_ID_EXTRA,
-                                        previousShift.getAssignedShiftId()));
+                        showConfirmEndDialog(previousShift.getAssignedShiftId(), shiftEnded);
 
                         DeviceUtil.setEndConfirmed(weekStartTime, previousShift);
                     }
@@ -804,7 +959,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         notification.defaults |= Notification.DEFAULT_SOUND;
         final NotificationManagerCompat notificationManager = NotificationManagerCompat.from
                 (MyApplication.getContext());
-        notificationManager.notify(Util.NOTIFICATION_ID_CLOCK_IN, notification);
+        notificationManager.notify(NOTIFICATION_ID_CLOCK_IN, notification);
 
         DeviceUtil.setClockInShown(weekStartTime, currentShift);
     }

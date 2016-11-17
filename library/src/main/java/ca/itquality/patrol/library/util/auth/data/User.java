@@ -84,10 +84,12 @@ public class User {
         private String video;
         @SerializedName("sitting_duration")
         private int sitting_duration;
+        @SerializedName("leave_watch_message")
+        private String leave_watch_message;
 
         public AssignedObject(String assignedObjectId, String title, Float latitude,
                               Float longitude, String contacts, String safety, String video,
-                              int sitting_duration) {
+                              int sitting_duration, String leave_watch_message) {
             this.assignedObjectId = assignedObjectId;
             this.title = title;
             this.latitude = latitude;
@@ -96,6 +98,7 @@ public class User {
             this.safety = safety;
             this.video = video;
             this.sitting_duration = sitting_duration;
+            this.leave_watch_message = leave_watch_message;
         }
 
         public String getAssignedObjectId() {
@@ -128,6 +131,10 @@ public class User {
 
         public int getSittingDuration() {
             return sitting_duration;
+        }
+
+        public String getLeaveWatchMessage() {
+            return leave_watch_message;
         }
     }
 
