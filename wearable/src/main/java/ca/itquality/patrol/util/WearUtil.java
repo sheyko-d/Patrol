@@ -28,6 +28,7 @@ public class WearUtil {
     private static final String PREF_STEPS = "Steps";
     private static final String PREF_WEATHER_TEMPERATURE = "WeatherTemperature";
     private static final String PREF_WEATHER_ICON = "WeatherIcon";
+    private static final String PREF_WATCH_REMOVED_MAX_MIN = "WatchRemovedMaxMin";
 
     /**
      * Saves an activity status in shared preferences.
@@ -206,5 +207,15 @@ public class WearUtil {
                 return "-";
             }
         }
+    }
+
+    public static void setWatchRemovedMaxMin(int min) {
+        PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext()).edit()
+                .putInt(PREF_WATCH_REMOVED_MAX_MIN, min).apply();
+    }
+
+    public static int getWatchRemovedMaxDuration() {
+        return PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
+                .getInt(PREF_WATCH_REMOVED_MAX_MIN, 5) * 60 * 1000;
     }
 }

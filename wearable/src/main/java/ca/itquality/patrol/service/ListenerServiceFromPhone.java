@@ -233,6 +233,8 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
                             parseSteps(dataItem);
                         } else if (item.getUri().getPath().equals(Util.PATH_WEATHER)) {
                             parseWeather(dataItem);
+                        } else if (item.getUri().getPath().equals(Util.PATH_WATCH_REMOVED_MAX_MIN)) {
+                            parseWatchRemovedMaxMin(dataItem);
                         }
                     }
                 }
@@ -240,8 +242,13 @@ public class ListenerServiceFromPhone extends Service implements GoogleApiClient
         });
     }
 
+    private void parseWatchRemovedMaxMin(DataMapItem dataItem) {
+        int min = (dataItem.getDataMap().getInt(Util.DATA_MIN));
+        Util.Log("received parseWatchRemovedMaxMin: "+min);
+        WearUtil.setWatchRemovedMaxMin(min);
+    }
+
     private void parseWeather(DataMapItem dataItem) {
-        Util.Log("receiver weather");
         int temperature = (dataItem.getDataMap().getInt(Util.DATA_TEMPERATURE));
         loadBitmapFromAsset(dataItem.getDataMap().getAsset(Util.DATA_ICON), temperature);
     }

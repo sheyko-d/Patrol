@@ -716,6 +716,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                     DeviceUtil.updateProfile(user);
                     updateShift();
                     checkAtWork();
+                    updateWearWatchRemovedMaxMin(user.getAssignedObject().getWatchRemovedMaxMin());
                 }
             }
 
@@ -725,6 +726,21 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
                         Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void updateWearWatchRemovedMaxMin(int min) {
+        try {
+            Util.Log("Update wear removed time on watch: " + min);
+            PutDataMapRequest putDataMapReq = PutDataMapRequest.create
+                    (Util.PATH_WATCH_REMOVED_MAX_MIN);
+            putDataMapReq.setUrgent();
+            putDataMapReq.getDataMap().putInt(Util.DATA_MIN, min);
+            putDataMapReq.getDataMap().putLong(Util.DATA_TIME, System.currentTimeMillis());
+            PutDataRequest putDataReq = putDataMapReq.asPutDataRequest();
+            Wearable.DataApi.putDataItem(mGoogleApiClient, putDataReq);
+        } catch (Exception e) {
+            // Watch is not supported
+        }
     }
 
     private void checkAtWork() {
@@ -743,7 +759,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
 
     private void sendNotAtWorkEmailToAdministrator() {
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
-        Call<Void> call = apiService.setNotAtWorkAlert(DeviceUtil.getToken());
+        Call<Void> call = apiService.sendNotAtWorkAlert(DeviceUtil.getToken());
         call.enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {

@@ -12,12 +12,15 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.annotation.Nullable;
 
+import ca.itquality.patrol.library.util.Util;
+import ca.itquality.patrol.util.WearUtil;
+
 import static ca.itquality.patrol.service.ListenerServiceFromPhone.INTENT_WEAR_WATCH;
 
 public class WearingListenerService extends Service {
 
     private static final String WAKELOCK_TAG = "ShakeWakelock";
-    private static final long NOT_WEARING_WATCH_MAX_DURATION = 1000 * 60 * 5;
+    private static final int MINUTE_DURATION = 60 * 1000;
     private PowerManager.WakeLock mWakeLock;
     private SensorManager mSensorManager;
     private Handler mHandler = new Handler();
@@ -48,13 +51,13 @@ public class WearingListenerService extends Service {
             public void run() {
                 if (!mAskedToWearWatch && mLastWearingTime != -1
                         && System.currentTimeMillis() - mLastWearingTime
-                        > NOT_WEARING_WATCH_MAX_DURATION) {
+                        > WearUtil.getWatchRemovedMaxDuration()) {
                     askToWearWatch();
                     mAskedToWearWatch = true;
                 }
-                mHandler.postDelayed(this, NOT_WEARING_WATCH_MAX_DURATION);
+                mHandler.postDelayed(this, MINUTE_DURATION);
             }
-        }, NOT_WEARING_WATCH_MAX_DURATION);
+        }, MINUTE_DURATION);
     }
 
     private void askToWearWatch() {
@@ -78,6 +81,7 @@ public class WearingListenerService extends Service {
             mAcceleration = mAcceleration * 0.9f + delta;
 
             if (mAcceleration > 1) {
+                Util.Log("Watch started counting down inactivity");
                 mLastWearingTime = System.currentTimeMillis();
                 mAskedToWearWatch = false;
             }

@@ -43,6 +43,8 @@ public class Util {
     public static final String PATH_WEATHER = "/weather";
     public static final String DATA_ICON = "Icon";
     public static final String DATA_TEMPERATURE = "Temperature";
+    public static final String PATH_WATCH_REMOVED_MAX_MIN = "/watch-removed-max-min";
+    public static final String DATA_MIN = "Min";
     public static final int NOTIFICATION_ID_BACKUP = 3;
     private static final int DAY_DURATION = 1000 * 60 * 60 * 24;
     public static final int NOTIFICATION_ID_CLOCK_IN = 4;

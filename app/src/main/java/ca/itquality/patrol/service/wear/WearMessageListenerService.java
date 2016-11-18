@@ -14,7 +14,12 @@ import ca.itquality.patrol.R;
 import ca.itquality.patrol.app.MyApplication;
 import ca.itquality.patrol.auth.LoginActivity;
 import ca.itquality.patrol.library.util.Util;
+import ca.itquality.patrol.library.util.api.ApiClient;
+import ca.itquality.patrol.library.util.api.ApiInterface;
 import ca.itquality.patrol.util.DeviceUtil;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class WearMessageListenerService extends WearableListenerService {
 
@@ -38,16 +43,19 @@ public class WearMessageListenerService extends WearableListenerService {
             if (DeviceUtil.askBackup()) MyApplication.showBackupNotification();
         } else if (messageEvent.getPath().equals(STRETCH_WEAR_PATH)) {
             showStretchNotification();
-        } else if (messageEvent.getPath().equals(WEAR_WATCH_WEAR_PATH)){
+        } else if (messageEvent.getPath().equals(WEAR_WATCH_WEAR_PATH)) {
             showWearWatchNotification();
         }
     }
 
     private void showWearWatchNotification() {
+        sendRemovedWatchEmailToAdministrator();
+
         final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder
                 (MyApplication.getContext());
         notificationBuilder.setContentTitle("Please wear the watch");
-        notificationBuilder.setContentText("It was removed for more than 5 min.");
+        notificationBuilder.setContentText("It was removed for more than "
+                + DeviceUtil.getUser().getAssignedObject().getWatchRemovedMaxMin() + " min.");
         notificationBuilder.setAutoCancel(true);
         notificationBuilder.setSmallIcon(R.drawable.alert_notification);
         notificationBuilder.setColor(ContextCompat.getColor(MyApplication.getContext(),
@@ -60,6 +68,25 @@ public class WearMessageListenerService extends WearableListenerService {
         final NotificationManagerCompat notificationManager = NotificationManagerCompat.from
                 (MyApplication.getContext());
         notificationManager.notify(Util.NOTIFICATION_ID_STRETCH, notification);
+    }
+
+    private void sendRemovedWatchEmailToAdministrator() {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<Void> call = apiService.sendRemovedWatchAlert(DeviceUtil.getToken(),
+                DeviceUtil.getUser().getAssignedObject().getWatchRemovedMaxMin());
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (!response.isSuccessful()) {
+                    Util.Log("Can't send removed watch alert: " + response.body());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Util.Log("Server error: " + t.getMessage());
+            }
+        });
     }
 
 

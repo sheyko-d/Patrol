@@ -59,7 +59,12 @@ public interface ApiInterface {
 
     @FormUrlEncoded
     @POST("alert/send_not_at_work_alert.php")
-    Call<Void> setNotAtWorkAlert(@Field("token") String token);
+    Call<Void> sendNotAtWorkAlert(@Field("token") String token);
+
+    @FormUrlEncoded
+    @POST("alert/send_removed_watch_alert.php")
+    Call<Void> sendRemovedWatchAlert(@Field("token") String token,
+                                     @Field("min") int min);
 
     /**
      * Message APIs.
