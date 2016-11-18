@@ -57,6 +57,10 @@ public interface ApiInterface {
     Call<Void> sendSitting30Alert(@Field("token") String token,
                                   @Field("sitting_duration") int sitting_duration);
 
+    @FormUrlEncoded
+    @POST("alert/send_not_at_work_alert.php")
+    Call<Void> setNotAtWorkAlert(@Field("token") String token);
+
     /**
      * Message APIs.
      */

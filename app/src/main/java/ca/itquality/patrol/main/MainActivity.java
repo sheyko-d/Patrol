@@ -106,6 +106,7 @@ import retrofit2.Response;
 import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 import static ca.itquality.patrol.messages.ChatActivity.INCOMING_MESSAGE_INTENT;
+import static ca.itquality.patrol.service.BackgroundService.ACCOUNT_CHANGED_INTENT;
 import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
@@ -201,6 +202,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         startWearDataListenerService();
         registerListener();
         checkBackupRequest();
+        updateShifts();
+    }
+
+    private void updateShifts() {
+        sendBroadcast(new Intent(ACCOUNT_CHANGED_INTENT));
     }
 
     private void setNewPlaceWelcomeListener() {
@@ -1206,7 +1212,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         DeviceUtil.setLastMessage(null, null);
         updateWearLastMessage(null, null);
         DeviceUtil.setShift(null, null);
-        sendBroadcast(new Intent(BackgroundService.ACCOUNT_CHANGED_INTENT));
+        sendBroadcast(new Intent(ACCOUNT_CHANGED_INTENT));
         DeviceUtil.setSteps(-1);
         updateObjectMap();
 

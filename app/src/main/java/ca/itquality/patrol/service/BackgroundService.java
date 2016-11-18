@@ -164,12 +164,13 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
             notificationManager.cancel(Util.NOTIFICATION_ID_NOT_AT_WORK);
             if (intent.getAction().equals(STOP_SHIFT_INTENT)) {
                 showClockOutDialog();
-                //showLeaveWatchNotification();
             }
             if (intent.getAction().equals(CLOCK_IN_INTENT)) {
                 clockIn(intent.getStringExtra(EXTRA_SHIFT_ID),
                         intent.getBooleanExtra(EXTRA_SHIFT_STARTED, false));
-                showLeaveWatchNotification();
+                if (!intent.getBooleanExtra(EXTRA_SHIFT_STARTED, false)) {
+                    showLeaveWatchNotification();
+                }
             } else if (intent.getAction().equals(DAY_OFF_INTENT)) {
                 openClockInDialog(intent.getStringExtra(EXTRA_SHIFT_ID));
             }
@@ -362,7 +363,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
     }
 
     private void showSitting30MinNotification() {
-        sendEmailToAdministrator();
+        sendSitting30MinEmailToAdministrator();
 
         if (!PreferenceManager.getDefaultSharedPreferences(MyApplication.getContext())
                 .getBoolean("setting_sitting_alert", true)) {
@@ -388,7 +389,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         notificationManager.notify(NOTIFICATION_ID_SITTING_30, notification);
     }
 
-    private void sendEmailToAdministrator() {
+    private void sendSitting30MinEmailToAdministrator() {
         ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
         Call<Void> call = apiService.sendSitting30Alert(DeviceUtil.getToken(),
                 DeviceUtil.getUser().getAssignedObject().getSittingDuration());
@@ -730,6 +731,7 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         if (!userAtWork() && mCurrentShift != null) {
             if (mAtWorkActiveShift) {
                 askWhyLeftWork();
+
                 mAtWorkActiveShift = false;
             }
         } else if (userAtWork() && mCurrentShift != null) {
@@ -737,6 +739,24 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         } else {
             mAtWorkActiveShift = false;
         }
+    }
+
+    private void sendNotAtWorkEmailToAdministrator() {
+        ApiInterface apiService = ApiClient.getClient().create(ApiInterface.class);
+        Call<Void> call = apiService.setNotAtWorkAlert(DeviceUtil.getToken());
+        call.enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (!response.isSuccessful()) {
+                    Util.Log("Can't send not at work alert: " + response.body());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Util.Log("Server error: " + t.getMessage());
+            }
+        });
     }
 
     private void askWhyLeftWork() {
@@ -748,6 +768,8 @@ public class BackgroundService extends Service implements GoogleApiClient.Connec
         calendar.set(Calendar.DAY_OF_WEEK, calendar.getFirstDayOfWeek());
         long weekStartTime = calendar.getTimeInMillis();
         if (DeviceUtil.endConfirmed(weekStartTime, mCurrentShift)) return;
+
+        sendNotAtWorkEmailToAdministrator();
         DeviceUtil.setEndConfirmed(weekStartTime, mCurrentShift);
 
         final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder

@@ -49,7 +49,7 @@ public class WearMessageListenerService extends WearableListenerService {
         notificationBuilder.setContentTitle("Please wear the watch");
         notificationBuilder.setContentText("It was removed for more than 5 min.");
         notificationBuilder.setAutoCancel(true);
-        notificationBuilder.setSmallIcon(R.drawable.backup_notification);
+        notificationBuilder.setSmallIcon(R.drawable.alert_notification);
         notificationBuilder.setColor(ContextCompat.getColor(MyApplication.getContext(),
                 R.color.colorPrimary));
         notificationBuilder.setPriority(NotificationCompat.PRIORITY_MAX);
