@@ -1,0 +1,11 @@
+[25-Jul-2016 05:21:58 America/Denver] PHP Warning:  mysqli_insert_id() expects exactly 1 parameter, 0 given in /home/stiggca/public_html/api/assigned_object/assign_user.php on line 69
+[25-Jul-2016 06:14:55 America/Denver] PHP Warning:  mysqli_insert_id() expects exactly 1 parameter, 0 given in /home/stiggca/public_html/api/assigned_object/assign_user.php on line 69
+[25-Jul-2016 06:16:12 America/Denver] PHP Warning:  mysqli_insert_id() expects exactly 1 parameter, 0 given in /home/stiggca/public_html/api/assigned_object/assign_user.php on line 69
+[25-Jul-2016 08:34:02 America/Denver] PHP Warning:  mysqli_insert_id() expects exactly 1 parameter, 0 given in /home/stiggca/public_html/api/assigned_object/assign_user.php on line 69
+[26-Jul-2016 12:42:47 America/Denver] PHP Parse error:  syntax error, unexpected ';' in /home/stiggca/public_html/api/assigned_object/assign_user.php on line 50
+[18-Sep-2016 03:04:15 America/Denver] PHP Fatal error:  Function name must be a string in /home/stiggca/public_html/api/assigned_object/delete_assigned_object.php on line 25
+[18-Nov-2016 08:06:04 America/Denver] PHP Parse error:  syntax error, unexpected ')' in /home/stiggca/public_html/api/assigned_object/assign_user.php on line 101
+[18-Nov-2016 08:08:14 America/Denver] PHP Warning:  mysqli_error() expects exactly 1 parameter, 0 given in /home/stiggca/public_html/api/assigned_object/assign_user.php on line 111
+[18-Nov-2016 08:08:16 America/Denver] PHP Warning:  mysqli_error() expects exactly 1 parameter, 0 given in /home/stiggca/public_html/api/assigned_object/assign_user.php on line 111
+[18-Nov-2016 08:11:11 America/Denver] PHP Parse error:  syntax error, unexpected ')' in /home/stiggca/public_html/api/assigned_object/assign_user.php on line 111
+[18-Nov-2016 08:13:33 America/Denver] PHP Parse error:  syntax error, unexpected ')' in /home/stiggca/public_html/api/assigned_object/assign_user.php on line 101

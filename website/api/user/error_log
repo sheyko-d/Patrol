@@ -1,0 +1,26 @@
+[19-Jul-2016 13:04:31 America/Denver] PHP Warning:  mysqli_connect(): (HY000/1045): Access denied for user ''@'localhost' (using password: NO) in /home/stiggca/public_html/api/util/database.php on line 18
+[19-Jul-2016 13:04:31 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home/stiggca/public_html/api/util/database.php on line 20
+[19-Jul-2016 13:04:57 America/Denver] PHP Warning:  mysqli_connect(): (HY000/1045): Access denied for user ''@'localhost' (using password: NO) in /home/stiggca/public_html/api/util/database.php on line 18
+[19-Jul-2016 13:04:57 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home/stiggca/public_html/api/util/database.php on line 20
+[19-Jul-2016 13:06:08 America/Denver] PHP Warning:  mysqli_connect(): (HY000/1045): Access denied for user ''@'localhost' (using password: NO) in /home/stiggca/public_html/api/util/database.php on line 18
+[19-Jul-2016 13:06:08 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home/stiggca/public_html/api/util/database.php on line 20
+[19-Jul-2016 13:06:29 America/Denver] PHP Warning:  mysqli_connect(): (HY000/1045): Access denied for user ''@'localhost' (using password: NO) in /home/stiggca/public_html/api/util/database.php on line 18
+[19-Jul-2016 13:06:29 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home/stiggca/public_html/api/util/database.php on line 20
+[19-Jul-2016 13:06:30 America/Denver] PHP Warning:  mysqli_connect(): (HY000/1045): Access denied for user ''@'localhost' (using password: NO) in /home/stiggca/public_html/api/util/database.php on line 18
+[19-Jul-2016 13:06:30 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home/stiggca/public_html/api/util/database.php on line 20
+[19-Jul-2016 13:07:53 America/Denver] PHP Warning:  mysqli_connect(): (HY000/1044): Access denied for user 'stiggca_android'@'localhost' to database 'stigg_guard' in /home/stiggca/public_html/api/util/database.php on line 13
+[19-Jul-2016 13:07:53 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home/stiggca/public_html/api/util/database.php on line 15
+[19-Jul-2016 13:08:47 America/Denver] PHP Warning:  mysqli_connect(): (HY000/1044): Access denied for user 'stiggca_android'@'localhost' to database 'stigg_guard' in /home/stiggca/public_html/api/util/database.php on line 13
+[19-Jul-2016 13:08:47 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home/stiggca/public_html/api/util/database.php on line 15
+[19-Jul-2016 13:08:55 America/Denver] PHP Warning:  mysqli_connect(): (HY000/1044): Access denied for user 'stiggca_android'@'localhost' to database 'stigg_guard' in /home/stiggca/public_html/api/util/database.php on line 13
+[19-Jul-2016 13:08:55 America/Denver] PHP Warning:  mysqli_error() expects parameter 1 to be mysqli, boolean given in /home/stiggca/public_html/api/util/database.php on line 15
+[19-Jul-2016 13:10:13 America/Denver] PHP Parse error:  syntax error, unexpected '$con' (T_VARIABLE) in /home/stiggca/public_html/api/util/database.php on line 14
+[23-Jul-2016 07:24:51 America/Denver] PHP Warning:  mysql_num_rows() expects parameter 1 to be resource, object given in /home/stiggca/public_html/api/user/login.php on line 63
+[23-Jul-2016 07:25:10 America/Denver] PHP Warning:  mysqli_num_rows() expects exactly 1 parameter, 2 given in /home/stiggca/public_html/api/user/login.php on line 63
+[23-Jul-2016 07:25:18 America/Denver] PHP Warning:  mysqli_num_rows() expects exactly 1 parameter, 2 given in /home/stiggca/public_html/api/user/login.php on line 63
+[23-Jul-2016 07:25:19 America/Denver] PHP Warning:  mysqli_num_rows() expects exactly 1 parameter, 2 given in /home/stiggca/public_html/api/user/login.php on line 63
+[23-Jul-2016 08:36:08 America/Denver] PHP Fatal error:  Call to a member function makeQuery() on null in /home/stiggca/public_html/api/user/sign_in_facebook.php on line 75
+[23-Jul-2016 08:36:12 America/Denver] PHP Fatal error:  Call to a member function makeQuery() on null in /home/stiggca/public_html/api/user/sign_in_facebook.php on line 75
+[23-Jul-2016 08:41:01 America/Denver] PHP Parse error:  syntax error, unexpected '@', expecting identifier (T_STRING) or variable (T_VARIABLE) or '{' or '$' in /home/stiggca/public_html/api/user/sign_in_facebook.php on line 75
+[23-Jul-2016 08:52:33 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home/stiggca/public_html/api/user/sign_in_facebook.php on line 81
+[03-Sep-2016 08:56:48 America/Denver] PHP Fatal error:  Allowed memory size of 268435456 bytes exhausted (tried to allocate 72 bytes) in /home/stiggca/public_html/api/user/sign_in_facebook.php on line 75

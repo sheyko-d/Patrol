@@ -1,0 +1,7 @@
+[10-Sep-2016 04:38:11 America/Denver] PHP Warning:  Illegal string offset 'latitude' in /home/stiggca/public_html/api/data/post_location.php on line 39
+[10-Sep-2016 04:38:11 America/Denver] PHP Warning:  Illegal string offset 'longitude' in /home/stiggca/public_html/api/data/post_location.php on line 40
+[10-Sep-2016 04:50:51 America/Denver] PHP Fatal error:  Cannot use object of type stdClass as array in /home/stiggca/public_html/api/data/post_location.php on line 40
+[10-Sep-2016 04:52:16 America/Denver] PHP Fatal error:  Cannot use object of type stdClass as array in /home/stiggca/public_html/api/data/post_location.php on line 40
+[10-Sep-2016 04:53:23 America/Denver] PHP Fatal error:  Cannot use object of type stdClass as array in /home/stiggca/public_html/api/data/post_location.php on line 40
+[10-Sep-2016 04:53:52 America/Denver] PHP Fatal error:  Cannot use object of type stdClass as array in /home/stiggca/public_html/api/data/post_location.php on line 40
+[10-Sep-2016 04:56:09 America/Denver] PHP Fatal error:  Cannot use object of type stdClass as array in /home/stiggca/public_html/api/data/post_location.php on line 40

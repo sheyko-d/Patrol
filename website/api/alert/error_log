@@ -1,0 +1,4 @@
+[26-Jul-2016 11:34:44 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home/stiggca/public_html/api/alert/send_alert.php on line 74
+[26-Jul-2016 11:36:46 America/Denver] PHP Parse error:  syntax error, unexpected 'else' (T_ELSE) in /home/stiggca/public_html/api/alert/send_alert.php on line 74
+[26-Jul-2016 11:38:08 America/Denver] PHP Warning:  array_push() expects parameter 1 to be array, string given in /home/stiggca/public_html/api/alert/send_alert.php on line 76
+[26-Jul-2016 11:38:08 America/Denver] PHP Warning:  array_push() expects parameter 1 to be array, string given in /home/stiggca/public_html/api/alert/send_alert.php on line 76

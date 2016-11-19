@@ -1,0 +1,31 @@
+[27-Jul-2016 03:51:02 America/Denver] PHP Warning:  mysqli_real_escape_string() expects parameter 2 to be string, array given in /home/stiggca/public_html/api/message/send_message.php on line 35
+[27-Jul-2016 11:17:14 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home/stiggca/public_html/api/message/send_message.php on line 67
+[27-Jul-2016 11:17:14 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home/stiggca/public_html/api/message/send_message.php on line 100
+[27-Jul-2016 11:17:51 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home/stiggca/public_html/api/message/send_message.php on line 67
+[27-Jul-2016 11:26:48 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home/stiggca/public_html/api/message/send_message.php on line 67
+[27-Jul-2016 11:30:29 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home/stiggca/public_html/api/message/send_message.php on line 67
+[27-Jul-2016 11:32:20 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home/stiggca/public_html/api/message/send_message.php on line 67
+[27-Jul-2016 11:33:25 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home/stiggca/public_html/api/message/send_message.php on line 67
+[28-Jul-2016 00:56:15 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home/stiggca/public_html/api/message/send_message.php on line 67
+[28-Jul-2016 00:57:34 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home/stiggca/public_html/api/message/send_message.php on line 67
+[28-Jul-2016 00:58:28 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home/stiggca/public_html/api/message/send_message.php on line 67
+[28-Jul-2016 00:59:11 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home/stiggca/public_html/api/message/send_message.php on line 67
+[28-Jul-2016 01:00:22 America/Denver] PHP Warning:  Invalid argument supplied for foreach() in /home/stiggca/public_html/api/message/send_message.php on line 67
+[28-Jul-2016 03:44:29 America/Denver] PHP Parse error:  syntax error, unexpected 'foreach' (T_FOREACH) in /home/stiggca/public_html/api/message/send_message.php on line 68
+[28-Jul-2016 03:53:04 America/Denver] PHP Parse error:  syntax error, unexpected '"found one! = "' (T_CONSTANT_ENCAPSED_STRING) in /home/stiggca/public_html/api/message/send_message.php on line 63
+[28-Jul-2016 09:07:15 America/Denver] PHP Parse error:  syntax error, unexpected ';' in /home/stiggca/public_html/api/message/get_messages.php on line 40
+[28-Jul-2016 10:46:32 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, array given in /home/stiggca/public_html/api/message/get_messages.php on line 61
+[28-Jul-2016 11:19:26 America/Denver] PHP Parse error:  syntax error, unexpected 'foreach' (T_FOREACH) in /home/stiggca/public_html/api/message/get_messages.php on line 51
+[28-Jul-2016 11:29:20 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home/stiggca/public_html/api/message/send_message.php on line 102
+[28-Jul-2016 11:55:00 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home/stiggca/public_html/api/message/send_message.php on line 68
+[28-Jul-2016 12:18:29 America/Denver] PHP Parse error:  syntax error, unexpected '$thread_id' (T_VARIABLE) in /home/stiggca/public_html/api/message/send_message.php on line 65
+[28-Jul-2016 12:18:30 America/Denver] PHP Parse error:  syntax error, unexpected '$thread_id' (T_VARIABLE) in /home/stiggca/public_html/api/message/send_message.php on line 65
+[28-Jul-2016 13:28:01 America/Denver] PHP Warning:  explode() expects parameter 2 to be string, array given in /home/stiggca/public_html/api/message/get_messages.php on line 51
+[28-Jul-2016 13:28:01 America/Denver] PHP Warning:  array_map(): Argument #2 should be an array in /home/stiggca/public_html/api/message/get_messages.php on line 51
+[28-Jul-2016 13:28:01 America/Denver] PHP Warning:  sort() expects parameter 1 to be array, null given in /home/stiggca/public_html/api/message/get_messages.php on line 52
+[29-Jul-2016 12:57:36 America/Denver] PHP Parse error:  syntax error, unexpected '=', expecting ')' in /home/stiggca/public_html/api/message/get_threads.php on line 65
+[29-Jul-2016 12:58:04 America/Denver] PHP Parse error:  syntax error, unexpected '=', expecting ')' in /home/stiggca/public_html/api/message/get_threads.php on line 65
+[29-Jul-2016 12:59:38 America/Denver] PHP Parse error:  syntax error, unexpected '=', expecting ')' in /home/stiggca/public_html/api/message/get_threads.php on line 65
+[29-Jul-2016 13:25:05 America/Denver] PHP Warning:  mysqli_query(): Empty query in /home/stiggca/public_html/api/util/database.php on line 21
+[29-Jul-2016 13:25:51 America/Denver] PHP Warning:  mysqli_query(): Empty query in /home/stiggca/public_html/api/util/database.php on line 21
+[29-Jul-2016 13:26:26 America/Denver] PHP Warning:  mysqli_query(): Empty query in /home/stiggca/public_html/api/util/database.php on line 21

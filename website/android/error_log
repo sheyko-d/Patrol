@@ -1,0 +1,99 @@
+[10-Sep-2016 09:55:31 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home/stiggca/public_html/android/index.php on line 113
+[11-Sep-2016 02:54:13 America/Denver] PHP Fatal error:  Call to a member function fetch_assoc() on array in /home/stiggca/public_html/android/index.php on line 159
+[11-Sep-2016 02:58:14 America/Denver] PHP Parse error:  syntax error, unexpected '}' in /home/stiggca/public_html/android/index.php on line 230
+[12-Sep-2016 04:17:55 America/Denver] PHP Warning:  mysql_num_rows() expects parameter 1 to be resource, object given in /home/stiggca/public_html/android/index.php on line 215
+[12-Sep-2016 04:18:17 America/Denver] PHP Warning:  mysqli_num_rows() expects exactly 1 parameter, 2 given in /home/stiggca/public_html/android/index.php on line 215
+[12-Sep-2016 05:21:14 America/Denver] PHP Parse error:  syntax error, unexpected '$activity_result' (T_VARIABLE), expecting ',' or ';' in /home/stiggca/public_html/android/index.php on line 202
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 19:03:26 Asia/Bangkok] PHP Warning:  date_format() expects parameter 1 to be DateTimeInterface, string given in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 06:05:56 America/Denver] PHP Parse error:  syntax error, unexpected '->' (T_OBJECT_OPERATOR), expecting ',' or ';' in /home/stiggca/public_html/android/index.php on line 206
+[12-Sep-2016 06:14:29 America/Denver] PHP Fatal error:  Uncaught exception 'Exception' with message 'DateTime::__construct(): Failed to parse time string (1473681252) at position 8 (5): Unexpected character' in /home/stiggca/public_html/android/index.php:202
+Stack trace:
+#0 /home/stiggca/public_html/android/index.php(202): DateTime->__construct('1473681252')
+#1 {main}
+  thrown in /home/stiggca/public_html/android/index.php on line 202
+[12-Sep-2016 06:30:03 America/Denver] PHP Fatal error:  Uncaught exception 'Exception' with message 'DateTimeZone::__construct(): Unknown or bad timezone (gmt+2)' in /home/stiggca/public_html/android/index.php:203
+Stack trace:
+#0 /home/stiggca/public_html/android/index.php(203): DateTimeZone->__construct('gmt+2')
+#1 {main}
+  thrown in /home/stiggca/public_html/android/index.php on line 203
+[12-Sep-2016 06:30:14 America/Denver] PHP Fatal error:  Uncaught exception 'Exception' with message 'DateTimeZone::__construct(): Unknown or bad timezone (utc+2)' in /home/stiggca/public_html/android/index.php:203
+Stack trace:
+#0 /home/stiggca/public_html/android/index.php(203): DateTimeZone->__construct('utc+2')
+#1 {main}
+  thrown in /home/stiggca/public_html/android/index.php on line 203
+[12-Sep-2016 06:59:57 America/Denver] PHP Fatal error:  Uncaught exception 'Exception' with message 'DateTimeZone::__construct(): Unknown or bad timezone (UTC-6)' in /home/stiggca/public_html/android/index.php:203
+Stack trace:
+#0 /home/stiggca/public_html/android/index.php(203): DateTimeZone->__construct('UTC-6')
+#1 {main}
+  thrown in /home/stiggca/public_html/android/index.php on line 203
+[12-Sep-2016 07:11:57 America/Denver] PHP Fatal error:  Uncaught exception 'Exception' with message 'DateTime::__construct(): Failed to parse time string (@) at position 0 (@): Unexpected character' in /home/stiggca/public_html/android/index.php:254
+Stack trace:
+#0 /home/stiggca/public_html/android/index.php(254): DateTime->__construct('@')
+#1 {main}
+  thrown in /home/stiggca/public_html/android/index.php on line 254
+[12-Sep-2016 07:22:46 America/Denver] PHP Parse error:  syntax error, unexpected ')' in /home/stiggca/public_html/android/index.php on line 332
+[12-Sep-2016 14:39:41 America/Denver] PHP Fatal error:  Call to a member function fetch_assoc() on null in /home/stiggca/public_html/android/index.php on line 166
+[13-Sep-2016 06:31:22 America/Denver] PHP Fatal error:  Function name must be a string in /home/stiggca/public_html/android/index.php on line 90
+[13-Sep-2016 06:31:30 America/Denver] PHP Fatal error:  Function name must be a string in /home/stiggca/public_html/android/index.php on line 90
+[13-Sep-2016 06:32:04 America/Denver] PHP Fatal error:  Function name must be a string in /home/stiggca/public_html/android/index.php on line 93
+[14-Sep-2016 02:58:05 America/Denver] PHP Parse error:  syntax error, unexpected 'echo' (T_ECHO) in /home/stiggca/public_html/android/index.php on line 67
+[14-Sep-2016 02:58:07 America/Denver] PHP Parse error:  syntax error, unexpected 'echo' (T_ECHO) in /home/stiggca/public_html/android/index.php on line 67
+[14-Sep-2016 02:58:20 America/Denver] PHP Parse error:  syntax error, unexpected 'echo' (T_ECHO) in /home/stiggca/public_html/android/index.php on line 87
+[14-Sep-2016 03:00:03 America/Denver] PHP Parse error:  syntax error, unexpected 'width' (T_STRING), expecting ',' or ';' in /home/stiggca/public_html/android/index.php on line 70
+[14-Sep-2016 04:31:55 America/Denver] PHP Fatal error:  Call to a member function fetch_assoc() on null in /home/stiggca/public_html/android/places.php on line 151
+[21-Sep-2016 06:05:56 America/Denver] PHP Parse error:  syntax error, unexpected '?>' in /home/stiggca/public_html/android/places.php on line 218
+[07-Oct-2016 11:39:52 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:39:52 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:40:25 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:40:25 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:40:48 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:40:48 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:45:04 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:45:04 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:49:24 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:49:24 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:50:29 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:50:29 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:50:37 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:50:37 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:50:40 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:50:40 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:50:50 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:50:50 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:51:01 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:51:01 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:51:04 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:51:04 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:51:33 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:51:33 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:51:43 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:51:43 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:52:03 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 11:52:03 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 12:00:31 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[07-Oct-2016 12:00:31 America/Denver] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/stiggca/public_html/android/shifts.php on line 123
+[08-Nov-2016 04:48:41 America/Denver] PHP Parse error:  syntax error, unexpected '	' in /home/stiggca/public_html/android/shifts.php on line 237
+[19-Nov-2016 03:28:28 America/Denver] PHP Parse error:  syntax error, unexpected '" ?>)"' (T_CONSTANT_ENCAPSED_STRING), expecting ',' or ';' in /home/stiggca/public_html/android/places.php on line 133
+[19-Nov-2016 03:29:16 America/Denver] PHP Warning:  json_encode() expects parameter 2 to be long, string given in /home/stiggca/public_html/android/places.php on line 117
+[19-Nov-2016 03:29:16 America/Denver] PHP Warning:  json_encode() expects parameter 2 to be long, string given in /home/stiggca/public_html/android/places.php on line 117
+[19-Nov-2016 03:29:16 America/Denver] PHP Warning:  json_encode() expects parameter 2 to be long, string given in /home/stiggca/public_html/android/places.php on line 117
+[19-Nov-2016 03:29:16 America/Denver] PHP Warning:  json_encode() expects parameter 2 to be long, string given in /home/stiggca/public_html/android/places.php on line 117
+[19-Nov-2016 03:29:16 America/Denver] PHP Warning:  json_encode() expects parameter 2 to be long, string given in /home/stiggca/public_html/android/places.php on line 117
+[19-Nov-2016 03:29:16 America/Denver] PHP Warning:  json_encode() expects parameter 2 to be long, string given in /home/stiggca/public_html/android/places.php on line 117
+[19-Nov-2016 03:29:16 America/Denver] PHP Warning:  json_encode() expects parameter 2 to be long, string given in /home/stiggca/public_html/android/places.php on line 117
